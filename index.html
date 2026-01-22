@@ -437,8 +437,13 @@ function applyRoleAccess() {
 }
     
 function logout() {
-  localStorage.removeItem('ewarga_user');
-  location.reload();
+  // Menghapus data user dari localStorage [cite: 14]
+  localStorage.removeItem('ewarga_user'); // Menghapus kunci lama jika ada
+  localStorage.removeItem('ewarga_user_data'); // Menghapus kunci baru yang berisi role/rt
+  
+  // Mengarahkan kembali ke tampilan login secara manual tanpa refresh penuh jika memungkinkan, 
+  // atau biarkan reload untuk membersihkan state aplikasi.
+  location.reload(); 
 }
 
     async function refreshData() {
@@ -847,14 +852,22 @@ function pastelColorFromString(str) {
 }
 
   function checkLoginState() {
-    const userData = localStorage.getItem('ewarga_user_data');
-    if (userData) {
-        currentUser = JSON.parse(userData);
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('main-app').style.display = 'flex';
-        applyRoleAccess();
-        refreshData();
-    }
+  // Mengambil data user yang disimpan saat login 
+  const userData = localStorage.getItem('ewarga_user_data');
+  
+  if (userData) {
+    currentUser = JSON.parse(userData);
+    document.getElementById('auth-container').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    
+    // Terapkan hak akses sesuai role (Petugas/Admin/Lihat)
+    applyRoleAccess(); 
+    refreshData();
+  } else {
+    // Jika tidak ada data, pastikan halaman login yang tampil
+    document.getElementById('auth-container').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
+  }
 }
 
   // Jalankan saat halaman pertama kali dibuka

@@ -806,57 +806,85 @@ function pastelColorFromString(str) {
         navigate('add');
     }
 
-    async function handleSaveWarga(e) {
-        e.preventDefault(); toggleLoading(true);
-        // Validasi Frontend sebelum kirim
-    if (currentUser.role === 'petugas' && document.getElementById('f-rt').value !== currentUser.rt) {
-        alert("Gagal: Anda hanya boleh mengisi/edit data untuk RT 0" + currentUser.rt);
+   async function handleSaveWarga(e) {
+    if (e) e.preventDefault();
+    toggleLoading(true);
+
+    // 1. Pastikan currentUser diambil lagi dari localStorage agar tidak undefined
+    const userData = localStorage.getItem('ewarga_user_data');
+    if (!userData) {
+        alert("Sesi login habis, silakan login kembali.");
+        location.reload();
         return;
     }
-        const blok = document.getElementById('f-blok').value;
-        const nomer = document.getElementById('f-nomer').value;
-        const rt = document.getElementById('f-rt').value;
-        const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+    const currentUser = JSON.parse(userData);
 
-        const payload = { 
-            originalNik: document.getElementById('f-original-nik').value, 
-            nik: document.getElementById('f-nik').value, 
-            kk: document.getElementById('f-kk').value, 
-            nama: document.getElementById('f-nama').value, 
-            kelamin: document.getElementById('f-kelamin').value, 
-            agama: document.getElementById('f-agama').value,
-            tempat: document.getElementById('f-tempat').value,
-            tanggal: document.getElementById('f-tanggal').value,
-            perkawinan: document.getElementById('f-perkawinan').value,
-            tinggal: document.getElementById('f-tinggal').value,
-            blok: blok, 
-            nomer: nomer, 
-            rt: rt, 
-            alamatKTP: document.getElementById('f-alamat-ktp').value,
-            alamatTinggal: alamatTinggalStr,
-            statusKel: document.getElementById('f-status-kel').value,
-            hp: document.getElementById('f-hp').value,
-            pekerjaan: document.getElementById('f-pekerjaan').value
-        };
-        try {
+    // 2. Ambil nilai RT untuk validasi
+    const rt = document.getElementById('f-rt').value;
+
+    // 3. Validasi Frontend sebelum kirim
+    if (currentUser.role === 'petugas' && rt.toString() !== currentUser.rt.toString()) {
+        alert("Gagal: Anda hanya boleh mengisi/edit data untuk RT 0" + currentUser.rt);
+        toggleLoading(false);
+        return;
+    }
+
+    const blok = document.getElementById('f-blok').value;
+    const nomer = document.getElementById('f-nomer').value;
+    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+
+    // 4. Susun Payload
+    const payload = { 
+        originalNik: document.getElementById('f-original-nik').value, 
+        nik: document.getElementById('f-nik').value, 
+        kk: document.getElementById('f-kk').value, 
+        nama: document.getElementById('f-nama').value, 
+        kelamin: document.getElementById('f-kelamin').value, 
+        agama: document.getElementById('f-agama').value,
+        tempat: document.getElementById('f-tempat').value,
+        tanggal: document.getElementById('f-tanggal').value,
+        perkawinan: document.getElementById('f-perkawinan').value,
+        tinggal: document.getElementById('f-tinggal').value,
+        blok: blok, 
+        nomer: nomer, 
+        rt: rt, 
+        alamatKTP: document.getElementById('f-alamat-ktp').value,
+        alamatTinggal: alamatTinggalStr,
+        statusKel: document.getElementById('f-status-kel').value,
+        hp: document.getElementById('f-hp').value,
+        pekerjaan: document.getElementById('f-pekerjaan').value
+    };
+
+    try {
         const res = await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'saveWarga', 
-                args: [payload, currentUser] // Kirim currentUser untuk validasi backend
+                args: [payload, currentUser] 
             }) 
         });
+
+        // Cek jika response fetch OK
+        if (!res.ok) throw new Error("Server bermasalah");
+
         const result = await res.json();
-        if (result.success) {
-            alert(result.message);
+        
+        if (result && result.success) {
+            alert(result.message || "Data berhasil disimpan");
+            // Pastikan form ditutup (jika ada fungsi closeForm)
+            if (typeof closeForm === 'function') closeForm();
             navigate('dashboard'); 
             refreshData();
         } else {
-            alert(result.message); // Pesan "Akses Ditolak" dari backend
+            // Tampilkan pesan error dari backend atau pesan default
+            alert("Gagal: " + (result.message || "Terjadi kesalahan pada server"));
         }
     } catch (err) { 
-        alert("Terjadi kesalahan sistem");
-    } finally { toggleLoading(false); }
+        console.error(err);
+        alert("Terjadi kesalahan sistem: " + err.message);
+    } finally { 
+        toggleLoading(false); 
+    }
 }
 
   function checkLoginState() {

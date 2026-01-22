@@ -693,53 +693,61 @@ function pastelColorFromString(str) {
 
 
     function showDetail(nik) {
-        const w = allData.find(x => x.NIK.toString() === nik.toString());
-        if(!w) return;
-        history.pushState({modal: true}, null, "");
-        document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
-
-      // Logika menyembunyikan tombol Edit di Modal
+    const w = allData.find(x => x.NIK.toString() === nik.toString());
+    if(!w) return;
+    
+    history.pushState({modal: true}, null, "");
+    
+    // DEFINISIKAN btnEdit di sini agar tidak terjadi ReferenceError
+    const btnEdit = document.getElementById('btn-edit-trigger');
+    
+    // Logika Hak Akses Tombol Edit
     if (currentUser.role === 'lihat') {
+        // Role 'lihat' tidak boleh edit sama sekali
         btnEdit.style.display = 'none';
     } else if (currentUser.role === 'petugas' && w.RT.toString() !== currentUser.rt.toString()) {
+        // Role 'petugas' hanya boleh edit RT-nya sendiri
         btnEdit.style.display = 'none';
     } else {
+        // Role 'admin' atau 'petugas' di RT yang sama boleh edit
         btnEdit.style.display = 'block';
         btnEdit.onclick = () => openFormEdit(w);
     }
-      
-        const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
-        let waLink = "";
-        if (rawHp) {
-            let cleanHp = rawHp.replace(/\D/g, '');
-            if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.substring(1);
-            if (cleanHp.startsWith('8')) cleanHp = '62' + cleanHp;
-            waLink = `https://wa.me/${cleanHp}`;
-        }
 
-        document.getElementById('detail-content').innerHTML = `
-            <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
-                <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
-                <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
-            </div>
-            <div class="mt-4">
-                ${renderDetailItem('NIK', w.NIK)}
-                ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
-                ${renderDetailItem('Agama', w.Agama)}
-                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
-                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
-                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
-                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
-                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
-                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
-            </div>
-        `;
-        document.getElementById('detail-modal').style.display = 'flex';
+    // Bagian link WhatsApp
+    const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
+    let waLink = "";
+    if (rawHp) {
+        let cleanHp = rawHp.replace(/\D/g, '');
+        if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.substring(1);
+        if (cleanHp.startsWith('8')) cleanHp = '62' + cleanHp;
+        waLink = `https://wa.me/${cleanHp}`;
     }
+
+    // Render Konten Detail
+    document.getElementById('detail-content').innerHTML = `
+        <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
+            <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
+            <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
+        </div>
+        <div class="mt-4">
+            ${renderDetailItem('NIK', w.NIK)}
+            ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
+            ${renderDetailItem('Agama', w.Agama)}
+            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+            ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+            ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+            ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+            ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+            ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
+            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+            ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+        </div>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
 
     function renderDetailItem(label, val) {
         return `<div class="px-2 py-3 border-b border-slate-50 flex justify-between items-start gap-4">

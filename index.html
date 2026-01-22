@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Warga - Puri Agung 2</title>
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+  <!-- Load Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    
+    :root {
+      --soft-indigo: #6366f1;
+      --bg-milk: #F8FAFC; 
+      --pastel-bg: rgba(255,255,255,0.92);
+      --pastel-primary: #8b8cf8;   /* soft indigo */
+      --pastel-active: #f163cd;    /* pastel pink */
+      --pastel-muted: #94a3b8;
+    }
+
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: var(--bg-milk); 
+      color: #334155;
+      margin: 0;
+    }
+
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: center; justify-content: center;
+    }
+
+    #auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+    #main-app { display: none; min-height: 100vh; flex-direction: column; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.3s ease-out; }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .login-card { background: white; width: 100%; max-width: 400px; padding: 40px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); text-align: center; }
+    
+    .input-group { position: relative; margin-bottom: 12px; }
+    .input-group .material-icons { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 18px; }
+    .material-symbols-rounded {
+    font-variation-settings:
+    'FILL' 1,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
+     }
+    
+    input.modern-input, select.modern-input, textarea.modern-input {
+      width: 100%; background: #f8fafc; border: 2px solid #f1f5f9; padding: 12px 16px 12px 35px; border-radius: 16px; font-size: 13px; font-weight: 600; color: #1e293b;
+    }
+    textarea.modern-input { padding-left: 16px; min-height: 80px; }
+
+    .form-label { display: block; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin: 0 0 6px 10px; }
+    .btn-submit { width: 100%; background: #ff93ad; color: white; padding: 16px; border-radius: 20px; font-weight: 700; margin-top: 10px; }
+
+    /* Dashboard UI */
+    .stat-card { background: white; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+    .stat-card2 { background: #f2d7ee; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+    .stat-card3 { background: #b1e9e5; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+
+    .bottom-nav { position: fixed; bottom: 0px; left: 0px; right: 0px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); height: 70px; border-radius: 20px 20px 0 0; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 -6px 20px rgba(0,0,0,0.1); z-index: 4000; } 
+    .nav-item { color: var(--pastel-muted); display: flex; flex-direction: column; align-items: center; font-size: 9px; font-weight: 800; text-transform: uppercase; border: none; background: none; outline: none; }
+    .nav-item.active { color: var(--pastel-active); }
+    .nav-item:hover {color: var(--pastel-primary); transform: translateY(-4px);}
+    .nav-item:hover .material-icons {filter: drop-shadow(0 4px 6px rgba(139,140,248,0.35));}
+    .btn-add-center { background: var(--pastel-primary); color: white; width: 58px; height: 58px; border-radius: 22px; display: flex; align-items: center; justify-content: center; transform: translateY(-22px); box-shadow: 0 10px 18px rgba(99,102,241,0.3); border: 4px solid white; cursor: pointer; }
+    .btn-add-center:hover {transform: translateY(-26px) scale(1.05);box-shadow: 0 14px 24px rgba(139,140,248,0.45);}
+    
+    .warga-card { background: white; padding: 12px; border-radius: 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; border: 1px solid #f1f5f9; cursor: pointer; transition: transform 0.2s; }
+    .warga-card:active { transform: scale(0.98); }
+    .avatar { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; }
+
+    .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; padding-bottom: 20px; }
+    .btn-page { background: white; border: 1px solid #f1f5f9; padding: 8px 12px; border-radius: 12px; font-weight: 800; font-size: 10px; color: #64748b; text-transform: uppercase; }
+    .btn-page:disabled { opacity: 0.3; }
+
+    /* Gaya Tombol Tab untuk Statistik */
+    .tab-btn { 
+      padding: 12px 20px; 
+      border-radius: 16px; 
+      font-size: 11px; 
+      font-weight: 800; 
+      text-transform: uppercase; 
+      background: white; 
+      color: #94a3b8; 
+      border: 1px solid #f1f5f9; 
+      transition: all 0.2s;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .tab-btn.active { 
+      background: var(--soft-indigo); 
+      color: white; 
+      border-color: var(--soft-indigo); 
+      box-shadow: 0 8px 15px rgba(99,102,241,0.2); 
+    }
+    
+    #detail-modal { position: fixed; inset: 0; background: white; z-index: 3000; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 110px; }
+  </style>
+</head>
+<body>
+
+  <div id="loading-overlay">
+    <div class="flex flex-col items-center">
+      <div class="w-10 h-10 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal">
+    <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="handleBackAction()" class="text-slate-400 border-none bg-none"><span class="material-icons">arrow_back_ios</span></button>
+            <h2 class="text-lg font-black text-slate-800">Profil Lengkap</h2>
+            <button id="btn-edit-trigger" class="text-indigo-500 font-bold text-sm bg-none border-none">Edit</button>
+        </div>
+        <div id="detail-content" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <div id="auth-container">
+    <div class="login-card">
+        <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" alt="Logo" class="w-20 h-20 mx-auto mb-4 object-contain">
+        <h1 class="text-xl font-extrabold text-slate-800 mb-8">E-Warga RW6</h1>
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group"><input type="text" id="login-user" placeholder="Username" class="modern-input" required><span class="material-icons">person</span></div>
+            <div class="input-group"><input type="password" id="login-pass" placeholder="Password" class="modern-input" required><span class="material-icons">lock</span></div>
+            <button type="submit" class="btn-submit !mt-4">Masuk</button>
+        </form>
+    </div>
+  </div>
+
+  <div id="main-app">
+    <header class="p-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" alt="Logo" class="w-10 h-10 object-contain">
+            <div>
+                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Puri Agung 2</p>
+                <h1 id="welcome-text" class="text-xl font-extrabold text-slate-800 leading-tight">E-WARGA RW6</h1>
+
+            </div>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="refreshData()" class="text-slate-300 bg-none border-none hover:text-indigo-500 transition-colors">
+                <span class="material-icons" id="refresh-icon">refresh</span>
+            </button>
+            <button onclick="logout()" class="text-slate-300 bg-none border-none"><span class="material-icons">logout</span></button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 pb-32">
+      <!-- Dashboard -->
+      <section id="page-dashboard" class="page active space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div class="stat-card2">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Warga</p>
+                <h2 id="stat-total" class="text-2xl font-black text-slate-800">0</h2>
+            </div>
+            <div class="stat-card3">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kepala Keluarga</p>
+                <h2 id="stat-kk" class="text-2xl font-black text-slate-800">0</h2>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Jenis Kelamin</p>
+            <div class="flex items-center gap-4">
+                <div class="w-24 h-24"><canvas id="chartGender"></canvas></div>
+                <div class="flex-1 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-indigo-400"></div><span class="text-[10px] font-bold text-slate-500">Laki-laki</span></div>
+                        <span id="label-pria" class="text-xs font-black text-slate-800">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-pink-400"></div><span class="text-[10px] font-bold text-slate-500">Perempuan</span></div>
+                        <span id="label-wanita" class="text-xs font-black text-slate-800">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Distribusi Per RT</p>
+            <div class="h-40">
+                <canvas id="chartRT"></canvas>
+            </div>
+        </div>
+
+        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-4">Warga Terbaru</h3>
+        <div id="latest-list"></div>
+      </section>
+
+      <!-- Statistik Detail -->
+<section id="page-stats" class="page space-y-4">
+    <h2 class="text-xl font-black text-slate-800 mb-4">Demografi Warga</h2>
+    
+    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="switchStatTab('balita')" id="tab-balita" class="tab-btn active">Balita</button>
+        <button onclick="switchStatTab('lansia')" id="tab-lansia" class="tab-btn">Lansia</button>
+        <button onclick="switchStatTab('ultah')" id="tab-ultah" class="tab-btn">Ulang Tahun</button>
+    </div>
+
+    <div id="stat-list-container" class="space-y-3">
+        <!-- List akan diinjeksi di sini oleh JavaScript -->
+    </div>
+</section>
+      
+      <!-- Daftar Warga -->
+      <section id="page-warga" class="page">
+        <h2 class="text-xl font-black text-slate-800 mb-4">Daftar Warga</h2>
+        <div class="mb-4 space-y-3">
+            <div class="input-group">
+                <input type="text" id="search-warga" placeholder="Cari Nama, NIK, Blok..." class="modern-input" oninput="resetWargaPage(); filterWargaList()">
+                <span class="material-icons">search</span>
+            </div>
+            <div class="input-group !mb-0">
+                <select id="filter-rt" class="modern-input !pl-10" onchange="resetWargaPage(); filterWargaList()">
+                    <option value="">Semua RT</option>
+                    <option value="1">RT 01</option><option value="2">RT 02</option><option value="3">RT 03</option><option value="4">RT 04</option>
+                </select>
+                <span class="material-icons">filter_list</span>
+            </div>
+        </div>
+        <div id="all-warga-list"></div>
+        <div id="warga-pagination" class="pagination-controls"></div>
+      </section>
+
+      <!-- Data Keluarga -->
+<!-- Data Keluarga -->
+<section id="page-kk" class="page">
+  <h2 class="text-xl font-black text-slate-800 mb-4">Data Kepala Keluarga</h2>
+
+  <div class="mb-4 space-y-3">
+    <!-- Search -->
+    <div class="input-group">
+      <input type="text" id="search-kk"
+             placeholder="Cari Nama KK atau No KK..."
+             class="modern-input"
+             oninput="resetKkPage(); filterKkList()">
+      <span class="material-icons">search</span>
+    </div>
+
+    <!-- Filter RT -->
+    <div class="input-group !mb-0">
+      <select id="filter-kk-rt"
+              class="modern-input !pl-10"
+              onchange="resetKkPage(); filterKkList()">
+        <option value="">Semua RT</option>
+        <option value="1">RT 01</option>
+        <option value="2">RT 02</option>
+        <option value="3">RT 03</option>
+        <option value="4">RT 04</option>
+      </select>
+      <span class="material-icons">filter_list</span>
+    </div>
+  </div>
+
+  <div id="kk-list"></div>
+  <div id="kk-pagination" class="pagination-controls"></div>
+</section>
+
+
+      <!-- Form -->
+      <section id="page-add" class="page">
+          <h2 id="form-title" class="text-xl font-black text-slate-800 mb-6">Input Data Warga</h2>
+          <form id="form-warga" onsubmit="handleSaveWarga(event)" class="space-y-4 pb-24">
+              <input type="hidden" id="f-original-nik">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label class="form-label">NIK</label><input type="number" id="f-nik" class="modern-input" required></div>
+                  <div><label class="form-label">No KK</label><input type="number" id="f-kk" class="modern-input" required></div>
+              </div>
+              <div><label class="form-label">Nama Lengkap</label><input type="text" id="f-nama" class="modern-input" required></div>
+              <div class="grid grid-cols-2 gap-4">
+                <div><label class="form-label">Kelamin</label><select id="f-kelamin" class="modern-input"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
+                <div><label class="form-label">Agama</label>
+                    <select id="f-agama" class="modern-input">
+                        <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option><option value="Buddha">Buddha</option><option value="Hindu">Hindu</option><option value="Konghucu">Konghucu</option>
+                    </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                  <div><label class="form-label">Tempat Lahir</label><input type="text" id="f-tempat" class="modern-input"></div>
+                  <div><label class="form-label">Tanggal Lahir</label><input type="date" id="f-tanggal" class="modern-input"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                  <div><label class="form-label">Status Perkawinan</label>
+                      <select id="f-perkawinan" class="modern-input">
+                          <option value="Belum kawin">Belum kawin</option><option value="Kawin">Kawin</option><option value="Cerai Hidup">Cerai Hidup</option><option value="Cerai Mati">Cerai Mati</option>
+                      </select>
+                  </div>
+                  <div><label class="form-label">Status Tinggal</label>
+                      <select id="f-tinggal" class="modern-input">
+                          <option value="Tetap">Tetap</option><option value="Kontrak">Kontrak</option><option value="Kos">Kos</option><option value="Lainnya">Lainnya</option>
+                      </select>
+                  </div>
+              </div>
+              <div class="bg-indigo-50 p-4 rounded-2xl space-y-4">
+                  <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Alamat Tinggal Sekarang</p>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div><label class="form-label">Blok</label><select id="f-blok" class="modern-input !pl-4" onchange="syncKtp()"><option value="A">A</option><option value="B">B</option><option value="B1">B1</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div>
+                    <div><label class="form-label">No</label><input type="text" id="f-nomer" class="modern-input !pl-4" oninput="syncKtp()"></div>
+                    <div><label class="form-label">RT</label><select id="f-rt" class="modern-input !pl-4" onchange="syncKtp()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                  </div>
+              </div>
+              <div>
+                  <div class="flex justify-between items-center mb-1">
+                      <label class="form-label !mb-0">Alamat KTP</label>
+                      <label class="flex items-center gap-1 cursor-pointer">
+                          <input type="checkbox" id="sync-ktp-check" onchange="syncKtp()" class="w-3 h-3">
+                          <span class="text-[9px] font-bold text-slate-500 uppercase">Sama dengan alamat tinggal</span>
+                      </label>
+                  </div>
+                  <textarea id="f-alamat-ktp" class="modern-input" placeholder="Tulis alamat lengkap sesuai KTP..."></textarea>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                  <div><label class="form-label">Status Keluarga</label>
+                      <select id="f-status-kel" class="modern-input">
+                          <option value="Kepala Keluarga">Kepala Keluarga</option><option value="Istri">Istri</option><option value="Anak">Anak</option><option value="Orang Tua">Orang Tua</option><option value="Lainnya">Lainnya</option>
+                      </select>
+                  </div>
+                  <div><label class="form-label">No HP / WA</label><input type="number" id="f-hp" class="modern-input"></div>
+              </div>
+              <div><label class="form-label">Pekerjaan</label>
+                  <select id="f-pekerjaan" class="modern-input">
+                      <option value="Belum/Tidak Bekerja">Belum/Tidak Bekerja</option><option value="Mengurus Rumah Tangga">Mengurus Rumah Tangga</option><option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option><option value="Pensiunan">Pensiunan</option><option value="PNS">PNS</option><option value="TNI">TNI</option><option value="POLRI">POLRI</option><option value="Karyawan Swasta">Karyawan Swasta</option><option value="Wiraswasta">Wiraswasta</option><option value="Petani">Petani</option><option value="Nelayan">Nelayan</option>
+                  </select>
+              </div>
+              <button type="submit" class="btn-submit">Simpan Data Warga</button>
+          </form>
+      </section>
+    </main>
+
+    <!-- Navigation -->
+    <nav class="bottom-nav">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active"><span class="material-symbols-rounded">dashboard</span><span>Beranda</span></button>
+        <button onclick="navigate('warga')" id="nav-warga" class="nav-item"><span class="material-symbols-rounded">group_search</span><span>Warga</span></button>
+        <button onclick="navigate('add'); closeDetail();" class="btn-add-center"><span class="material-icons">add</span></button>
+        <button onclick="navigate('kk')" id="nav-kk" class="nav-item"><span class="material-symbols-rounded">diversity_1</span><span>Keluarga</span></button>
+        <button onclick="navigate('stats')" id="nav-stats" class="nav-item"><span class="material-symbols-rounded">demography</span><span>Statistik</span></button>
+    </nav>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyQnIfaRQhv6r9jL_bJ3-uX9RhyUSAnUF4kt_lTCpgkHjWtXsCk4OWTBLPxB3JDz6L0qw/exec";
+    let allData = [];
+    let genderChart, rtChart;
+    let wargaPage = 1, kkPage = 1;
+    const PAGE_SIZE = 20;
+    let currentStatTab = 'balita';
+
+
+    // Handle back button on mobile
+    window.addEventListener('popstate', function (event) {
+        if (event.state && event.state.modal) {
+            // Keep open
+        } else if (document.getElementById('detail-modal').style.display === 'flex') {
+            closeDetailSilent();
+        }
+    });
+
+    function toggleLoading(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
+    
+    function navigate(p) {
+      closeDetailSilent();
+      document.querySelectorAll('.page').forEach(e => e.classList.toggle('active', e.id === 'page-'+p));
+      document.querySelectorAll('.nav-item').forEach(e => e.classList.toggle('active', e.id === 'nav-'+p));
+      window.scrollTo(0, 0);
+      if (p === 'stats') {
+      switchStatTab(currentStatTab);
+      }
+    }
+
+    function syncKtp() {
+        const isChecked = document.getElementById('sync-ktp-check').checked;
+        const target = document.getElementById('f-alamat-ktp');
+        if(isChecked) {
+            target.value = `Blok ${document.getElementById('f-blok').value} No ${document.getElementById('f-nomer').value} RT 0${document.getElementById('f-rt').value}`;
+            target.readOnly = true; target.classList.add('opacity-60');
+        } else {
+            target.readOnly = false; target.classList.remove('opacity-60');
+        }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault(); toggleLoading(true);
+      const u = document.getElementById('login-user').value;
+      const p = document.getElementById('login-pass').value;
+      try {
+        const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
+        const result = await res.json();
+        if(result.success) {
+           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
+            localStorage.setItem('ewarga_user', u);
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            refreshData();
+        } else { alert("Login Gagal"); }
+      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
+    }
+
+function logout() {
+  localStorage.removeItem('ewarga_user');
+  location.reload();
+}
+
+    async function refreshData() {
+      toggleLoading(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getAllWarga`);
+        allData = await res.json();
+        updateUI();
+        // 🔥 PAKSA render tab statistik default
+        switchStatTab(currentStatTab);
+      } catch (e) { console.error(e); } finally { toggleLoading(false); }
+    }
+
+    function updateUI() {
+        document.getElementById('stat-total').innerText = allData.length;
+        document.getElementById('stat-kk').innerText = allData.filter(w => w['Status Keluarga'] === 'Kepala Keluarga').length;
+        renderCharts();
+        renderList(allData.slice(-5).reverse(), 'latest-list'); 
+        filterWargaList(); filterKkList();
+    }
+
+    // --- Statistik Page Logic ---
+function switchStatTab(tab) {
+    if (!allData || allData.length === 0) return;
+    currentStatTab = tab;
+    // Mengatur status aktif pada tombol tab
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-'+tab));
+    const listContainer = document.getElementById('stat-list-container');
+    listContainer.innerHTML = "";
+
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    let filtered = [];
+
+    allData.forEach(w => {
+        if (!w['Tanggal Lahir']) return;
+        const bDate = new Date(w['Tanggal Lahir']);
+        if (isNaN(bDate)) return;
+
+        // Hitung Umur
+        let age = today.getFullYear() - bDate.getFullYear();
+        const m = today.getMonth() - bDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) age--;
+
+        if (tab === 'balita' && age < 5) {
+            w._displayAge = age + " Thn";
+            filtered.push(w);
+        } else if (tab === 'lansia' && age >= 55) {
+            w._displayAge = age + " Thn";
+            filtered.push(w);
+        } else if (tab === 'ultah') {
+            const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
+            if (bThisYear >= new Date(today.setHours(0,0,0,0)) && bThisYear <= nextWeek) {
+                w._displayAge = bDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                filtered.push(w);
+            }
+        }
+    });
+
+    // Render hasil filter ke UI
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `<div class="p-10 text-center text-slate-300 font-bold text-xs uppercase tracking-widest">Tidak ada data</div>`;
+        return;
+    }
+
+    listContainer.innerHTML = filtered.map(w => `
+        <div class="warga-card" onclick="showDetail('${w.NIK}')">
+            <div class="avatar ${w.Kelamin.startsWith('L') ? 'bg-indigo-400' : 'bg-pink-400'}">${w.Nama[0]}</div>
+            <div class="flex-1">
+                <h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">Blok ${w.Blok} No ${w.Nomer} • RT 0${w.RT}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-indigo-500">${w._displayAge}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+    function filterWargaList() {
+        const query = document.getElementById('search-warga').value.toLowerCase();
+        const rtFilter = document.getElementById('filter-rt').value;
+        const filtered = allData.filter(w => {
+            const matchSearch = (w.Nama || "").toLowerCase().includes(query) || (w.NIK || "").toString().includes(query) || (w.Blok || "").toLowerCase().includes(query);
+            const matchRT = rtFilter === "" || (w.RT && w.RT.toString() === rtFilter);
+            return matchSearch && matchRT;
+        });
+        const start = (wargaPage - 1) * PAGE_SIZE;
+        renderList(filtered.slice(start, start + PAGE_SIZE), 'all-warga-list');
+        renderPagination(filtered.length, wargaPage, 'warga-pagination', 'changeWargaPage');
+    }
+
+    function resetWargaPage() { wargaPage = 1; }
+    function changeWargaPage(step) { wargaPage += step; filterWargaList(); window.scrollTo(0, 0); }
+
+    function filterKkList() {
+  const query = document.getElementById('search-kk').value.toLowerCase();
+  const rtFilter = document.getElementById('filter-kk-rt').value;
+
+  const filtered = allData
+    // hanya Kepala Keluarga
+    .filter(w => w['Status Keluarga'] === 'Kepala Keluarga')
+    // search nama / no KK
+    .filter(kk => {
+      const matchSearch =
+        (kk.Nama || '').toLowerCase().includes(query) ||
+        (kk['No KK'] || kk['NO KK'] || '').toString().includes(query);
+
+      const matchRT =
+        rtFilter === '' ||
+        (kk.RT && kk.RT.toString() === rtFilter);
+
+      return matchSearch && matchRT;
+    });
+
+  const start = (kkPage - 1) * PAGE_SIZE;
+  renderKkList(filtered.slice(start, start + PAGE_SIZE));
+  renderPagination(filtered.length, kkPage, 'kk-pagination', 'changeKkPage');
+}
+
+
+    function resetKkPage() { kkPage = 1; }
+    function changeKkPage(step) { kkPage += step; filterKkList(); window.scrollTo(0, 0); }
+
+    function renderPagination(totalItems, currentPage, targetId, callbackName) {
+        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+        const container = document.getElementById(targetId);
+        if (totalPages <= 1) { container.innerHTML = ""; return; }
+        container.innerHTML = `
+            <button class="btn-page" ${currentPage === 1 ? 'disabled' : ''} onclick="${callbackName}(-1)"><span class="material-icons" style="font-size:14px">chevron_left</span></button>
+            <span class="text-[10px] font-black text-slate-400">Hal ${currentPage} / ${totalPages}</span>
+            <button class="btn-page" ${currentPage === totalPages ? 'disabled' : ''} onclick="${callbackName}(1)"><span class="material-icons" style="font-size:14px">chevron_right</span></button>
+        `;
+    }
+
+    function renderCharts() {
+        const priaCount = allData.filter(w => (w.Kelamin || "").toLowerCase().startsWith('l')).length;
+        const wanitaCount = allData.filter(w => (w.Kelamin || "").toLowerCase().startsWith('p')).length;
+        document.getElementById('label-pria').innerText = priaCount;
+        document.getElementById('label-wanita').innerText = wanitaCount;
+        if (genderChart) genderChart.destroy();
+        genderChart = new Chart(document.getElementById('chartGender'), {
+            type: 'doughnut',
+            data: { datasets: [{ data: [priaCount, wanitaCount], backgroundColor: ['#818cf8', '#f472b6'], borderWidth: 0 }] },
+            options: { cutout: '50%', plugins: { legend: { display: false } }, maintainAspectRatio: false }
+        });
+
+        const rtCounts = [0, 0, 0, 0];
+        allData.forEach(w => { const rt = parseInt(w.RT); if (rt >= 1 && rt <= 4) rtCounts[rt-1]++; });
+        if (rtChart) rtChart.destroy();
+        rtChart = new Chart(document.getElementById('chartRT'), {
+            type: 'bar',
+            data: { labels: ['RT 01', 'RT 02', 'RT 03', 'RT 04'], datasets: [{ data: rtCounts, backgroundColor: ['#A5B4FC', '#FDA4AF', '#FCD34D', '#6EE7B7'], borderRadius: 12 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
+        });
+    }
+
+    function renderList(data, target) {
+        const container = document.getElementById(target);
+        if (data.length === 0) { container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold text-xs">Kosong</div>`; return; }
+        container.innerHTML = data.map(w => `
+            <div class="warga-card" onclick="showDetail('${w.NIK}')">
+                <div class="avatar ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
+                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p></div>
+                <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">RT 0${w.RT || '-'}</span>
+            </div>
+        `).join('');
+    }
+
+    // Ambil inisial nama (maks 2 huruf)
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+// Warna pastel konsisten berdasarkan teks (nama / no KK)
+function pastelColorFromString(str) {
+  const colors = [
+    '#A5B4FC', // indigo pastel
+    '#FBCFE8', // pink pastel
+    '#BFDBFE', // blue pastel
+    '#BBF7D0', // green pastel
+    '#FDE68A', // yellow pastel
+    '#FED7AA', // orange pastel
+    '#E9D5FF', // purple pastel
+    '#BAE6FD'  // sky pastel
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+  
+  function countFamilyMembers(noKk) {
+  return allData.filter(w =>
+    (w['No KK'] || w['NO KK'] || '').toString() === noKk.toString()
+  ).length;
+}
+
+    
+  function renderKkList(data) {
+  const container = document.getElementById('kk-list');
+  if (data.length === 0) {
+    container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold text-xs">Kosong</div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(kk => {
+    const nama = kk.Nama || '';
+    const noKk = kk['No KK'] || kk['NO KK'];
+    const inisial = getInitials(nama);
+    const warna = pastelColorFromString(nama);
+    const jumlah = countFamilyMembers(noKk);
+
+    return `
+      <div class="warga-card relative" onclick="showFamily('${noKk}')">
+        
+        <!-- Avatar Inisial -->
+        <div class="avatar" style="background:${warna}; color:#1e293b;">
+          <span class="text-xs font-black">${inisial}</span>
+        </div>
+
+        <!-- Info KK -->
+        <div class="flex-1">
+          <h4 class="text-xs font-extrabold text-slate-800">${nama}</h4>
+          <p class="text-[9px] font-bold text-slate-400">KK: ${noKk}</p>
+        </div>
+
+        <!-- Badge Jumlah Anggota -->
+        <div class="px-2 py-1 rounded-full text-[9px] font-black
+                    bg-indigo-100 text-indigo-600">
+          ${jumlah} org
+        </div>
+
+        <span class="material-icons text-slate-300 ml-1">chevron_right</span>
+      </div>
+    `;
+  }).join('');
+}
+
+
+
+    function showDetail(nik) {
+        const w = allData.find(x => x.NIK.toString() === nik.toString());
+        if(!w) return;
+        history.pushState({modal: true}, null, "");
+        document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
+        
+        const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
+        let waLink = "";
+        if (rawHp) {
+            let cleanHp = rawHp.replace(/\D/g, '');
+            if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.substring(1);
+            if (cleanHp.startsWith('8')) cleanHp = '62' + cleanHp;
+            waLink = `https://wa.me/${cleanHp}`;
+        }
+
+        document.getElementById('detail-content').innerHTML = `
+            <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
+                <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
+                <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
+            </div>
+            <div class="mt-4">
+                ${renderDetailItem('NIK', w.NIK)}
+                ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
+                ${renderDetailItem('Agama', w.Agama)}
+                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
+                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+            </div>
+        `;
+        document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function renderDetailItem(label, val) {
+        return `<div class="px-2 py-3 border-b border-slate-50 flex justify-between items-start gap-4">
+            <p class="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap pt-1">${label}</p>
+            <p class="text-xs font-bold text-slate-700 text-right">${val || '-'}</p>
+        </div>`;
+    }
+
+    function showFamily(noKk) {
+        const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
+        history.pushState({modal: true}, null, "");
+        document.getElementById('btn-edit-trigger').style.display = 'none';
+        let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;
+        members.forEach(m => {
+            html += `<div class="warga-card" onclick="showDetail('${m.NIK}')">
+                <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(m.Nama || 'W')[0]}</div>
+                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${m.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p></div>
+            </div>`;
+        });
+        document.getElementById('detail-content').innerHTML = html;
+        document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function handleBackAction() { if (history.state && history.state.modal) { history.back(); } else { closeDetail(); } }
+
+    function closeDetail() { 
+        document.getElementById('detail-modal').style.display = 'none'; 
+        document.getElementById('btn-edit-trigger').style.display = 'block'; 
+    }
+
+    function closeDetailSilent() {
+        document.getElementById('detail-modal').style.display = 'none'; 
+        document.getElementById('btn-edit-trigger').style.display = 'block'; 
+    }
+    
+    function openFormEdit(w) {
+        closeDetailSilent();
+        document.getElementById('f-original-nik').value = w.NIK;
+        document.getElementById('f-nik').value = w.NIK;
+        document.getElementById('f-kk').value = w['No KK'] || w['NO KK'];
+        document.getElementById('f-nama').value = w.Nama;
+        document.getElementById('f-kelamin').value = w.Kelamin;
+        document.getElementById('f-agama').value = w.Agama || "Islam";
+        document.getElementById('f-tempat').value = w['Tempat Lahir'] || "";
+        document.getElementById('f-tanggal').value = w['Tanggal Lahir'] || "";
+        document.getElementById('f-perkawinan').value = w['Status Perkawinan'] || "Belum kawin";
+        document.getElementById('f-tinggal').value = w['Status Tinggal'] || "Tetap";
+        document.getElementById('f-blok').value = w.Blok;
+        document.getElementById('f-nomer').value = w.Nomer;
+        document.getElementById('f-rt').value = w.RT;
+        document.getElementById('f-alamat-ktp').value = w['Alamat KTP'] || "";
+        document.getElementById('f-status-kel').value = w['Status Keluarga'] || "Kepala Keluarga";
+        document.getElementById('f-hp').value = w['No HP'] || w['NO HP'] || "";
+        document.getElementById('f-pekerjaan').value = w.Pekerjaan || "Belum/Tidak Bekerja";
+        document.getElementById('sync-ktp-check').checked = false; syncKtp();
+        navigate('add');
+    }
+
+    async function handleSaveWarga(e) {
+        e.preventDefault(); toggleLoading(true);
+        const blok = document.getElementById('f-blok').value;
+        const nomer = document.getElementById('f-nomer').value;
+        const rt = document.getElementById('f-rt').value;
+        const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+
+        const payload = { 
+            originalNik: document.getElementById('f-original-nik').value, 
+            nik: document.getElementById('f-nik').value, 
+            kk: document.getElementById('f-kk').value, 
+            nama: document.getElementById('f-nama').value, 
+            kelamin: document.getElementById('f-kelamin').value, 
+            agama: document.getElementById('f-agama').value,
+            tempat: document.getElementById('f-tempat').value,
+            tanggal: document.getElementById('f-tanggal').value,
+            perkawinan: document.getElementById('f-perkawinan').value,
+            tinggal: document.getElementById('f-tinggal').value,
+            blok: blok, 
+            nomer: nomer, 
+            rt: rt, 
+            alamatKTP: document.getElementById('f-alamat-ktp').value,
+            alamatTinggal: alamatTinggalStr,
+            statusKel: document.getElementById('f-status-kel').value,
+            hp: document.getElementById('f-hp').value,
+            pekerjaan: document.getElementById('f-pekerjaan').value
+        };
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
+            navigate('dashboard'); refreshData();
+        } catch (err) { navigate('dashboard'); refreshData(); } finally { toggleLoading(false); }
+    }
+
+  function checkLoginState() {
+    const user = localStorage.getItem('ewarga_user');
+    if (user) {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('main-app').style.display = 'flex';
+      refreshData();
+    }
+  }
+
+  // Jalankan saat halaman pertama kali dibuka
+  document.addEventListener('DOMContentLoaded', checkLoginState);
+
+  </script>
+</body>
+</html>

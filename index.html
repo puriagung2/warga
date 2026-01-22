@@ -393,24 +393,49 @@
             target.readOnly = false; target.classList.remove('opacity-60');
         }
     }
-
+    let currentUser = JSON.parse(localStorage.getItem('ewarga_user_data') || '{}');
     async function handleLogin(e) {
-      e.preventDefault(); toggleLoading(true);
-      const u = document.getElementById('login-user').value;
-      const p = document.getElementById('login-pass').value;
-      try {
+    e.preventDefault(); toggleLoading(true);
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
+    try {
         const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
         const result = await res.json();
         if(result.success) {
-           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
-            localStorage.setItem('ewarga_user', u);
+            // Simpan data user lengkap (role & rt)
+            localStorage.setItem('ewarga_user_data', JSON.stringify(result));
+            currentUser = result;
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
+            applyRoleAccess();
             refreshData();
-        } else { alert("Login Gagal"); }
-      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
-    }
+        } else { alert("Login Gagal: Username atau Password salah"); }
+    } catch (err) { alert("Error koneksi"); } finally { toggleLoading(false); }
+}
+    
+function applyRoleAccess() {
+    const btnAdd = document.querySelector('.btn-add-center');
+    const filterRt = document.getElementById('filter-rt');
+    const filterKkRt = document.getElementById('filter-kk-rt');
 
+    if (currentUser.role === 'petugas') {
+        // Petugas: Kunci filter ke RT mereka saja
+        filterRt.value = currentUser.rt;
+        filterRt.disabled = true;
+        filterKkRt.value = currentUser.rt;
+        filterKkRt.disabled = true;
+        btnAdd.style.display = 'flex';
+    } else if (currentUser.role === 'lihat') {
+        // Lihat: Sembunyikan tombol tambah & izinkan semua filter
+        btnAdd.style.display = 'none';
+        filterRt.disabled = false;
+    } else {
+        // Admin: Bebas
+        btnAdd.style.display = 'flex';
+        filterRt.disabled = false;
+    }
+}
+    
 function logout() {
   localStorage.removeItem('ewarga_user');
   location.reload();
@@ -667,7 +692,17 @@ function pastelColorFromString(str) {
         if(!w) return;
         history.pushState({modal: true}, null, "");
         document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
-        
+
+      // Logika menyembunyikan tombol Edit di Modal
+    if (currentUser.role === 'lihat') {
+        btnEdit.style.display = 'none';
+    } else if (currentUser.role === 'petugas' && w.RT.toString() !== currentUser.rt.toString()) {
+        btnEdit.style.display = 'none';
+    } else {
+        btnEdit.style.display = 'block';
+        btnEdit.onclick = () => openFormEdit(w);
+    }
+      
         const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
         let waLink = "";
         if (rawHp) {
@@ -760,6 +795,11 @@ function pastelColorFromString(str) {
 
     async function handleSaveWarga(e) {
         e.preventDefault(); toggleLoading(true);
+        // Validasi Frontend sebelum kirim
+    if (currentUser.role === 'petugas' && document.getElementById('f-rt').value !== currentUser.rt) {
+        alert("Gagal: Anda hanya boleh mengisi/edit data untuk RT 0" + currentUser.rt);
+        return;
+    }
         const blok = document.getElementById('f-blok').value;
         const nomer = document.getElementById('f-nomer').value;
         const rt = document.getElementById('f-rt').value;
@@ -786,19 +826,37 @@ function pastelColorFromString(str) {
             pekerjaan: document.getElementById('f-pekerjaan').value
         };
         try {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
-            navigate('dashboard'); refreshData();
-        } catch (err) { navigate('dashboard'); refreshData(); } finally { toggleLoading(false); }
+        const res = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'saveWarga', 
+                args: [payload, currentUser] // Kirim currentUser untuk validasi backend
+            }) 
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(result.message);
+            navigate('dashboard'); 
+            refreshData();
+        } else {
+            alert(result.message); // Pesan "Akses Ditolak" dari backend
+        }
+    } catch (err) { 
+        alert("Terjadi kesalahan sistem");
+    } finally { toggleLoading(false); }
+}
     }
 
   function checkLoginState() {
-    const user = localStorage.getItem('ewarga_user');
-    if (user) {
-      document.getElementById('auth-container').style.display = 'none';
-      document.getElementById('main-app').style.display = 'flex';
-      refreshData();
+    const userData = localStorage.getItem('ewarga_user_data');
+    if (userData) {
+        currentUser = JSON.parse(userData);
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('main-app').style.display = 'flex';
+        applyRoleAccess();
+        refreshData();
     }
-  }
+}
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);

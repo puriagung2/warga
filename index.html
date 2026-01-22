@@ -393,57 +393,27 @@
             target.readOnly = false; target.classList.remove('opacity-60');
         }
     }
-    let currentUser = JSON.parse(localStorage.getItem('ewarga_user_data') || '{}');
+
     async function handleLogin(e) {
-    e.preventDefault(); toggleLoading(true);
-    const u = document.getElementById('login-user').value;
-    const p = document.getElementById('login-pass').value;
-    try {
+      e.preventDefault(); toggleLoading(true);
+      const u = document.getElementById('login-user').value;
+      const p = document.getElementById('login-pass').value;
+      try {
         const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
         const result = await res.json();
         if(result.success) {
-            // Simpan data user lengkap (role & rt)
-            localStorage.setItem('ewarga_user_data', JSON.stringify(result));
-            currentUser = result;
+           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
+            localStorage.setItem('ewarga_user', u);
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
-            applyRoleAccess();
             refreshData();
-        } else { alert("Login Gagal: Username atau Password salah"); }
-    } catch (err) { alert("Error koneksi"); } finally { toggleLoading(false); }
-}
-    
-function applyRoleAccess() {
-    const btnAdd = document.querySelector('.btn-add-center');
-    const filterRt = document.getElementById('filter-rt');
-    const filterKkRt = document.getElementById('filter-kk-rt');
-
-    if (currentUser.role === 'petugas') {
-        // Petugas: Kunci filter ke RT mereka saja
-        filterRt.value = currentUser.rt;
-        filterRt.disabled = true;
-        filterKkRt.value = currentUser.rt;
-        filterKkRt.disabled = true;
-        btnAdd.style.display = 'flex';
-    } else if (currentUser.role === 'lihat') {
-        // Lihat: Sembunyikan tombol tambah & izinkan semua filter
-        btnAdd.style.display = 'none';
-        filterRt.disabled = false;
-    } else {
-        // Admin: Bebas
-        btnAdd.style.display = 'flex';
-        filterRt.disabled = false;
+        } else { alert("Login Gagal"); }
+      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
     }
-}
-    
+
 function logout() {
-  // Menghapus data user dari localStorage [cite: 14]
-  localStorage.removeItem('ewarga_user'); // Menghapus kunci lama jika ada
-  localStorage.removeItem('ewarga_user_data'); // Menghapus kunci baru yang berisi role/rt
-  
-  // Mengarahkan kembali ke tampilan login secara manual tanpa refresh penuh jika memungkinkan, 
-  // atau biarkan reload untuk membersihkan state aplikasi.
-  location.reload(); 
+  localStorage.removeItem('ewarga_user');
+  location.reload();
 }
 
     async function refreshData() {
@@ -693,61 +663,43 @@ function pastelColorFromString(str) {
 
 
     function showDetail(nik) {
-    const w = allData.find(x => x.NIK.toString() === nik.toString());
-    if(!w) return;
-    
-    history.pushState({modal: true}, null, "");
-    
-    // DEFINISIKAN btnEdit di sini agar tidak terjadi ReferenceError
-    const btnEdit = document.getElementById('btn-edit-trigger');
-    
-    // Logika Hak Akses Tombol Edit
-    if (currentUser.role === 'lihat') {
-        // Role 'lihat' tidak boleh edit sama sekali
-        btnEdit.style.display = 'none';
-    } else if (currentUser.role === 'petugas' && w.RT.toString() !== currentUser.rt.toString()) {
-        // Role 'petugas' hanya boleh edit RT-nya sendiri
-        btnEdit.style.display = 'none';
-    } else {
-        // Role 'admin' atau 'petugas' di RT yang sama boleh edit
-        btnEdit.style.display = 'block';
-        btnEdit.onclick = () => openFormEdit(w);
-    }
+        const w = allData.find(x => x.NIK.toString() === nik.toString());
+        if(!w) return;
+        history.pushState({modal: true}, null, "");
+        document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
+        
+        const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
+        let waLink = "";
+        if (rawHp) {
+            let cleanHp = rawHp.replace(/\D/g, '');
+            if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.substring(1);
+            if (cleanHp.startsWith('8')) cleanHp = '62' + cleanHp;
+            waLink = `https://wa.me/${cleanHp}`;
+        }
 
-    // Bagian link WhatsApp
-    const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
-    let waLink = "";
-    if (rawHp) {
-        let cleanHp = rawHp.replace(/\D/g, '');
-        if (cleanHp.startsWith('0')) cleanHp = '62' + cleanHp.substring(1);
-        if (cleanHp.startsWith('8')) cleanHp = '62' + cleanHp;
-        waLink = `https://wa.me/${cleanHp}`;
+        document.getElementById('detail-content').innerHTML = `
+            <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
+                <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
+                <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
+            </div>
+            <div class="mt-4">
+                ${renderDetailItem('NIK', w.NIK)}
+                ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
+                ${renderDetailItem('Agama', w.Agama)}
+                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
+                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+            </div>
+        `;
+        document.getElementById('detail-modal').style.display = 'flex';
     }
-
-    // Render Konten Detail
-    document.getElementById('detail-content').innerHTML = `
-        <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
-            <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
-            <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
-            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
-        </div>
-        <div class="mt-4">
-            ${renderDetailItem('NIK', w.NIK)}
-            ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
-            ${renderDetailItem('Agama', w.Agama)}
-            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-            ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-            ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
-            ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
-            ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
-            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-            ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
-            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
-            ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
-        </div>
-    `;
-    document.getElementById('detail-modal').style.display = 'flex';
-}
 
     function renderDetailItem(label, val) {
         return `<div class="px-2 py-3 border-b border-slate-50 flex justify-between items-start gap-4">
@@ -806,105 +758,47 @@ function pastelColorFromString(str) {
         navigate('add');
     }
 
-   async function handleSaveWarga(e) {
-    if (e) e.preventDefault();
-    toggleLoading(true);
+    async function handleSaveWarga(e) {
+        e.preventDefault(); toggleLoading(true);
+        const blok = document.getElementById('f-blok').value;
+        const nomer = document.getElementById('f-nomer').value;
+        const rt = document.getElementById('f-rt').value;
+        const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-    // 1. Pastikan currentUser diambil lagi dari localStorage agar tidak undefined
-    const userData = localStorage.getItem('ewarga_user_data');
-    if (!userData) {
-        alert("Sesi login habis, silakan login kembali.");
-        location.reload();
-        return;
+        const payload = { 
+            originalNik: document.getElementById('f-original-nik').value, 
+            nik: document.getElementById('f-nik').value, 
+            kk: document.getElementById('f-kk').value, 
+            nama: document.getElementById('f-nama').value, 
+            kelamin: document.getElementById('f-kelamin').value, 
+            agama: document.getElementById('f-agama').value,
+            tempat: document.getElementById('f-tempat').value,
+            tanggal: document.getElementById('f-tanggal').value,
+            perkawinan: document.getElementById('f-perkawinan').value,
+            tinggal: document.getElementById('f-tinggal').value,
+            blok: blok, 
+            nomer: nomer, 
+            rt: rt, 
+            alamatKTP: document.getElementById('f-alamat-ktp').value,
+            alamatTinggal: alamatTinggalStr,
+            statusKel: document.getElementById('f-status-kel').value,
+            hp: document.getElementById('f-hp').value,
+            pekerjaan: document.getElementById('f-pekerjaan').value
+        };
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
+            navigate('dashboard'); refreshData();
+        } catch (err) { navigate('dashboard'); refreshData(); } finally { toggleLoading(false); }
     }
-    const currentUser = JSON.parse(userData);
-
-    // 2. Ambil nilai RT untuk validasi
-    const rt = document.getElementById('f-rt').value;
-
-    // 3. Validasi Frontend sebelum kirim
-    if (currentUser.role === 'petugas' && rt.toString() !== currentUser.rt.toString()) {
-        alert("Gagal: Anda hanya boleh mengisi/edit data untuk RT 0" + currentUser.rt);
-        toggleLoading(false);
-        return;
-    }
-
-    const blok = document.getElementById('f-blok').value;
-    const nomer = document.getElementById('f-nomer').value;
-    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
-
-    // 4. Susun Payload
-    const payload = { 
-        originalNik: document.getElementById('f-original-nik').value, 
-        nik: document.getElementById('f-nik').value, 
-        kk: document.getElementById('f-kk').value, 
-        nama: document.getElementById('f-nama').value, 
-        kelamin: document.getElementById('f-kelamin').value, 
-        agama: document.getElementById('f-agama').value,
-        tempat: document.getElementById('f-tempat').value,
-        tanggal: document.getElementById('f-tanggal').value,
-        perkawinan: document.getElementById('f-perkawinan').value,
-        tinggal: document.getElementById('f-tinggal').value,
-        blok: blok, 
-        nomer: nomer, 
-        rt: rt, 
-        alamatKTP: document.getElementById('f-alamat-ktp').value,
-        alamatTinggal: alamatTinggalStr,
-        statusKel: document.getElementById('f-status-kel').value,
-        hp: document.getElementById('f-hp').value,
-        pekerjaan: document.getElementById('f-pekerjaan').value
-    };
-
-    try {
-        const res = await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ 
-                action: 'saveWarga', 
-                args: [payload, currentUser] 
-            }) 
-        });
-
-        // Cek jika response fetch OK
-        if (!res.ok) throw new Error("Server bermasalah");
-
-        const result = await res.json();
-        
-        if (result && result.success) {
-            alert(result.message || "Data berhasil disimpan");
-            // Pastikan form ditutup (jika ada fungsi closeForm)
-            if (typeof closeForm === 'function') closeForm();
-            navigate('dashboard'); 
-            refreshData();
-        } else {
-            // Tampilkan pesan error dari backend atau pesan default
-            alert("Gagal: " + (result.message || "Terjadi kesalahan pada server"));
-        }
-    } catch (err) { 
-        console.error(err);
-        alert("Terjadi kesalahan sistem: " + err.message);
-    } finally { 
-        toggleLoading(false); 
-    }
-}
 
   function checkLoginState() {
-  // Mengambil data user yang disimpan saat login 
-  const userData = localStorage.getItem('ewarga_user_data');
-  
-  if (userData) {
-    currentUser = JSON.parse(userData);
-    document.getElementById('auth-container').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
-    
-    // Terapkan hak akses sesuai role (Petugas/Admin/Lihat)
-    applyRoleAccess(); 
-    refreshData();
-  } else {
-    // Jika tidak ada data, pastikan halaman login yang tampil
-    document.getElementById('auth-container').style.display = 'flex';
-    document.getElementById('main-app').style.display = 'none';
+    const user = localStorage.getItem('ewarga_user');
+    if (user) {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('main-app').style.display = 'flex';
+      refreshData();
+    }
   }
-}
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);

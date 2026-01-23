@@ -439,6 +439,7 @@ function logout() {
         allData = await res.json();
         updateUI();
         updateBirthdayBadge();
+        checkTodayBirthdayPopUp();
         // 🔥 PAKSA render tab statistik default
         switchStatTab(currentStatTab);
       } catch (e) { console.error(e); } finally { toggleLoading(false); }
@@ -889,6 +890,66 @@ function pastelColorFromString(str) {
         badge.classList.add('hidden');
     }
 }
+    // pop up ultah
+    function checkTodayBirthdayPopUp() {
+    const today = new Date();
+    const tMonth = today.getMonth();
+    const tDate = today.getDate();
+
+    // Filter warga yang ultah hari ini
+    const birthdayKids = allData.filter(w => {
+        if (!w['Tanggal Lahir']) return false;
+        const b = new Date(w['Tanggal Lahir']);
+        return b.getMonth() === tMonth && b.getDate() === tDate;
+    });
+
+    if (birthdayKids.length > 0) {
+        const listContainer = document.getElementById('list-ultah-today');
+        listContainer.innerHTML = birthdayKids.map(w => {
+            const age = today.getFullYear() - new Date(w['Tanggal Lahir']).getFullYear();
+            return `
+                <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-pink-100">
+                    <div class="w-10 h-10 rounded-xl bg-pink-400 flex items-center justify-center text-white font-black text-sm">
+                        ${w.Nama[0]}
+                    </div>
+                    <div class="text-left">
+                        <h4 class="text-xs font-black text-slate-800">${w.Nama}</h4>
+                        <p class="text-[9px] font-bold text-pink-500 uppercase">Ulang Tahun ke-${age}th • RT 0${w.RT}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Tampilkan Modal
+        document.getElementById('modal-ultah').classList.remove('hidden');
+    }
+}
+
+function closeUltahModal() {
+    document.getElementById('modal-ultah').classList.add('hidden');
+}
   </script>
+  
+  <div id="modal-ultah" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl transform transition-all animate-in zoom-in duration-300">
+        <div class="bg-gradient-to-br from-pink-100 to-indigo-100 p-8 text-center relative">
+            <div class="text-4xl mb-2">🎂</div>
+            <h3 class="text-xl font-black text-slate-800">Wilujeng Tepang Tahun!</h3>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Warga yang Berbahagia Hari Ini</p>
+            <button onclick="closeUltahModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div id="list-ultah-today" class="p-6 max-h-[300px] overflow-y-auto space-y-3">
+            </div>
+
+        <div class="p-6 pt-0 text-center">
+            <button onclick="closeUltahModal()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-slate-200">
+                Aamiin & Tutup
+            </button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

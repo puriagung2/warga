@@ -1,6 +1,6 @@
 {
   "name": "Puri Agung 2",
-  "short_name": "e-Warga",
+  "short_name": "e-Warga RW6",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F5F7FB",
@@ -16,5 +16,7 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "id": "e-Warga RW6",
+  "description": "e-Warga RW6 Puri Agung 2 adalah aplikasi digital untuk membantu pengelolaan data warga secara terpusat. Aplikasi ini memudahkan pengurus RW/RT dalam mencatat, memperbarui, serta memantau data warga secara cepat, rapi, dan transparan melalui perangkat mobile."
 }

@@ -354,7 +354,8 @@
     <nav class="bottom-nav">
         <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active"><span class="material-symbols-rounded">dashboard</span><span>Beranda</span></button>
         <button onclick="navigate('warga')" id="nav-warga" class="nav-item"><span class="material-symbols-rounded">group_search</span><span>Warga</span></button>
-        <button onclick="navigate('add'); closeDetail();" class="btn-add-center"><span class="material-icons">add</span></button>
+        <button onclick="openFormTambah()" class="btn-add-center"><span class="material-icons">add</span></button>  
+        <!-- <button onclick="navigate('add'); closeDetail();" class="btn-add-center"><span class="material-icons">add</span></button> -->
         <button onclick="navigate('kk')" id="nav-kk" class="nav-item"><span class="material-symbols-rounded">diversity_1</span><span>Keluarga</span></button>
         <button onclick="navigate('stats')" id="nav-stats" class="nav-item"><span class="material-symbols-rounded">demography</span><span>Statistik</span></button>
     </nav>
@@ -810,6 +811,38 @@ function pastelColorFromString(str) {
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);
 
+    // reset form
+    function resetForm() {
+    // Reset form secara keseluruhan
+    document.getElementById('form-warga').reset();
+    // Pastikan hidden input original-nik juga dikosongkan
+    document.getElementById('f-original-nik').value = "";
+    // Jika Anda menggunakan checkbox "Sama dengan alamat tinggal", pastikan itu juga di-uncheck
+    const syncCheck = document.getElementById('sync-ktp-check');
+    if(syncCheck) syncCheck.checked = false;
+    // Set judul form kembali ke default
+    document.getElementById('form-title').innerText = "Input Data Warga";
+}
+    function openFormTambah() {
+    // 1. Reset isi form agar kosong
+    document.getElementById('form-warga').reset();
+    
+    // 2. Kosongkan field tersembunyi (Sangat Penting!)
+    document.getElementById('f-original-nik').value = "";
+    
+    // 3. Ubah Judul Form menjadi Input Data (bukan Edit)
+    document.getElementById('form-title').innerText = "Input Data Warga";
+    
+    // 4. Pastikan checkbox alamat KTP tidak tercentang
+    const checkKtp = document.getElementById('sync-ktp-check');
+    if(checkKtp) checkKtp.checked = false;
+
+    // 5. Pindah ke halaman form
+    navigate('add');
+    
+    // 6. Tutup detail jika sedang terbuka
+    if (typeof closeDetail === "function") closeDetail();
+}
   </script>
 </body>
 </html>

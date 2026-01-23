@@ -484,12 +484,15 @@ function switchStatTab(tab) {
             w._displayAge = age + " Thn";
             filtered.push(w);
         } else if (tab === 'ultah') {
-            const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
-            if (bThisYear >= new Date(today.setHours(0,0,0,0)) && bThisYear <= nextWeek) {
-                w._displayAge = bDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-                filtered.push(w);
-            }
-        }
+    const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
+    const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+
+    if (bThisYear >= new Date(today.setHours(0,0,0,0)) && bThisYear <= nextWeek) {
+        // Jika hari ini, beri label khusus, jika tidak tampilkan tanggal
+        w._displayAge = isToday ? "HARI INI 🎂" : bDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        filtered.push(w);
+    }
+}
     });
 
     // Render hasil filter ke UI

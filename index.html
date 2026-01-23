@@ -357,7 +357,15 @@
         <button onclick="openFormTambah()" class="btn-add-center"><span class="material-icons">add</span></button>  
         <!-- <button onclick="navigate('add'); closeDetail();" class="btn-add-center"><span class="material-icons">add</span></button> -->
         <button onclick="navigate('kk')" id="nav-kk" class="nav-item"><span class="material-symbols-rounded">diversity_1</span><span>Keluarga</span></button>
-        <button onclick="navigate('stats')" id="nav-stats" class="nav-item"><span class="material-symbols-rounded">demography</span><span>Statistik</span></button>
+
+      <button onclick="navigate('stats')" id="nav-stats" class="nav-item relative">
+    <span class="material-symbols-rounded">demography</span>
+    <span>Statistik</span>
+    <span id="badge-ultah" class="hidden absolute -top-1 right-2 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+        0
+    </span>
+</button>
+    
     </nav>
   </div>
 

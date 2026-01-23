@@ -693,7 +693,7 @@ function pastelColorFromString(str) {
                 ${renderDetailItem('Agama', w.Agama)}
                 ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
                 ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+                ${renderDetailItem('Tanggal Lahir', formatDateIndonesia(w['Tanggal Lahir']))}
                 ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
                 ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
                 ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
@@ -803,10 +803,30 @@ function pastelColorFromString(str) {
       refreshData();
     }
   }
-
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);
 
+      // format waktu indonesia
+
+    function formatDateIndonesia(dateString) {
+    if (!dateString) return "-";
+    
+    // Pecah string 2011-01-22
+    const parts = dateString.split('-');
+    if (parts.length < 3) return dateString; // Jika format tidak sesuai, kembalikan aslinya
+
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1]) - 1;
+    const day = parts[2];
+
+    const bulan = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    return `${day} ${bulan[monthIndex]} ${year}`;
+}
+    
   </script>
 </body>
 </html>

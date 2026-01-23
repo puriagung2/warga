@@ -577,17 +577,32 @@ function switchStatTab(tab) {
         });
     }
 
-    function renderList(data, target) {
-        const container = document.getElementById(target);
-        if (data.length === 0) { container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold text-xs">Kosong</div>`; return; }
-        container.innerHTML = data.map(w => `
-            <div class="warga-card" onclick="showDetail('${w.NIK}')">
-                <div class="avatar ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
-                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p></div>
-                <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">RT 0${w.RT || '-'}</span>
+    
+
+    function renderList(data, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = data.map(w => `
+        <div class="card-warga flex items-center gap-4 p-4 mb-3 bg-white rounded-2xl border border-slate-100 shadow-sm" onclick="showDetail('${w.NIK}')">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${w.Kelamin === 'Laki-laki' ? 'bg-indigo-400' : 'bg-pink-400'}">
+                ${w.Nama.charAt(0)}
             </div>
-        `).join('');
-    }
+            
+            <div class="flex-1">
+                <h4 class="text-sm font-bold text-slate-800">${w.Nama}</h4>
+                <p class="text-[11px] text-slate-500 font-medium">
+                    ${w.NIK} — <span class="text-indigo-600">RT 0${w.RT}</span>
+                </p>
+            </div>
+
+            <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Oleh:</p>
+                <p class="text-[10px] font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                    ${w['Updated By'] || 'Sistem'}
+                </p>
+            </div>
+        </div>
+    `).join('');
+}
 
     // Ambil inisial nama (maks 2 huruf)
 function getInitials(name) {

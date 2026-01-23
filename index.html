@@ -286,29 +286,29 @@
           <form id="form-warga" onsubmit="handleSaveWarga(event)" class="space-y-4 pb-24">
               <input type="hidden" id="f-original-nik">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label class="form-label">NIK<span class="required-icon">*</span</label><input type="number" id="f-nik" class="modern-input" required></div>
+                  <div><label class="form-label">NIK<span class="required-icon">*</span></label><input type="number" id="f-nik" class="modern-input" required></div>
                   <div><label class="form-label">No KK</label><input type="number" id="f-kk" class="modern-input" ></div>
               </div>
-              <div><label class="form-label">Nama Lengkap</label><input type="text" id="f-nama" class="modern-input" required></div>
+              <div><label class="form-label">Nama Lengkap<span class="required-icon">*</span></label><input type="text" id="f-nama" class="modern-input" required></div>
               <div class="grid grid-cols-2 gap-4">
-                <div><label class="form-label">Kelamin</label><select id="f-kelamin" class="modern-input"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
-                <div><label class="form-label">Agama</label>
+                <div><label class="form-label">Kelamin<span class="required-icon">*</span></label><select id="f-kelamin" class="modern-input"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
+                <div><label class="form-label">Agama<span class="required-icon">*</span></label>
                     <select id="f-agama" class="modern-input">
                         <option value="Islam">Islam</option><option value="Kristen">Kristen</option><option value="Katolik">Katolik</option><option value="Buddha">Buddha</option><option value="Hindu">Hindu</option><option value="Konghucu">Konghucu</option>
                     </select>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                  <div><label class="form-label">Tempat Lahir</label><input type="text" id="f-tempat" class="modern-input" required></div>
-                  <div><label class="form-label">Tanggal Lahir</label><input type="date" id="f-tanggal" class="modern-input" required></div>
+                  <div><label class="form-label">Tempat Lahir<span class="required-icon">*</span></label><input type="text" id="f-tempat" class="modern-input" required></div>
+                  <div><label class="form-label">Tanggal Lahir<span class="required-icon">*</span></label><input type="date" id="f-tanggal" class="modern-input" required></div>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                  <div><label class="form-label">Status Perkawinan</label>
+                  <div><label class="form-label">Status Perkawinan<span class="required-icon">*</span></label>
                       <select id="f-perkawinan" class="modern-input">
                           <option value="Belum kawin">Belum kawin</option><option value="Kawin">Kawin</option><option value="Cerai Hidup">Cerai Hidup</option><option value="Cerai Mati">Cerai Mati</option>
                       </select>
                   </div>
-                  <div><label class="form-label">Status Tinggal</label>
+                  <div><label class="form-label">Status Tinggal<span class="required-icon">*</span></label>
                       <select id="f-tinggal" class="modern-input">
                           <option value="Tetap">Tetap</option><option value="Kontrak">Kontrak</option><option value="Kos">Kos</option><option value="Lainnya">Lainnya</option>
                       </select>
@@ -317,14 +317,14 @@
               <div class="bg-indigo-50 p-4 rounded-2xl space-y-4">
                   <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Alamat Tinggal Sekarang</p>
                   <div class="grid grid-cols-3 gap-2">
-                    <div><label class="form-label">Blok</label><select id="f-blok" class="modern-input !pl-4" onchange="syncKtp()"><option value="A">A</option><option value="B">B</option><option value="B1">B1</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div>
-                    <div><label class="form-label">No</label><input type="text" id="f-nomer" class="modern-input !pl-4" oninput="syncKtp()" required></div>
-                    <div><label class="form-label">RT</label><select id="f-rt" class="modern-input !pl-4" onchange="syncKtp()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                    <div><label class="form-label">Blok<span class="required-icon">*</span></label><select id="f-blok" class="modern-input !pl-4" onchange="syncKtp()"><option value="A">A</option><option value="B">B</option><option value="B1">B1</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option></select></div>
+                    <div><label class="form-label">No<span class="required-icon">*</span></label><input type="text" id="f-nomer" class="modern-input !pl-4" oninput="syncKtp()" required></div>
+                    <div><label class="form-label">RT<span class="required-icon">*</span></label><select id="f-rt" class="modern-input !pl-4" onchange="syncKtp()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
                   </div>
               </div>
               <div>
                   <div class="flex justify-between items-center mb-1">
-                      <label class="form-label !mb-0">Alamat KTP</label>
+                      <label class="form-label !mb-0">Alamat KTP<span class="required-icon">*</span></label>
                       <label class="flex items-center gap-1 cursor-pointer">
                           <input type="checkbox" id="sync-ktp-check" onchange="syncKtp()" class="w-3 h-3">
                           <span class="text-[9px] font-bold text-slate-500 uppercase">Sama dengan alamat tinggal</span>
@@ -333,14 +333,14 @@
                   <textarea id="f-alamat-ktp" class="modern-input" placeholder="Tulis alamat lengkap sesuai KTP..."></textarea>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                  <div><label class="form-label">Status Keluarga</label>
+                  <div><label class="form-label">Status Keluarga<span class="required-icon">*</span></label>
                       <select id="f-status-kel" class="modern-input">
                           <option value="Kepala Keluarga">Kepala Keluarga</option><option value="Istri">Istri</option><option value="Anak">Anak</option><option value="Orang Tua">Orang Tua</option><option value="Lainnya">Lainnya</option>
                       </select>
                   </div>
-                  <div><label class="form-label">No HP / WA</label><input type="number" id="f-hp" class="modern-input"></div>
+                  <div><label class="form-label">No HP / WA<span class="required-icon">*</span></label><input type="number" id="f-hp" class="modern-input" required></div>
               </div>
-              <div><label class="form-label">Pekerjaan</label>
+              <div><label class="form-label">Pekerjaan<span class="required-icon">*</span></label>
                   <select id="f-pekerjaan" class="modern-input">
                       <option value="Belum/Tidak Bekerja">Belum/Tidak Bekerja</option><option value="Mengurus Rumah Tangga">Mengurus Rumah Tangga</option><option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option><option value="Pensiunan">Pensiunan</option><option value="PNS">PNS</option><option value="TNI">TNI</option><option value="POLRI">POLRI</option><option value="Karyawan Swasta">Karyawan Swasta</option><option value="Wiraswasta">Wiraswasta</option><option value="Petani">Petani</option><option value="Nelayan">Nelayan</option>
                   </select>

@@ -767,73 +767,37 @@ function pastelColorFromString(str) {
     }
 
     async function handleSaveWarga(e) {
-    e.preventDefault(); 
-    toggleLoading(true);
+        e.preventDefault(); toggleLoading(true);
+        const blok = document.getElementById('f-blok').value;
+        const nomer = document.getElementById('f-nomer').value;
+        const rt = document.getElementById('f-rt').value;
+        const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-    // Ambil data user dari localStorage untuk validasi dan pencatatan
-    const userData = localStorage.getItem('ewarga_user_data');
-    const currentUser = userData ? JSON.parse(userData) : null;
-
-    const blok = document.getElementById('f-blok').value;
-    const nomer = document.getElementById('f-nomer').value;
-    const rt = document.getElementById('f-rt').value;
-    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
-
-    const payload = { 
-        originalNik: document.getElementById('f-original-nik').value, 
-        nik: document.getElementById('f-nik').value, 
-        kk: document.getElementById('f-kk').value, 
-        nama: document.getElementById('f-nama').value, 
-        kelamin: document.getElementById('f-kelamin').value, 
-        agama: document.getElementById('f-agama').value,
-        tempat: document.getElementById('f-tempat').value,
-        tanggal: document.getElementById('f-tanggal').value,
-        perkawinan: document.getElementById('f-perkawinan').value,
-        tinggal: document.getElementById('f-tinggal').value,
-        blok: blok, 
-        nomer: nomer, 
-        rt: rt, 
-        alamatKTP: document.getElementById('f-alamat-ktp').value,
-        alamatTinggal: alamatTinggalStr,
-        statusKel: document.getElementById('f-status-kel').value,
-        hp: document.getElementById('f-hp').value,
-        pekerjaan: document.getElementById('f-pekerjaan').value
-    };
-
-    try {
-        // Mengirim data ke server
-        const response = await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ 
-                action: 'saveWarga', 
-                args: [payload, currentUser] // Kirim payload dan info user login
-            }) 
-        });
-
-        // Mengubah respon mentah menjadi JSON
-        const result = await response.json();
-
-        if (result.success) {
-            // Tampilkan pesan sukses dari Backend (Google Script)
-            alert(result.message || "Data berhasil disimpan!");
-            
-            resetForm(); // Bersihkan form agar tidak muncul saat klik "Tambah" lagi
-            navigate('dashboard'); 
-            refreshData();
-        } else {
-            // Tampilkan pesan gagal (misal: "Akses Ditolak" atau "NIK sudah ada")
-            alert("Gagal: " + (result.message || "Terjadi kesalahan internal"));
-        }
-
-    } catch (err) { 
-        console.error(err);
-        alert("Terjadi kesalahan sistem: " + err.message);
-        navigate('dashboard'); 
-        refreshData(); 
-    } finally { 
-        toggleLoading(false); 
+        const payload = { 
+            originalNik: document.getElementById('f-original-nik').value, 
+            nik: document.getElementById('f-nik').value, 
+            kk: document.getElementById('f-kk').value, 
+            nama: document.getElementById('f-nama').value, 
+            kelamin: document.getElementById('f-kelamin').value, 
+            agama: document.getElementById('f-agama').value,
+            tempat: document.getElementById('f-tempat').value,
+            tanggal: document.getElementById('f-tanggal').value,
+            perkawinan: document.getElementById('f-perkawinan').value,
+            tinggal: document.getElementById('f-tinggal').value,
+            blok: blok, 
+            nomer: nomer, 
+            rt: rt, 
+            alamatKTP: document.getElementById('f-alamat-ktp').value,
+            alamatTinggal: alamatTinggalStr,
+            statusKel: document.getElementById('f-status-kel').value,
+            hp: document.getElementById('f-hp').value,
+            pekerjaan: document.getElementById('f-pekerjaan').value
+        };
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
+            navigate('dashboard'); refreshData();
+        } catch (err) { navigate('dashboard'); refreshData(); } finally { toggleLoading(false); }
     }
-}
 
   function checkLoginState() {
     const user = localStorage.getItem('ewarga_user');

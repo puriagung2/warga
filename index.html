@@ -456,14 +456,15 @@ function logout() {
 function switchStatTab(tab) {
     if (!allData || allData.length === 0) return;
     currentStatTab = tab;
-    // Mengatur status aktif pada tombol tab
+    
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-'+tab));
     const listContainer = document.getElementById('stat-list-container');
     listContainer.innerHTML = "";
 
     const today = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
+    // Membuat tanggal hari ini tanpa jam untuk perbandingan yang akurat
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const nextWeek = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     let filtered = [];
 
@@ -472,7 +473,7 @@ function switchStatTab(tab) {
         const bDate = new Date(w['Tanggal Lahir']);
         if (isNaN(bDate)) return;
 
-        // Hitung Umur
+        // Hitung Umur saat ini
         let age = today.getFullYear() - bDate.getFullYear();
         const m = today.getMonth() - bDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) age--;
@@ -484,32 +485,31 @@ function switchStatTab(tab) {
             w._displayAge = age + " Thn";
             filtered.push(w);
         } else if (tab === 'ultah') {
-    // 1. Tentukan tanggal ulang tahun di tahun ini
-    const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
-    
-    // 2. Cek apakah masuk dalam rentang hari ini sampai 7 hari ke depan
-    if (bThisYear >= new Date(today.setHours(0,0,0,0)) && bThisYear <= nextWeek) {
-        
-        // 3. Hitung umur (Tahun Sekarang - Tahun Lahir)
-        const age = today.getFullYear() - bDate.getFullYear();
-        
-        // 4. Cek apakah tepat hari ini
-        const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
-        
-        if (isToday) {
-            w._displayAge = `HARI INI 🎂 ke-${age}th`;
-            w._sortPriority = 0; // Prioritas utama
-        } else {
-            w._displayAge = `${bDate.getDate()} ${bDate.toLocaleDateString('id-ID', { month: 'short' })} (ke-${age}th)`;
-            w._sortPriority = bThisYear.getTime(); // Urutkan berdasarkan waktu terdekat
+            const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
+            const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+
+            if (bThisYear >= todayStart && bThisYear <= nextWeek) {
+                // Tambahkan umur ke-x th (menggunakan tahun depan jika sudah lewat, atau tahun ini jika hari ini/nanti)
+                // Untuk ulang tahun, kita hitung umur yang akan/sedang dicapai
+                const ageTarget = today.getFullYear() - bDate.getFullYear();
+                
+                if (isToday) {
+                    w._displayAge = `HARI INI 🎂 ke-${ageTarget}th`;
+                    w._sortPriority = 0; // Prioritas utama agar di paling atas
+                } else {
+                    w._displayAge = `${bDate.getDate()} ${bDate.toLocaleDateString('id-ID', { month: 'short' })} (ke-${ageTarget}th)`;
+                    w._sortPriority = bThisYear.getTime(); // Urutkan berdasarkan waktu terdekat
+                }
+                filtered.push(w);
+            }
         }
-        
-        filtered.push(w);
-    }
-}
     });
 
-    // Render hasil filter ke UI
+    // --- LOGIKA PENGURUTAN ---
+    if (tab === 'ultah') {
+        filtered.sort((a, b) => a._sortPriority - b._sortPriority);
+    }
+
     if (filtered.length === 0) {
         listContainer.innerHTML = `<div class="p-10 text-center text-slate-300 font-bold text-xs uppercase tracking-widest">Tidak ada data</div>`;
         return;
@@ -523,7 +523,7 @@ function switchStatTab(tab) {
                 <p class="text-[9px] font-bold text-slate-400 uppercase">Blok ${w.Blok} No ${w.Nomer} • RT 0${w.RT}</p>
             </div>
             <div class="text-right">
-                <p class="text-[10px] font-black text-indigo-500">${w._displayAge}</p>
+                <p class="text-[10px] font-black ${w._sortPriority === 0 ? 'text-pink-500' : 'text-indigo-500'}">${w._displayAge}</p>
             </div>
         </div>
     `).join('');

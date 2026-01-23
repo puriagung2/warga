@@ -484,12 +484,26 @@ function switchStatTab(tab) {
             w._displayAge = age + " Thn";
             filtered.push(w);
         } else if (tab === 'ultah') {
+    // 1. Tentukan tanggal ulang tahun di tahun ini
     const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
-    const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
-
+    
+    // 2. Cek apakah masuk dalam rentang hari ini sampai 7 hari ke depan
     if (bThisYear >= new Date(today.setHours(0,0,0,0)) && bThisYear <= nextWeek) {
-        // Jika hari ini, beri label khusus, jika tidak tampilkan tanggal
-        w._displayAge = isToday ? "HARI INI 🎂" : bDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        
+        // 3. Hitung umur (Tahun Sekarang - Tahun Lahir)
+        const age = today.getFullYear() - bDate.getFullYear();
+        
+        // 4. Cek apakah tepat hari ini
+        const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+        
+        if (isToday) {
+            w._displayAge = `HARI INI 🎂 ke-${age}th`;
+            w._sortPriority = 0; // Prioritas utama
+        } else {
+            w._displayAge = `${bDate.getDate()} ${bDate.toLocaleDateString('id-ID', { month: 'short' })} (ke-${age}th)`;
+            w._sortPriority = bThisYear.getTime(); // Urutkan berdasarkan waktu terdekat
+        }
+        
         filtered.push(w);
     }
 }
@@ -858,23 +872,21 @@ function pastelColorFromString(str) {
     // ultah
     function updateBirthdayBadge() {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentDate = today.getDate();
-    
-    // Hitung warga yang ulang tahun hari ini
+    const tMonth = today.getMonth();
+    const tDate = today.getDate();
+
     const countToday = allData.filter(w => {
         if (!w['Tanggal Lahir']) return false;
-        const bDate = new Date(w['Tanggal Lahir']);
-        return bDate.getMonth() === currentMonth && bDate.getDate() === currentDate;
+        const b = new Date(w['Tanggal Lahir']);
+        return b.getMonth() === tMonth && b.getDate() === tDate;
     }).length;
 
     const badge = document.getElementById('badge-ultah');
-    
     if (countToday > 0) {
         badge.innerText = countToday;
-        badge.classList.remove('hidden'); // Tampilkan jika ada
+        badge.classList.remove('hidden');
     } else {
-        badge.classList.add('hidden'); // Sembunyikan jika nol
+        badge.classList.add('hidden');
     }
 }
   </script>

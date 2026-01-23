@@ -438,6 +438,7 @@ function logout() {
         const res = await fetch(`${API_URL}?action=getAllWarga`);
         allData = await res.json();
         updateUI();
+        updateBirthdayBadge();
         // 🔥 PAKSA render tab statistik default
         switchStatTab(currentStatTab);
       } catch (e) { console.error(e); } finally { toggleLoading(false); }
@@ -850,6 +851,28 @@ function pastelColorFromString(str) {
     
     // 6. Tutup detail jika sedang terbuka
     if (typeof closeDetail === "function") closeDetail();
+}
+    // ultah
+    function updateBirthdayBadge() {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentDate = today.getDate();
+    
+    // Hitung warga yang ulang tahun hari ini
+    const countToday = allData.filter(w => {
+        if (!w['Tanggal Lahir']) return false;
+        const bDate = new Date(w['Tanggal Lahir']);
+        return bDate.getMonth() === currentMonth && bDate.getDate() === currentDate;
+    }).length;
+
+    const badge = document.getElementById('badge-ultah');
+    
+    if (countToday > 0) {
+        badge.innerText = countToday;
+        badge.classList.remove('hidden'); // Tampilkan jika ada
+    } else {
+        badge.classList.add('hidden'); // Sembunyikan jika nol
+    }
 }
   </script>
 </body>

@@ -1027,6 +1027,19 @@ function previewFoto() {
     reader.readAsDataURL(file);
 }
 
+    function resetFotoForm() {
+    document.getElementById("f-foto").value = "";
+    const img = document.getElementById("preview-foto");
+    img.src = "";
+    img.classList.add("hidden");
+}
+function addNewWarga() {
+    document.getElementById("form-warga").reset();
+    document.getElementById("f-original-nik").value = "";
+    resetFotoForm();
+    navigate("page-add");
+}
+
 // reset preview foto
   function openAddForm() {
     document.getElementById("form-warga").reset();

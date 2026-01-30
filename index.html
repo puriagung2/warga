@@ -817,6 +817,22 @@ function pastelColorFromString(str) {
         document.getElementById('f-pekerjaan').value = w.Pekerjaan || "Belum/Tidak Bekerja";
         document.getElementById('sync-ktp-check').checked = false; syncKtp();
         navigate('add');
+      // === FOTO EDIT ===
+const fotoInput = document.getElementById("f-foto");
+const preview = document.getElementById("preview-foto");
+
+// Reset file input
+fotoInput.value = "";
+
+// Jika data warga punya foto → tampilkan
+if (w.Foto && w.Foto !== "") {
+    preview.src = w.Foto;
+    preview.classList.remove("hidden");
+} else {
+    preview.src = "";
+    preview.classList.add("hidden");
+}
+
     }
 
     async function handleSaveWarga(e) {
@@ -829,17 +845,22 @@ function pastelColorFromString(str) {
 
     const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-    // ==== Ambil Foto Base64 ====
-    let fotoBase64 = "";
-    const fotoFile = document.getElementById("f-foto").files[0];
+// ==== Ambil Foto Baru (Kalau Ada) ====
+let fotoBase64 = "";
+const fotoFile = document.getElementById("f-foto").files[0];
+const originalFoto = allData.find(x => x.NIK == payload.originalNik)?.Foto || "";
 
-    if (fotoFile) {
-        fotoBase64 = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(fotoFile);
-        });
-    }
+// Jika user upload foto baru → encode base64
+if (fotoFile) {
+    fotoBase64 = await new Promise(resolve => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.readAsDataURL(fotoFile);
+    });
+} else {
+    fotoBase64 = ""; // berarti gunakan foto lama
+}
+
 
     const payload = { 
         originalNik: document.getElementById('f-original-nik').value, 
@@ -1007,32 +1028,22 @@ if (fotoFile) {
 
     // preview foto
 function previewFoto() {
-    const fileInput = document.getElementById('f-foto');
-    const img = document.getElementById('preview-foto');
+    const fileInput = document.getElementById("f-foto");
+    const img = document.getElementById("preview-foto");
 
-    if (!fileInput.files || fileInput.files.length === 0) {
-        img.src = "";
-        img.classList.add("hidden");
+    if (fileInput.files.length === 0) {
         return;
     }
 
-    const file = fileInput.files[0];
     const reader = new FileReader();
-
-    reader.onload = function(e) {
+    reader.onload = e => {
         img.src = e.target.result;
         img.classList.remove("hidden");
     };
-
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(fileInput.files[0]);
 }
 
-    function resetFotoForm() {
-    document.getElementById("f-foto").value = "";
-    const img = document.getElementById("preview-foto");
-    img.src = "";
-    img.classList.add("hidden");
-}
+
 function addNewWarga() {
     document.getElementById("form-warga").reset();
     document.getElementById("f-original-nik").value = "";

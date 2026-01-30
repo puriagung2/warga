@@ -825,7 +825,16 @@ function pastelColorFromString(str) {
         const nomer = document.getElementById('f-nomer').value;
         const rt = document.getElementById('f-rt').value;
         const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+let fotoBase64 = "";
+    const fotoFile = document.getElementById("f-foto").files[0];
 
+    if (fotoFile) {
+        fotoBase64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(fotoFile);
+        });
+    }
         const payload = { 
             originalNik: document.getElementById('f-original-nik').value, 
             nik: document.getElementById('f-nik').value, 
@@ -845,6 +854,7 @@ function pastelColorFromString(str) {
             statusKel: document.getElementById('f-status-kel').value,
             hp: document.getElementById('f-hp').value,
             pekerjaan: document.getElementById('f-pekerjaan').value
+            fotoData: fotoBase64
         };
         try {
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
@@ -967,6 +977,24 @@ if (fotoFile) {
   reader.readAsDataURL(fotoFile);
 } else {
   kirimSimpan("");
+}
+
+    // preview foto
+    function previewFoto() {
+  const file = document.getElementById('f-foto').files[0];
+  const img = document.getElementById('preview-foto');
+
+  if (!file) {
+    img.classList.add("hidden");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    img.src = e.target.result; 
+    img.classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
 }
 
   

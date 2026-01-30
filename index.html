@@ -1006,24 +1006,47 @@ if (fotoFile) {
 }
 
     // preview foto
-    function previewFoto() {
-  const file = document.getElementById('f-foto').files[0];
-  const img = document.getElementById('preview-foto');
+function previewFoto() {
+    const fileInput = document.getElementById('f-foto');
+    const img = document.getElementById('preview-foto');
 
-  if (!file) {
-    img.classList.add("hidden");
-    return;
-  }
+    if (!fileInput.files || fileInput.files.length === 0) {
+        img.src = "";
+        img.classList.add("hidden");
+        return;
+    }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    img.src = e.target.result; 
-    img.classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        img.src = e.target.result;
+        img.classList.remove("hidden");
+    };
+
+    reader.readAsDataURL(file);
 }
 
-  
+// reset preview foto
+  function openAddForm() {
+    document.getElementById("form-warga").reset();
+    document.getElementById("f-original-nik").value = "";
+document.getElementById("f-foto").value = "";
+    document.getElementById("preview-foto").src = "";
+    document.getElementById("preview-foto").classList.add("hidden");
+    
+    // RESET FOTO
+    const pf = document.getElementById("preview-foto");
+    const ff = document.getElementById("f-foto");
+
+    ff.value = "";
+    pf.src = "";
+    pf.classList.add("hidden");
+
+    navigate("page-add");
+}
+
+
   </script>
   
   <div id="modal-ultah" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">

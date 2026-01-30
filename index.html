@@ -820,12 +820,17 @@ function pastelColorFromString(str) {
     }
 
     async function handleSaveWarga(e) {
-        e.preventDefault(); toggleLoading(true);
-        const blok = document.getElementById('f-blok').value;
-        const nomer = document.getElementById('f-nomer').value;
-        const rt = document.getElementById('f-rt').value;
-        const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
-let fotoBase64 = "";
+    e.preventDefault();
+    toggleLoading(true);
+
+    const blok = document.getElementById('f-blok').value;
+    const nomer = document.getElementById('f-nomer').value;
+    const rt = document.getElementById('f-rt').value;
+
+    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+
+    // ==== Ambil Foto Base64 ====
+    let fotoBase64 = "";
     const fotoFile = document.getElementById("f-foto").files[0];
 
     if (fotoFile) {
@@ -835,32 +840,53 @@ let fotoBase64 = "";
             reader.readAsDataURL(fotoFile);
         });
     }
-        const payload = { 
-            originalNik: document.getElementById('f-original-nik').value, 
-            nik: document.getElementById('f-nik').value, 
-            kk: document.getElementById('f-kk').value, 
-            nama: document.getElementById('f-nama').value, 
-            kelamin: document.getElementById('f-kelamin').value, 
-            agama: document.getElementById('f-agama').value,
-            tempat: document.getElementById('f-tempat').value,
-            tanggal: document.getElementById('f-tanggal').value,
-            perkawinan: document.getElementById('f-perkawinan').value,
-            tinggal: document.getElementById('f-tinggal').value,
-            blok: blok, 
-            nomer: nomer, 
-            rt: rt, 
-            alamatKTP: document.getElementById('f-alamat-ktp').value,
-            alamatTinggal: alamatTinggalStr,
-            statusKel: document.getElementById('f-status-kel').value,
-            hp: document.getElementById('f-hp').value,
-            pekerjaan: document.getElementById('f-pekerjaan').value
-            fotoData: fotoBase64
-        };
-        try {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveWarga', args: [payload] }) });
-            navigate('dashboard'); refreshData();
-        } catch (err) { navigate('dashboard'); refreshData(); } finally { toggleLoading(false); }
+
+    const payload = { 
+        originalNik: document.getElementById('f-original-nik').value, 
+        nik: document.getElementById('f-nik').value, 
+        kk: document.getElementById('f-kk').value, 
+        nama: document.getElementById('f-nama').value, 
+        kelamin: document.getElementById('f-kelamin').value, 
+        agama: document.getElementById('f-agama').value,
+        tempat: document.getElementById('f-tempat').value,
+        tanggal: document.getElementById('f-tanggal').value,
+        perkawinan: document.getElementById('f-perkawinan').value,
+        tinggal: document.getElementById('f-tinggal').value,
+        blok: blok, 
+        nomer: nomer, 
+        rt: rt, 
+        alamatKTP: document.getElementById('f-alamat-ktp').value,
+        alamatTinggal: alamatTinggalStr,
+        statusKel: document.getElementById('f-status-kel').value,
+        hp: document.getElementById('f-hp').value,
+        pekerjaan: document.getElementById('f-pekerjaan').value,
+
+        // Foto Base64 → dikirim ke Apps Script
+        fotoData: fotoBase64
+    };
+
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: 'saveWarga', 
+                args: [payload] 
+            })
+        });
+
+        navigate('dashboard');
+        refreshData();
+
+    } catch (err) {
+        console.error(err);
+        navigate('dashboard');
+        refreshData();
+
+    } finally {
+        toggleLoading(false);
     }
+}
+
 
   function checkLoginState() {
     const user = localStorage.getItem('ewarga_user');

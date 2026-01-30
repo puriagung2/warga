@@ -355,6 +355,22 @@
                       <option value="Belum/Tidak Bekerja">Belum/Tidak Bekerja</option><option value="Mengurus Rumah Tangga">Mengurus Rumah Tangga</option><option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option><option value="Pensiunan">Pensiunan</option><option value="PNS">PNS</option><option value="TNI">TNI</option><option value="POLRI">POLRI</option><option value="Karyawan Swasta">Karyawan Swasta</option><option value="Wiraswasta">Wiraswasta</option><option value="Petani">Petani</option><option value="Nelayan">Nelayan</option>
                   </select>
               </div>
+            <div>
+    <label class="form-label">Foto Warga</label>
+
+    <!-- Preview foto -->
+    <img id="preview-foto" 
+         src="" 
+         class="w-32 h-32 object-cover rounded-xl border hidden mb-2">
+
+    <input type="file" 
+           id="f-foto" 
+           accept="image/*" 
+           capture="environment"
+           class="modern-input"
+           onchange="previewFoto()">
+</div>
+
               <button type="submit" class="btn-submit">Simpan Data Warga</button>
           </form>
       </section>
@@ -938,6 +954,22 @@ function pastelColorFromString(str) {
 function closeUltahModal() {
     document.getElementById('modal-ultah').classList.add('hidden');
 }
+const fotoFile = document.getElementById("f-foto").files[0];
+
+let fotoBase64 = "";
+
+if (fotoFile) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    fotoBase64 = reader.result;
+    kirimSimpan(fotoBase64);
+  };
+  reader.readAsDataURL(fotoFile);
+} else {
+  kirimSimpan("");
+}
+
+  
   </script>
   
   <div id="modal-ultah" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">

@@ -738,15 +738,25 @@ function pastelColorFromString(str) {
             waLink = `https://wa.me/${cleanHp}`;
         }
 
-        document.getElementById('detail-content').innerHTML = `
+        const fotoUrl = (w.Foto && w.Foto !== '')
+    ? w.Foto
+    : "https://raw.githubusercontent.com/puriagung2/warga/refs/heads/main/default-foto.png";
+
+const genderClass =
+    (w.Kelamin || '').toLowerCase().startsWith('l') ? "ring-blue-400" :
+    (w.Kelamin || '').toLowerCase().startsWith('p') ? "ring-pink-400" :
+    "ring-slate-300";
+
+document.getElementById('detail-content').innerHTML = `
     <div class="bg-white p-5 rounded-3xl shadow-lg border border-slate-100">
 
         <!-- HEADER FOTO + NAMA -->
         <div class="flex flex-col items-center">
             <div class="relative">
                 <img 
-                    src="${w.Foto && w.Foto !== '' ? w.Foto : 'https://raw.githubusercontent.com/puriagung2/warga/refs/heads/main/default-foto.png'}" 
-                    class="w-28 h-28 object-cover rounded-2xl border shadow"
+                    src="${fotoUrl}"
+                    onclick="openPhotoViewer('${fotoUrl}')"
+                    class="w-28 h-28 object-cover rounded-2xl border shadow ring-4 ${genderClass} cursor-pointer transition-transform duration-200 hover:scale-105"
                 >
                 <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-md shadow">
                     ${w['Status Keluarga'] || 'Warga'}
@@ -762,10 +772,10 @@ function pastelColorFromString(str) {
             </p>
         </div>
 
-        <div class="my-4 border-t border-slate-200"></div>
+        <div class="my-3 border-t border-slate-200"></div>
 
-        <!-- DETAIL (Compact Mode) -->
-        <div class="space-y-2">  <!-- sebelumnya space-y-3 -->
+        <!-- DETAIL (Compact Version) -->
+        <div class="space-y-[6px]"> 
             ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
             ${renderDetailItem('Agama', w.Agama)}
             ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
@@ -774,7 +784,7 @@ function pastelColorFromString(str) {
             ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
             ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
             ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-            
+
             ${renderDetailItem(
                 'No HP',
                 rawHp 
@@ -788,11 +798,10 @@ function pastelColorFromString(str) {
             ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
             ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
         </div>
-
     </div>
 `;
-document.getElementById('detail-modal').style.display = 'flex';
 
+document.getElementById('detail-modal').style.display = 'flex';
     }
 
    function renderDetailItem(label, value) {
@@ -1101,9 +1110,27 @@ document.getElementById("f-foto").value = "";
     navigate("page-add");
 }
 
+    // klik foto profil
+function openPhotoViewer(url) {
+    const modal = document.getElementById("photo-viewer");
+    const img = document.getElementById("photo-viewer-img");
+    img.src = url;
+    modal.classList.remove("hidden");
+}
+
+function closePhotoViewer() {
+    document.getElementById("photo-viewer").classList.add("hidden");
+}
 
   </script>
-  
+
+  <div id="photo-viewer"
+     class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-[9999]"
+     onclick="closePhotoViewer()">
+    <img id="photo-viewer-img"
+         class="max-w-full max-h-full rounded-2xl shadow-xl border border-white/20">
+</div>
+
   <div id="modal-ultah" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
     <div class="bg-white w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl transform transition-all animate-in zoom-in duration-300">
         <div class="bg-gradient-to-br from-pink-100 to-indigo-100 p-8 text-center relative">

@@ -1003,8 +1003,8 @@ showDetail(payload.nik);
         // Tampilkan halaman detail warga yang baru disimpan
         showDetail(payload.nik);
 
-alert("Data berhasil disimpan!");
 
+showToast("Data berhasil disimpan!");
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
@@ -1181,7 +1181,24 @@ function openPhotoViewer(url) {
 function closePhotoViewer() {
     document.getElementById("photo-viewer").classList.add("hidden");
 }
-
+// popup alert
+    function showToast(message = "Data berhasil disimpan!", duration = 3000) {
+    const toast = document.getElementById('custom-toast');
+    const toastMsg = document.getElementById('toast-message');
+    
+    // Set pesan
+    toastMsg.innerText = message;
+    
+    // Munculkan (Pop In)
+    toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    
+    // Sembunyikan otomatis setelah durasi tertentu (Pop Out)
+    setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-[-100px]', 'opacity-0');
+    }, duration);
+}
 
   </script>
 
@@ -1214,6 +1231,13 @@ function closePhotoViewer() {
     </div>
 </div>
 
-
+<div id="custom-toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[10001] transform transition-all duration-300 translate-y-[-100px] opacity-0">
+    <div class="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
+        <div class="bg-green-500 rounded-full p-1 flex items-center justify-center">
+            <span class="material-icons text-sm" style="font-size: 16px;">check</span>
+        </div>
+        <span id="toast-message" class="text-xs font-bold tracking-wide uppercase">Data berhasil disimpan!</span>
+    </div>
+</div>
 </body>
 </html>

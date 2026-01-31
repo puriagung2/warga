@@ -465,7 +465,9 @@ function logout() {
         allData = await res.json();
         updateUI();
         updateBirthdayBadge();
-        checkTodayBirthdayPopUp();
+        if (currentPage === "dashboard") {
+            checkTodayBirthdayPopUp();
+        }
         // 🔥 PAKSA render tab statistik default
         switchStatTab(currentStatTab);
       } catch (e) { console.error(e); } finally { toggleLoading(false); }

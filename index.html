@@ -835,78 +835,82 @@ if (w.Foto && w.Foto !== "") {
 
     }
 
-    async function handleSaveWarga(e) {
+async function handleSaveWarga(e) {
     e.preventDefault();
     toggleLoading(true);
 
+    // ====== Ambil Foto Lama Jika Edit ======
+    const originalNik = document.getElementById("f-original-nik").value;
+    let existingFoto = "";
+
+    if (originalNik) {
+        const findW = allData.find(w => w.NIK == originalNik);
+        if (findW) existingFoto = findW.Foto || "";
+    }
+
+    // ====== Proses Foto Baru Jika Ada ======
+    let fotoBase64 = "";
+    const fotoFile = document.getElementById("f-foto").files[0];
+
+    if (fotoFile) {
+        fotoBase64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(fotoFile);
+        });
+    }
+
+    // ====== Susun Payload ======
     const blok = document.getElementById('f-blok').value;
     const nomer = document.getElementById('f-nomer').value;
     const rt = document.getElementById('f-rt').value;
 
-    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+    const alamatTinggal = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-// ==== Ambil Foto Baru (Kalau Ada) ====
-let fotoBase64 = "";
-const fotoFile = document.getElementById("f-foto").files[0];
-const originalFoto = allData.find(x => x.NIK == payload.originalNik)?.Foto || "";
-
-// Jika user upload foto baru → encode base64
-if (fotoFile) {
-    fotoBase64 = await new Promise(resolve => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.readAsDataURL(fotoFile);
-    });
-} else {
-    fotoBase64 = ""; // berarti gunakan foto lama
-}
-
-
-    const payload = { 
-        originalNik: document.getElementById('f-original-nik').value, 
-        nik: document.getElementById('f-nik').value, 
-        kk: document.getElementById('f-kk').value, 
-        nama: document.getElementById('f-nama').value, 
-        kelamin: document.getElementById('f-kelamin').value, 
+    const payload = {
+        originalNik: originalNik,
+        nik: document.getElementById('f-nik').value,
+        kk: document.getElementById('f-kk').value,
+        nama: document.getElementById('f-nama').value,
+        kelamin: document.getElementById('f-kelamin').value,
         agama: document.getElementById('f-agama').value,
         tempat: document.getElementById('f-tempat').value,
         tanggal: document.getElementById('f-tanggal').value,
         perkawinan: document.getElementById('f-perkawinan').value,
         tinggal: document.getElementById('f-tinggal').value,
-        blok: blok, 
-        nomer: nomer, 
-        rt: rt, 
+        blok: blok,
+        nomer: nomer,
+        rt: rt,
         alamatKTP: document.getElementById('f-alamat-ktp').value,
-        alamatTinggal: alamatTinggalStr,
+        alamatTinggal: alamatTinggal,
         statusKel: document.getElementById('f-status-kel').value,
         hp: document.getElementById('f-hp').value,
         pekerjaan: document.getElementById('f-pekerjaan').value,
 
-        // Foto Base64 → dikirim ke Apps Script
-        fotoData: fotoBase64
+        // === Foto Baru / Lama ===
+        fotoData: fotoBase64 || ""   // jika kosong → GAS pakai foto lama
     };
 
     try {
         await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: 'saveWarga', 
-                args: [payload] 
+            method: "POST",
+            body: JSON.stringify({
+                action: "saveWarga",
+                args: [payload]
             })
         });
 
-        navigate('dashboard');
+        navigate("dashboard");
         refreshData();
 
     } catch (err) {
-        console.error(err);
-        navigate('dashboard');
-        refreshData();
+        console.error("SAVE ERROR:", err);
 
     } finally {
         toggleLoading(false);
     }
 }
+
 
 
   function checkLoginState() {
@@ -1011,20 +1015,7 @@ if (fotoFile) {
 function closeUltahModal() {
     document.getElementById('modal-ultah').classList.add('hidden');
 }
-const fotoFile = document.getElementById("f-foto").files[0];
 
-let fotoBase64 = "";
-
-if (fotoFile) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    fotoBase64 = reader.result;
-    kirimSimpan(fotoBase64);
-  };
-  reader.readAsDataURL(fotoFile);
-} else {
-  kirimSimpan("");
-}
 
     // preview foto
 function previewFoto() {

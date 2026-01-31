@@ -887,14 +887,14 @@ async function handleSaveWarga(e) {
     // ====== Ambil NIK Lama Jika Edit ======
     const originalNik = document.getElementById("f-original-nik").value;
 
-    // ====== Cari foto lama dari allData ======
+    // ====== Ambil Foto Lama dari allData ======
     let existingFoto = "";
     if (originalNik) {
-        const foundW = allData.find(w => w.NIK == originalNik);
-        if (foundW) existingFoto = foundW.Foto || "";
+        const found = allData.find(w => w.NIK == originalNik);
+        if (found) existingFoto = found.Foto || "";
     }
 
-    // ====== Proses Foto Baru Jika Ada Upload ======
+    // ====== FOTO BARU jika ada upload ======
     let fotoBase64 = "";
     const fotoFile = document.getElementById("f-foto").files[0];
 
@@ -906,14 +906,14 @@ async function handleSaveWarga(e) {
         });
     }
 
-    // ====== Ambil Field to Build Payload ======
+    // ====== Ambil form field ======
     const fBlok  = document.getElementById("f-blok").value;
     const fNomer = document.getElementById("f-nomer").value;
     const fRT    = document.getElementById("f-rt").value;
 
     const alamatTinggal = `Blok ${fBlok} No ${fNomer} RT 0${fRT}`;
 
-    // ====== SUSUN DATA PAYLOAD ======
+    // ====== SUSUN PAYLOAD ======
     const payload = {
         originalNik: originalNik,
         nik: document.getElementById('f-nik').value,
@@ -933,13 +933,11 @@ async function handleSaveWarga(e) {
         statusKel: document.getElementById('f-status-kel').value,
         hp: document.getElementById('f-hp').value,
         pekerjaan: document.getElementById('f-pekerjaan').value,
-
-        // Foto Baru / Foto Lama
-        fotoData: fotoBase64 || ""      
+        fotoData: fotoBase64 || ""     // jika tidak upload foto baru → kosong → backend pakai foto lama
     };
 
     try {
-        // ====== Simpan ke Apps Script ======
+        // Kirim ke Apps Script
         await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -948,15 +946,15 @@ async function handleSaveWarga(e) {
             })
         });
 
-        // ====== Refresh data dulu ======
+        // Refresh ulang data warga
         await refreshData();
 
-        // ====== Cari data warga yang baru disimpan ======
-        const updated = allData.find(w => w.NIK == payload.nik);
+        // Cari data warga yang baru disimpan
+        const updatedWarga = allData.find(w => w.NIK == payload.nik);
 
-        // ====== Tampilkan kembali halaman DETAIL warga ======
-        if (updated) {
-            openDetail(updated);
+        // === KEMBALIKAN KE HALAMAN DETAIL, BUKAN DASHBOARD ===
+        if (updatedWarga) {
+            showDetail(updatedWarga);   // <— ini fungsi yang benar
         }
 
     } catch (err) {
@@ -966,6 +964,7 @@ async function handleSaveWarga(e) {
         toggleLoading(false);
     }
 }
+
 
 
 

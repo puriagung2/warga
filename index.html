@@ -971,7 +971,8 @@ showDetail(payload.nik);
 
 setTimeout(() => {
     showSuccessPopup("Data berhasil disimpan!");
-}, 30);
+}, 50);
+
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
@@ -1149,14 +1150,23 @@ function closePhotoViewer() {
     document.getElementById("photo-viewer").classList.add("hidden");
 }
 // pop up alert
-    function showSuccessPopup(message = "Data berhasil disimpan!") {
-    document.getElementById("popup-success-text").innerText = message;
-    document.getElementById("popup-success").classList.remove("hidden");
+   function showSuccessPopup(msg = "Data berhasil disimpan!") {
+    const popup = document.getElementById("popup-success");
+    const text = document.getElementById("popup-success-text");
+    if (!popup || !text) {
+        console.error("Popup container tidak ditemukan!");
+        return;
+    }
+
+    text.innerText = msg;
+    popup.style.display = "flex";   // ← ini memastikan muncul
 }
 
 function closeSuccessPopup() {
-    document.getElementById("popup-success").classList.add("hidden");
+    const popup = document.getElementById("popup-success");
+    if (popup) popup.style.display = "none";
 }
+
 
   </script>
 
@@ -1190,27 +1200,74 @@ function closeSuccessPopup() {
 </div>
 
   <!-- ===== MODERN SUCCESS POPUP ===== -->
-<div id="popup-success" class="
-    class="
-    fixed inset-0 bg-black/40 backdrop-blur-sm
-    flex items-center justify-center 
-    hidden
-    z-[99999]
-">
-    <div class="bg-white rounded-3xl shadow-xl p-6 w-64 text-center animate-popup">
-        <div class="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-3">
-            <span class="material-icons text-green-600 text-4xl">check_circle</span>
+<!-- UNIVERSAL POPUP -->
+<div id="popup-success" 
+     style="
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        backdrop-filter: blur(3px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999999;
+     ">
+
+    <div style="
+        background: white;
+        width: 260px;
+        border-radius: 18px;
+        padding: 22px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        animation: popIn 0.25s ease;
+    ">
+        <div style="
+            width: 60px; height: 60px;
+            margin: auto;
+            border-radius: 50%;
+            background: #d1fae5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        ">
+            <span style="font-size: 40px; color: #059669;">✔</span>
         </div>
-        <h3 class="text-base font-black text-slate-800 mb-1">Berhasil!</h3>
-        <p id="popup-success-text" class="text-[11px] text-slate-500 mb-4">
-            Data berhasil disimpan.
+
+        <h3 style="font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 4px;">
+            Berhasil!
+        </h3>
+
+        <p id="popup-success-text"
+           style="font-size: 12px; color: #475569; margin-bottom: 14px;">
+           Data berhasil disimpan.
         </p>
+
         <button onclick="closeSuccessPopup()" 
-            class="bg-green-600 text-white w-full py-2 rounded-xl text-sm font-bold">
+            style="
+                background: #059669;
+                color: white;
+                border: none;
+                padding: 10px 0;
+                width: 100%;
+                border-radius: 12px;
+                font-size: 13px;
+                font-weight: bold;
+            ">
             OK
         </button>
     </div>
 </div>
+
+<!-- ANIMASI POP -->
+<style>
+@keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+</style>
+
 
 </body>
 </html>

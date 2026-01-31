@@ -969,7 +969,9 @@ showDetail(payload.nik);
         // Tampilkan halaman detail warga yang baru disimpan
         showDetail(payload.nik);
 
-showSuccessPopup("Data berhasil disimpan!");
+setTimeout(() => {
+    showSuccessPopup("Data berhasil disimpan!");
+}, 30);
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
@@ -1189,9 +1191,11 @@ function closeSuccessPopup() {
 
   <!-- ===== MODERN SUCCESS POPUP ===== -->
 <div id="popup-success" class="
+    class="
     fixed inset-0 bg-black/40 backdrop-blur-sm
     flex items-center justify-center 
-    z-50 hidden
+    hidden
+    z-[99999]
 ">
     <div class="bg-white rounded-3xl shadow-xl p-6 w-64 text-center animate-popup">
         <div class="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-3">

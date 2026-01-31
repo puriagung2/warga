@@ -943,21 +943,21 @@ async function handleSaveWarga(e) {
             })
         });
 
-        // Refresh data dari server
+        // Refresh Data
         await refreshData();
 
-        // Ambil data yang baru diperbarui
+        // Data updated
         const updated = allData.find(w => w.NIK == payload.nik);
 
         // ====== TUTUP FORM EDIT ======
-        document.getElementById("form-modal").style.display = "none";
+        document.getElementById("edit-modal").style.display = "none";
 
         // ====== NOTIFIKASI ======
         alert("Data berhasil disimpan!");
 
-        // ====== TAMPILKAN DETAIL ======
+        // ====== TAMPILKAN HALAMAN DETAIL ======
         if (updated) {
-            showDetail(updated); 
+            showDetail(updated);
         }
 
     } catch (err) {
@@ -967,6 +967,7 @@ async function handleSaveWarga(e) {
         toggleLoading(false);
     }
 }
+
 
 
 

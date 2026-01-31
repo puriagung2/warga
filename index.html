@@ -958,7 +958,7 @@ async function handleSaveWarga(e) {
         if (originalNik) {
             const updated = allData.find(w => w.NIK == nikBaru);
             if (updated) {
-                openDetail(updated);
+                showDetail(updated);
             } else {
                 navigate("dashboard");
             }

@@ -739,28 +739,67 @@ function pastelColorFromString(str) {
         }
 
         document.getElementById('detail-content').innerHTML = `
-            <div class="bg-slate-50 p-6 rounded-3xl flex flex-col items-center">
-                <div class="avatar w-16 h-16 text-xl mb-3 ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
-                <h3 class="text-base font-black text-slate-800 text-center">${w.Nama}</h3>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${w['Status Keluarga'] || 'Warga'}</p>
+    <div class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
+        
+        <!-- HEADER PROFILE -->
+        <div class="flex flex-col items-center -mt-2">
+            
+            <!-- FOTO -->
+            <div class="relative">
+                <img 
+                    src="${w.Foto && w.Foto !== '' ? w.Foto : 'img/default-foto.png'}" 
+                    class="w-32 h-32 object-cover rounded-2xl border shadow-md"
+                >
+                <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-xs px-2 py-1 rounded-md shadow">
+                    ${w['Status Keluarga'] || 'Warga'}
+                </div>
             </div>
-            <div class="mt-4">
-                ${renderDetailItem('NIK', w.NIK)}
-                ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
-                ${renderDetailItem('Agama', w.Agama)}
-                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
-                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
-                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
-                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-500 flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
-                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
-                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
-            </div>
-        `;
-        document.getElementById('detail-modal').style.display = 'flex';
-    }
+
+            <!-- NAMA -->
+            <h2 class="text-xl font-black text-slate-800 mt-4 text-center">
+                ${w.Nama}
+            </h2>
+
+            <!-- NIK -->
+            <p class="text-sm text-slate-500 tracking-wide">
+                ${w.NIK}
+            </p>
+        </div>
+
+        <!-- SEPARATOR -->
+        <div class="my-5 border-t border-slate-200"></div>
+
+        <!-- DETAIL -->
+        <div class="space-y-3">
+
+            ${renderDetailItem('No KK', w['No KK'] || w['NO KK'])}
+            ${renderDetailItem('Agama', w.Agama)}
+            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+            ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+            ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+            ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+            ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+
+            ${renderDetailItem(
+                'No HP',
+                rawHp 
+                    ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1">
+                            <span>${rawHp}</span>
+                            <span class="material-icons text-[14px]">open_in_new</span>
+                        </a>`
+                    : '-'
+            )}
+
+            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+            ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+
+        </div>
+    </div>
+`;
+
+document.getElementById('detail-modal').style.display = 'flex';
+
 
     function renderDetailItem(label, val) {
         return `<div class="px-2 py-3 border-b border-slate-50 flex justify-between items-start gap-4">

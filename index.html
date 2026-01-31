@@ -1049,7 +1049,11 @@ function addNewWarga() {
 document.getElementById("f-foto").value = "";
     document.getElementById("preview-foto").src = "";
     document.getElementById("preview-foto").classList.add("hidden");
-    
+
+    document.getElementById("preview-foto").src = "img/default-foto.png"; 
+    document.getElementById("foto-input").value = "";
+    window.currentFoto = ""; 
+
     // RESET FOTO
     const pf = document.getElementById("preview-foto");
     const ff = document.getElementById("f-foto");

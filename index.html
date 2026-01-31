@@ -402,6 +402,7 @@
     let wargaPage = 1, kkPage = 1;
     const PAGE_SIZE = 20;
     let currentStatTab = 'balita';
+    let currentPage = "dashboard"; // halaman default
 
 
     // Handle back button on mobile
@@ -416,6 +417,8 @@
     function toggleLoading(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
     
     function navigate(p) {
+          currentPage = p;
+
       closeDetailSilent();
       document.querySelectorAll('.page').forEach(e => e.classList.toggle('active', e.id === 'page-'+p));
       document.querySelectorAll('.nav-item').forEach(e => e.classList.toggle('active', e.id === 'nav-'+p));
@@ -465,7 +468,7 @@ function logout() {
         allData = await res.json();
         updateUI();
         updateBirthdayBadge();
-        if (currentPage === "dashboard") {
+        if (currentPage === "dashboard")  {
             checkTodayBirthdayPopUp();
         }
         // 🔥 PAKSA render tab statistik default

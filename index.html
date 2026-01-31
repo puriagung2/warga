@@ -424,10 +424,16 @@
     });
 
     function toggleLoading(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
+
+    // permalink
+    window.addEventListener('hashchange', () => {
+    const page = window.location.hash.replace('#', '') || 'dashboard';
+    navigate(page);
+    });
     
     function navigate(p) {
-          currentPage = p;
-
+      currentPage = p;
+      window.location.hash = p; // Baris tambahan untuk mengubah URL permalink
       closeDetailSilent();
       document.querySelectorAll('.page').forEach(e => e.classList.toggle('active', e.id === 'page-'+p));
       document.querySelectorAll('.nav-item').forEach(e => e.classList.toggle('active', e.id === 'nav-'+p));

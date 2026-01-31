@@ -884,39 +884,61 @@ async function handleSaveWarga(e) {
     e.preventDefault();
     toggleLoading(true);
 
-    const blok = fBlok.value;
-    const nomer = fNomer.value;
-    const rt = fRt.value;
-    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
+    // ====== Ambil nilai form ======
+    const originalNik = document.getElementById("f-original-nik").value || "";
+    const nikBaru = document.getElementById("f-nik").value;
 
-    const payload = { 
-        originalNik: fOriginalNik.value || "",
-        nik: fNik.value,
-        kk: fKk.value,
-        nama: fNama.value,
-        kelamin: fKelamin.value,
-        agama: fAgama.value,
-        tempat: fTempat.value,
-        tanggal: fTanggal.value,
-        perkawinan: fPerkawinan.value,
-        tinggal: fTinggal.value,
-        blok,
-        nomer,
-        rt,
-        alamatKTP: fAlamatKtp.value,
-        alamatTinggal: alamatTinggalStr,
-        statusKel: fStatusKel.value,
-        hp: fHp.value,
-        pekerjaan: fPekerjaan.value,
+    const blok = document.getElementById("f-blok").value;
+    const nomer = document.getElementById("f-nomer").value;
+    const rt = document.getElementById("f-rt").value;
+    const alamatTinggal = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-        // foto aman → jika tidak ada return null
-        fotoData: window.cachedBase64Foto || null
+    // ====== Cek foto lama (jika mode EDIT) ======
+    let fotoLama = "";
+    if (originalNik) {
+        const w = allData.find(a => a.NIK == originalNik);
+        fotoLama = w?.Foto || "";
+    }
+
+    // ====== Proses foto baru jika ada ======
+    let fotoBase64 = null;
+    const fotoFile = document.getElementById("f-foto").files[0];
+
+    if (fotoFile) {
+        fotoBase64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(fotoFile);
+        });
+    }
+
+    // ====== Susun payload seperti backend butuh ======
+    const payload = {
+        originalNik,
+        nik: nikBaru,
+        kk: document.getElementById("f-kk").value,
+        nama: document.getElementById("f-nama").value,
+        kelamin: document.getElementById("f-kelamin").value,
+        agama: document.getElementById("f-agama").value,
+        tempat: document.getElementById("f-tempat").value,
+        tanggal: document.getElementById("f-tanggal").value,
+        perkawinan: document.getElementById("f-perkawinan").value,
+        tinggal: document.getElementById("f-tinggal").value,
+        blok, nomer, rt,
+        alamatKTP: document.getElementById("f-alamat-ktp").value,
+        alamatTinggal,
+        statusKel: document.getElementById("f-status-kel").value,
+        hp: document.getElementById("f-hp").value,
+        pekerjaan: document.getElementById("f-pekerjaan").value,
+
+        // Foto: prioritas foto baru, lalu foto lama
+        fotoData: fotoBase64 || null
     };
 
     try {
+        // ====== Kirim ke server ======
         const response = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 action: "saveWarga",
                 args: [payload]
@@ -927,37 +949,36 @@ async function handleSaveWarga(e) {
 
         if (!result.success) throw new Error("Save failed");
 
-        // Selalu refresh data warga setelah simpan
+        // ====== Refresh Database Warga ======
         await refreshData();
 
-        // ================================
-        //  MODE TAMBAH DATA BARU
-        // ================================
-        if (!payload.originalNik) {
-            navigate("dashboard");
+        // ===============================
+        //  MODE EDIT → tetap di profil
+        // ===============================
+        if (originalNik) {
+            const updated = allData.find(w => w.NIK == nikBaru);
+            if (updated) {
+                openDetailModal(updated);
+            } else {
+                navigate("dashboard");
+            }
             toggleLoading(false);
             return;
         }
 
-        // ================================
-        //  MODE EDIT DATA (TETAP DI PROFIL)
-        // ================================
-        const updated = allWarga.find(w => w.NIK == payload.nik);
-
-        if (updated) {
-            openDetailModal(updated);
-        } else {
-            // fallback kalau pencarian gagal
-            navigate("dashboard");
-        }
+        // ===============================
+        //  MODE TAMBAH BARU → balik home
+        // ===============================
+        navigate("dashboard");
 
     } catch (err) {
-        console.error(err);
+        console.error("SAVE ERROR:", err);
         alert("Gagal menyimpan data.");
     } finally {
         toggleLoading(false);
     }
 }
+
 
 
 

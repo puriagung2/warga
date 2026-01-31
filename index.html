@@ -884,61 +884,71 @@ async function handleSaveWarga(e) {
     e.preventDefault();
     toggleLoading(true);
 
-    const blok = document.getElementById('f-blok').value;
-    const nomer = document.getElementById('f-nomer').value;
-    const rt = document.getElementById('f-rt').value;
+    const blok = fBlok.value;
+    const nomer = fNomer.value;
+    const rt = fRt.value;
     const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
     const payload = { 
-        originalNik: document.getElementById('f-original-nik').value,
-        nik: document.getElementById('f-nik').value,
-        kk: document.getElementById('f-kk').value,
-        nama: document.getElementById('f-nama').value,
-        kelamin: document.getElementById('f-kelamin').value,
-        agama: document.getElementById('f-agama').value,
-        tempat: document.getElementById('f-tempat').value,
-        tanggal: document.getElementById('f-tanggal').value,
-        perkawinan: document.getElementById('f-perkawinan').value,
-        tinggal: document.getElementById('f-tinggal').value,
-        blok: blok,
-        nomer: nomer,
-        rt: rt,
-        alamatKTP: document.getElementById('f-alamat-ktp').value,
+        originalNik: fOriginalNik.value || "",
+        nik: fNik.value,
+        kk: fKk.value,
+        nama: fNama.value,
+        kelamin: fKelamin.value,
+        agama: fAgama.value,
+        tempat: fTempat.value,
+        tanggal: fTanggal.value,
+        perkawinan: fPerkawinan.value,
+        tinggal: fTinggal.value,
+        blok,
+        nomer,
+        rt,
+        alamatKTP: fAlamatKtp.value,
         alamatTinggal: alamatTinggalStr,
-        statusKel: document.getElementById('f-status-kel').value,
-        hp: document.getElementById('f-hp').value,
-        pekerjaan: document.getElementById('f-pekerjaan').value,
+        statusKel: fStatusKel.value,
+        hp: fHp.value,
+        pekerjaan: fPekerjaan.value,
+
+        // foto aman → jika tidak ada return null
         fotoData: window.cachedBase64Foto || null
     };
 
     try {
         const response = await fetch(API_URL, {
-            method: 'POST',
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                action: 'saveWarga',
+                action: "saveWarga",
                 args: [payload]
             })
         });
 
         const result = await response.json();
 
-        // ----------------------------
-        //  JIKA TAMBAH DATA BARU
-        // ----------------------------
+        if (!result.success) throw new Error("Save failed");
+
+        // Selalu refresh data warga setelah simpan
+        await refreshData();
+
+        // ================================
+        //  MODE TAMBAH DATA BARU
+        // ================================
         if (!payload.originalNik) {
-            refreshData();
-            navigate('dashboard');
+            navigate("dashboard");
+            toggleLoading(false);
             return;
         }
 
-        // ----------------------------
-        //  JIKA EDIT → TETAP DI PROFIL
-        // ----------------------------
-        const updatedNik = payload.nik;
-        const wargaBaru = allWarga.find(w => w.NIK == updatedNik);
+        // ================================
+        //  MODE EDIT DATA (TETAP DI PROFIL)
+        // ================================
+        const updated = allWarga.find(w => w.NIK == payload.nik);
 
-        if (wargaBaru) {
-            openDetailModal(wargaBaru);   // ⬅️ TETAP DI HALAMAN PROFIL
+        if (updated) {
+            openDetailModal(updated);
+        } else {
+            // fallback kalau pencarian gagal
+            navigate("dashboard");
         }
 
     } catch (err) {
@@ -948,6 +958,7 @@ async function handleSaveWarga(e) {
         toggleLoading(false);
     }
 }
+
 
 
 

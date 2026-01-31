@@ -795,12 +795,15 @@ document.getElementById('detail-modal').style.display = 'flex';
 
     }
 
-    function renderDetailItem(label, val) {
-        return `<div class="px-2 py-3 border-b border-slate-50 flex justify-between items-start gap-4">
-            <p class="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap pt-1">${label}</p>
-            <p class="text-xs font-bold text-slate-700 text-right">${val || '-'}</p>
-        </div>`;
-    }
+   function renderDetailItem(label, value) {
+    return `
+        <div class="px-2 py-1 border-b border-slate-100 flex justify-between items-start gap-2">
+            <p class="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap pt-[2px]">${label}</p>
+            <p class="text-[11px] font-semibold text-slate-700 text-right leading-tight">${value || '-'}</p>
+        </div>
+    `;
+}
+
 
     function showFamily(noKk) {
         const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());

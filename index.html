@@ -884,24 +884,18 @@ async function handleSaveWarga(e) {
     e.preventDefault();
     toggleLoading(true);
 
-    // ====== Ambil nilai form ======
-    const originalNik = document.getElementById("f-original-nik").value || "";
-    const nikBaru = document.getElementById("f-nik").value;
+    // ====== Ambil NIK Lama Jika Edit ======
+    const originalNik = document.getElementById("f-original-nik").value;
 
-    const blok = document.getElementById("f-blok").value;
-    const nomer = document.getElementById("f-nomer").value;
-    const rt = document.getElementById("f-rt").value;
-    const alamatTinggal = `Blok ${blok} No ${nomer} RT 0${rt}`;
-
-    // ====== Cek foto lama (jika mode EDIT) ======
-    let fotoLama = "";
+    // ====== Cari foto lama dari allData ======
+    let existingFoto = "";
     if (originalNik) {
-        const w = allData.find(a => a.NIK == originalNik);
-        fotoLama = w?.Foto || "";
+        const foundW = allData.find(w => w.NIK == originalNik);
+        if (foundW) existingFoto = foundW.Foto || "";
     }
 
-    // ====== Proses foto baru jika ada ======
-    let fotoBase64 = null;
+    // ====== Proses Foto Baru Jika Ada Upload ======
+    let fotoBase64 = "";
     const fotoFile = document.getElementById("f-foto").files[0];
 
     if (fotoFile) {
@@ -912,32 +906,41 @@ async function handleSaveWarga(e) {
         });
     }
 
-    // ====== Susun payload seperti backend butuh ======
-    const payload = {
-        originalNik,
-        nik: nikBaru,
-        kk: document.getElementById("f-kk").value,
-        nama: document.getElementById("f-nama").value,
-        kelamin: document.getElementById("f-kelamin").value,
-        agama: document.getElementById("f-agama").value,
-        tempat: document.getElementById("f-tempat").value,
-        tanggal: document.getElementById("f-tanggal").value,
-        perkawinan: document.getElementById("f-perkawinan").value,
-        tinggal: document.getElementById("f-tinggal").value,
-        blok, nomer, rt,
-        alamatKTP: document.getElementById("f-alamat-ktp").value,
-        alamatTinggal,
-        statusKel: document.getElementById("f-status-kel").value,
-        hp: document.getElementById("f-hp").value,
-        pekerjaan: document.getElementById("f-pekerjaan").value,
+    // ====== Ambil Field to Build Payload ======
+    const fBlok  = document.getElementById("f-blok").value;
+    const fNomer = document.getElementById("f-nomer").value;
+    const fRT    = document.getElementById("f-rt").value;
 
-        // Foto: prioritas foto baru, lalu foto lama
-        fotoData: fotoBase64 || null
+    const alamatTinggal = `Blok ${fBlok} No ${fNomer} RT 0${fRT}`;
+
+    // ====== SUSUN DATA PAYLOAD ======
+    const payload = {
+        originalNik: originalNik,
+        nik: document.getElementById('f-nik').value,
+        kk: document.getElementById('f-kk').value,
+        nama: document.getElementById('f-nama').value,
+        kelamin: document.getElementById('f-kelamin').value,
+        agama: document.getElementById('f-agama').value,
+        tempat: document.getElementById('f-tempat').value,
+        tanggal: document.getElementById('f-tanggal').value,
+        perkawinan: document.getElementById('f-perkawinan').value,
+        tinggal: document.getElementById('f-tinggal').value,
+        blok: fBlok,
+        nomer: fNomer,
+        rt: fRT,
+        alamatKTP: document.getElementById('f-alamat-ktp').value,
+        alamatTinggal: alamatTinggal,
+        statusKel: document.getElementById('f-status-kel').value,
+        hp: document.getElementById('f-hp').value,
+        pekerjaan: document.getElementById('f-pekerjaan').value,
+
+        // Foto Baru / Foto Lama
+        fotoData: fotoBase64 || ""      
     };
 
     try {
-        // ====== Kirim ke server ======
-        const response = await fetch(API_URL, {
+        // ====== Simpan ke Apps Script ======
+        await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
                 action: "saveWarga",
@@ -945,39 +948,25 @@ async function handleSaveWarga(e) {
             })
         });
 
-        const result = await response.json();
-
-        if (!result.success) throw new Error("Save failed");
-
-        // ====== Refresh Database Warga ======
+        // ====== Refresh data dulu ======
         await refreshData();
 
-        // ===============================
-        //  MODE EDIT → tetap di profil
-        // ===============================
-        if (originalNik) {
-            const updated = allData.find(w => w.NIK == nikBaru);
-            if (updated) {
-                showDetail(updated);
-            } else {
-                navigate("dashboard");
-            }
-            toggleLoading(false);
-            return;
-        }
+        // ====== Cari data warga yang baru disimpan ======
+        const updated = allData.find(w => w.NIK == payload.nik);
 
-        // ===============================
-        //  MODE TAMBAH BARU → balik home
-        // ===============================
-        navigate("dashboard");
+        // ====== Tampilkan kembali halaman DETAIL warga ======
+        if (updated) {
+            openDetail(updated);
+        }
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
-        alert("Gagal menyimpan data.");
+
     } finally {
         toggleLoading(false);
     }
 }
+
 
 
 

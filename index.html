@@ -426,16 +426,24 @@
     function toggleLoading(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
 
     // permalink
-    window.addEventListener('hashchange', () => {
+window.addEventListener('hashchange', () => {
     const hash = window.location.hash;
-    
-    if (hash.startsWith('#detail/')) {
-        // Ambil NIK dari hash (pola: #detail/NIK/nama-warga)
-        const parts = hash.split('/');
-        const nik = parts[1];
+
+    if (hash.startsWith('#detail-kk/')) {
+        const noKk = hash.split('/')[1];
+        if (noKk) showFamily(noKk);
+    } 
+    else if (hash.startsWith('#detail/')) {
+        const nik = hash.split('/')[1];
         if (nik) showDetail(nik);
-    } else {
+    } 
+    else {
+        // Jika hash adalah menu biasa (#dashboard, #warga, dll)
         const page = hash.replace('#', '') || 'dashboard';
+        
+        // Tutup modal jika masih terbuka saat navigasi berubah
+        document.getElementById('detail-modal').style.display = 'none';
+        
         navigate(page);
     }
 });
@@ -851,6 +859,9 @@ document.getElementById('detail-modal').style.display = 'flex';
 
     function showFamily(noKk) {
         const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
+      // 1. Ubah URL Hash
+        window.location.hash = `detail-kk/${noKk}`;
+      
         history.pushState({modal: true}, null, "");
         document.getElementById('btn-edit-trigger').style.display = 'none';
         let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;

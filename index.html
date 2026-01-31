@@ -884,36 +884,13 @@ async function handleSaveWarga(e) {
     e.preventDefault();
     toggleLoading(true);
 
-    // ====== Ambil Foto Lama Jika Edit ======
-    const originalNik = document.getElementById("f-original-nik").value;
-    let existingFoto = "";
-
-    if (originalNik) {
-        const findW = allData.find(w => w.NIK == originalNik);
-        if (findW) existingFoto = findW.Foto || "";
-    }
-
-    // ====== Proses Foto Baru Jika Ada ======
-    let fotoBase64 = "";
-    const fotoFile = document.getElementById("f-foto").files[0];
-
-    if (fotoFile) {
-        fotoBase64 = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(fotoFile);
-        });
-    }
-
-    // ====== Susun Payload ======
     const blok = document.getElementById('f-blok').value;
     const nomer = document.getElementById('f-nomer').value;
     const rt = document.getElementById('f-rt').value;
+    const alamatTinggalStr = `Blok ${blok} No ${nomer} RT 0${rt}`;
 
-    const alamatTinggal = `Blok ${blok} No ${nomer} RT 0${rt}`;
-
-    const payload = {
-        originalNik: originalNik,
+    const payload = { 
+        originalNik: document.getElementById('f-original-nik').value,
         nik: document.getElementById('f-nik').value,
         kk: document.getElementById('f-kk').value,
         nama: document.getElementById('f-nama').value,
@@ -927,34 +904,51 @@ async function handleSaveWarga(e) {
         nomer: nomer,
         rt: rt,
         alamatKTP: document.getElementById('f-alamat-ktp').value,
-        alamatTinggal: alamatTinggal,
+        alamatTinggal: alamatTinggalStr,
         statusKel: document.getElementById('f-status-kel').value,
         hp: document.getElementById('f-hp').value,
         pekerjaan: document.getElementById('f-pekerjaan').value,
-
-        // === Foto Baru / Lama ===
-        fotoData: fotoBase64 || ""   // jika kosong → GAS pakai foto lama
+        fotoData: window.cachedBase64Foto || null
     };
 
     try {
-        await fetch(API_URL, {
-            method: "POST",
+        const response = await fetch(API_URL, {
+            method: 'POST',
             body: JSON.stringify({
-                action: "saveWarga",
+                action: 'saveWarga',
                 args: [payload]
             })
         });
 
-        navigate("dashboard");
-        refreshData();
+        const result = await response.json();
+
+        // ----------------------------
+        //  JIKA TAMBAH DATA BARU
+        // ----------------------------
+        if (!payload.originalNik) {
+            refreshData();
+            navigate('dashboard');
+            return;
+        }
+
+        // ----------------------------
+        //  JIKA EDIT → TETAP DI PROFIL
+        // ----------------------------
+        const updatedNik = payload.nik;
+        const wargaBaru = allWarga.find(w => w.NIK == updatedNik);
+
+        if (wargaBaru) {
+            openDetailModal(wargaBaru);   // ⬅️ TETAP DI HALAMAN PROFIL
+        }
 
     } catch (err) {
-        console.error("SAVE ERROR:", err);
-
+        console.error(err);
+        alert("Gagal menyimpan data.");
     } finally {
         toggleLoading(false);
     }
 }
+
 
 
 

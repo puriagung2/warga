@@ -1035,6 +1035,7 @@ showDetail(payload.nik);
 }
     // pop up ultah
     function checkTodayBirthdayPopUp() {
+    if (currentPage !== "dashboard") return;
     const today = new Date();
     const tMonth = today.getMonth();
     const tDate = today.getDate();

@@ -427,9 +427,18 @@
 
     // permalink
     window.addEventListener('hashchange', () => {
-    const page = window.location.hash.replace('#', '') || 'dashboard';
-    navigate(page);
-    });
+    const hash = window.location.hash;
+    
+    if (hash.startsWith('#detail/')) {
+        // Ambil NIK dari hash (pola: #detail/NIK/nama-warga)
+        const parts = hash.split('/');
+        const nik = parts[1];
+        if (nik) showDetail(nik);
+    } else {
+        const page = hash.replace('#', '') || 'dashboard';
+        navigate(page); [cite: 87]
+    }
+});
     
     function navigate(p) {
       currentPage = p;
@@ -746,6 +755,12 @@ function pastelColorFromString(str) {
     function showDetail(nik) {
         const w = allData.find(x => x.NIK.toString() === nik.toString());
         if(!w) return;
+     
+      // Tambahkan baris ini untuk mengubah URL sesuai nama/nik warga
+      // Kita gunakan slug agar URL rapi: #detail/nik/nama-warga
+          const slug = w.Nama.toLowerCase().replace(/ /g, '-');
+          window.location.hash = `detail/${w.NIK}/${slug}`;
+      
         history.pushState({modal: true}, null, "");
         document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
         
@@ -854,6 +869,8 @@ document.getElementById('detail-modal').style.display = 'flex';
     function closeDetail() { 
         document.getElementById('detail-modal').style.display = 'none'; 
         document.getElementById('btn-edit-trigger').style.display = 'block'; 
+      // Kembalikan hash ke halaman aktif (misal #warga atau #dashboard)
+    window.location.hash = currentPage;
     }
 
     function closeDetailSilent() {

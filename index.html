@@ -887,17 +887,16 @@ async function handleSaveWarga(e) {
     // ====== Ambil NIK Lama Jika Edit ======
     const originalNik = document.getElementById("f-original-nik").value;
 
-    // ====== Ambil Foto Lama dari allData ======
+    // ====== Ambil Foto Lama ======
     let existingFoto = "";
     if (originalNik) {
         const found = allData.find(w => w.NIK == originalNik);
         if (found) existingFoto = found.Foto || "";
     }
 
-    // ====== FOTO BARU jika ada upload ======
+    // ====== Proses Foto Baru ======
     let fotoBase64 = "";
     const fotoFile = document.getElementById("f-foto").files[0];
-
     if (fotoFile) {
         fotoBase64 = await new Promise(resolve => {
             const reader = new FileReader();
@@ -910,10 +909,9 @@ async function handleSaveWarga(e) {
     const fBlok  = document.getElementById("f-blok").value;
     const fNomer = document.getElementById("f-nomer").value;
     const fRT    = document.getElementById("f-rt").value;
-
     const alamatTinggal = `Blok ${fBlok} No ${fNomer} RT 0${fRT}`;
 
-    // ====== SUSUN PAYLOAD ======
+    // ====== Payload ======
     const payload = {
         originalNik: originalNik,
         nik: document.getElementById('f-nik').value,
@@ -933,11 +931,10 @@ async function handleSaveWarga(e) {
         statusKel: document.getElementById('f-status-kel').value,
         hp: document.getElementById('f-hp').value,
         pekerjaan: document.getElementById('f-pekerjaan').value,
-        fotoData: fotoBase64 || ""     // jika tidak upload foto baru → kosong → backend pakai foto lama
+        fotoData: fotoBase64 || ""
     };
 
     try {
-        // Kirim ke Apps Script
         await fetch(API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -946,15 +943,21 @@ async function handleSaveWarga(e) {
             })
         });
 
-        // Refresh ulang data warga
+        // Refresh data dari server
         await refreshData();
 
-        // Cari data warga yang baru disimpan
-        const updatedWarga = allData.find(w => w.NIK == payload.nik);
+        // Ambil data yang baru diperbarui
+        const updated = allData.find(w => w.NIK == payload.nik);
 
-        // === KEMBALIKAN KE HALAMAN DETAIL, BUKAN DASHBOARD ===
-        if (updatedWarga) {
-            showDetail(updatedWarga);   // <— ini fungsi yang benar
+        // ====== TUTUP FORM EDIT ======
+        document.getElementById("form-modal").style.display = "none";
+
+        // ====== NOTIFIKASI ======
+        alert("Data berhasil disimpan!");
+
+        // ====== TAMPILKAN DETAIL ======
+        if (updated) {
+            showDetail(updated); 
         }
 
     } catch (err) {
@@ -964,6 +967,7 @@ async function handleSaveWarga(e) {
         toggleLoading(false);
     }
 }
+
 
 
 

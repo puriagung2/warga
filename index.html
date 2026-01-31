@@ -125,7 +125,16 @@
   margin-left: 2px;
   font-weight: bold;
 }
-    
+    @keyframes popupScale {
+    0% { transform: scale(0.7); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+.animate-popup {
+    animation: popupScale 0.4s ease;
+}
+
   </style>
 </head>
 <body>
@@ -960,7 +969,7 @@ showDetail(payload.nik);
         // Tampilkan halaman detail warga yang baru disimpan
         showDetail(payload.nik);
 
-        alert("Data berhasil disimpan!");
+showSuccessPopup("Data berhasil disimpan!");
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
@@ -1137,6 +1146,15 @@ function openPhotoViewer(url) {
 function closePhotoViewer() {
     document.getElementById("photo-viewer").classList.add("hidden");
 }
+// pop up alert
+    function showSuccessPopup(message = "Data berhasil disimpan!") {
+    document.getElementById("popup-success-text").innerText = message;
+    document.getElementById("popup-success").classList.remove("hidden");
+}
+
+function closeSuccessPopup() {
+    document.getElementById("popup-success").classList.add("hidden");
+}
 
   </script>
 
@@ -1168,5 +1186,27 @@ function closePhotoViewer() {
         </div>
     </div>
 </div>
+
+  <!-- ===== MODERN SUCCESS POPUP ===== -->
+<div id="popup-success" class="
+    fixed inset-0 bg-black/40 backdrop-blur-sm
+    flex items-center justify-center 
+    z-50 hidden
+">
+    <div class="bg-white rounded-3xl shadow-xl p-6 w-64 text-center animate-popup">
+        <div class="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-3">
+            <span class="material-icons text-green-600 text-4xl">check_circle</span>
+        </div>
+        <h3 class="text-base font-black text-slate-800 mb-1">Berhasil!</h3>
+        <p id="popup-success-text" class="text-[11px] text-slate-500 mb-4">
+            Data berhasil disimpan.
+        </p>
+        <button onclick="closeSuccessPopup()" 
+            class="bg-green-600 text-white w-full py-2 rounded-xl text-sm font-bold">
+            OK
+        </button>
+    </div>
+</div>
+
 </body>
 </html>

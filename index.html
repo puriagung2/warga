@@ -946,7 +946,11 @@ async function handleSaveWarga(e) {
         await refreshData();
 
         // Tutup modal edit
-        document.getElementById("edit-modal").style.display = "none";
+const addWrap = document.getElementById("add-wrapper");
+if (addWrap) addWrap.style.display = "none";
+
+// Buka halaman detail warga
+showDetail(payload.nik);
 
         // Tampilkan halaman detail warga yang baru disimpan
         showDetail(payload.nik);

@@ -925,20 +925,31 @@ document.getElementById('detail-modal').style.display = 'flex';
         document.getElementById('sync-ktp-check').checked = false; syncKtp();
         navigate('add');
       // === FOTO EDIT ===
-const fotoInput = document.getElementById("f-foto");
-const preview = document.getElementById("preview-foto");
+// === PERBAIKAN FOTO EDIT (Sesuai UI Modern) ===
+    const fotoInput = document.getElementById("f-foto");
+    const preview = document.getElementById("preview-foto");
+    const container = document.getElementById("container-preview");
+    const placeholder = document.getElementById("placeholder-upload");
 
-// Reset file input
-fotoInput.value = "";
+    // 1. Reset input file agar tidak membawa file dari sesi sebelumnya
+    fotoInput.value = "";
 
-// Jika data warga punya foto → tampilkan
-if (w.Foto && w.Foto !== "") {
-    preview.src = w.Foto;
-    preview.classList.remove("hidden");
-} else {
-    preview.src = "";
-    preview.classList.add("hidden");
-}
+    // 2. Jika data warga memiliki foto
+    if (w.Foto && w.Foto.trim() !== "") {
+        // Tampilkan foto
+        preview.src = w.Foto; 
+        
+        // Atur UI Modern: Tampilkan kotak preview, sembunyikan ikon upload
+        container.classList.remove("hidden");
+        placeholder.classList.add("hidden");
+    } else {
+        // Jika tidak ada foto
+        preview.src = "";
+        
+        // Atur UI Modern: Sembunyikan kotak preview, tampilkan ikon upload
+        container.classList.add("hidden");
+        placeholder.classList.remove("hidden");
+    }
 
     }
 

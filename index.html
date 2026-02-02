@@ -364,20 +364,35 @@
                       <option value="Belum/Tidak Bekerja">Belum/Tidak Bekerja</option><option value="Mengurus Rumah Tangga">Mengurus Rumah Tangga</option><option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option><option value="Pensiunan">Pensiunan</option><option value="PNS">PNS</option><option value="TNI">TNI</option><option value="POLRI">POLRI</option><option value="Karyawan Swasta">Karyawan Swasta</option><option value="Wiraswasta">Wiraswasta</option><option value="Petani">Petani</option><option value="Nelayan">Nelayan</option>
                   </select>
               </div>
-            <div>
-    <label class="form-label">Foto Warga</label>
+  <div class="space-y-2">
+    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Foto Warga</label>
+    
+    <div class="relative">
+        <input type="file" 
+               id="f-foto" 
+               accept="image/*" 
+               capture="environment"
+               class="hidden" 
+               onchange="previewFoto(this)">
 
-    <!-- Preview foto -->
-    <img id="preview-foto" 
-         src="" 
-         class="w-32 h-32 object-cover rounded-xl border hidden mb-2">
+        <label for="f-foto" class="flex flex-col items-center justify-center w-full min-h-[120px] p-4 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 hover:bg-slate-100 hover:border-indigo-300 transition-all cursor-pointer group">
+            
+            <div id="container-preview" class="hidden mb-3 relative">
+                <img id="preview-foto" src="" class="w-24 h-24 object-cover rounded-2xl shadow-md border-2 border-white">
+                <div class="absolute -top-2 -right-2 bg-indigo-500 text-white rounded-full p-1 shadow-lg">
+                    <span class="material-icons text-[14px]">cached</span>
+                </div>
+            </div>
 
-    <input type="file" 
-           id="f-foto" 
-           accept="image/*" 
-           capture="environment"
-           class="modern-input"
-           onchange="previewFoto()">
+            <div id="placeholder-upload" class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                    <span class="material-icons text-indigo-500">add_a_photo</span>
+                </div>
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">Ambil Foto atau Upload</p>
+                <p class="text-[9px] text-slate-400 mt-1">PNG, JPG up to 5MB</p>
+            </div>
+        </label>
+    </div>
 </div>
 
               <button type="submit" class="btn-submit">Simpan Data Warga</button>
@@ -1126,20 +1141,38 @@ function closeUltahModal() {
 function previewFoto() {
     const fileInput = document.getElementById("f-foto");
     const img = document.getElementById("preview-foto");
+    const container = document.getElementById("container-preview"); // Wadah foto
+    const placeholder = document.getElementById("placeholder-upload"); // Ikon upload
 
+    // Jika tidak ada file yang dipilih (batal)
     if (fileInput.files.length === 0) {
+        img.src = "";
+        container.classList.add("hidden");
+        placeholder.classList.remove("hidden");
         return;
     }
 
     const reader = new FileReader();
     reader.onload = e => {
         img.src = e.target.result;
-        img.classList.remove("hidden");
+        
+        // Tampilkan foto, sembunyikan icon/teks "Upload"
+        container.classList.remove("hidden");
+        placeholder.classList.add("hidden");
+        
+        // Opsional: Berikan feedback suara atau getar ringan jika di HP
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
     };
+    
     reader.readAsDataURL(fileInput.files[0]);
 }
 
-
+// Tambahkan fungsi ini jika ingin ada tombol hapus manual
+function resetFoto() {
+    const fileInput = document.getElementById("f-foto");
+    fileInput.value = ""; // Bersihkan input file
+    previewFoto(); // Panggil fungsi preview untuk mereset UI
+}
 function addNewWarga() {
     document.getElementById("form-warga").reset();
     document.getElementById("f-original-nik").value = "";

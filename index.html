@@ -1081,6 +1081,19 @@ showToast("Data berhasil disimpan!");
     const checkKtp = document.getElementById('sync-ktp-check');
     if(checkKtp) checkKtp.checked = false;
 
+      // === TAMBAHKAN INI: RESET VISUAL FOTO ===
+    const preview = document.getElementById("preview-foto");
+    const container = document.getElementById("container-preview");
+    const placeholder = document.getElementById("placeholder-upload");
+    const fotoInput = document.getElementById("f-foto");
+
+    if (preview && container && placeholder) {
+        fotoInput.value = ""; // Pastikan input file kosong
+        preview.src = "";     // Hapus gambar yang tersisa
+        container.classList.add("hidden");      // Sembunyikan kotak foto
+        placeholder.classList.remove("hidden"); // Munculkan ikon "Add Photo" lagi
+    }
+      
     // 5. Pindah ke halaman form
     navigate('add');
     

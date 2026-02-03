@@ -964,6 +964,22 @@ document.getElementById('detail-modal').style.display = 'flex';
 
 async function handleSaveWarga(e) {
     e.preventDefault();
+  // --- 1. AMBIL NILAI NIK ---
+    const nikInput = document.getElementById("f-nik").value;
+    const originalNik = document.getElementById("f-original-nik").value;
+
+    // --- 2. VALIDASI DUPLIKAT NIK (TAMBAHAN) ---
+    // Cek di array allData: apakah NIK sudah ada DAN bukan milik orang yang sedang diedit
+    const isDuplicate = allData.some(warga => 
+        warga.NIK.toString() === nikInput.toString() && 
+        nikInput.toString() !== originalNik.toString()
+    );
+
+    if (isDuplicate) {
+        showToast("Gagal! NIK " + nikInput + " sudah terdaftar", "error");
+        document.getElementById("f-nik").focus();
+        return; // Berhenti di sini, tidak lanjut simpan
+    }
     toggleLoading(true);
 
     const originalNik = document.getElementById("f-original-nik").value;

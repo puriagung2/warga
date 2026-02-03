@@ -47,7 +47,14 @@
       --border-color: #334155; /* Slate 700 */
       --input-bg: #0f172a;
     }
-
+body.dark h1, 
+body.dark h2, 
+body.dark h3, 
+body.dark h4, 
+body.dark p, 
+body.dark span:not(.material-icons) {
+    color: var(--text-main) !important;
+}
     body { 
       font-family: 'Plus Jakarta Sans', sans-serif; 
       background-color: var(--bg-milk); 
@@ -949,7 +956,7 @@ document.getElementById('detail-modal').style.display = 'flex';
         members.forEach(m => {
             html += `<div class="warga-card" onclick="showDetail('${m.NIK}')">
                 <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(m.Nama || 'W')[0]}</div>
-                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${m.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p></div>
+                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p></div>
             </div>`;
         });
         document.getElementById('detail-content').innerHTML = html;

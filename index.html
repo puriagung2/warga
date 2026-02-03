@@ -962,60 +962,62 @@ const genderClass =
     "ring-slate-300";
 
 document.getElementById('detail-content').innerHTML = `
-    <div class="bg-white p-5 rounded-3xl shadow-lg border border-slate-100">
+document.getElementById('detail-content').innerHTML = `
+        <div class="p-5 rounded-3xl shadow-lg border transition-colors duration-300" 
+             style="background-color: var(--card-bg); border-color: var(--border-color);">
 
-        <!-- HEADER FOTO + NAMA -->
-        <div class="flex flex-col items-center">
-            <div class="relative">
-                <img 
-                    src="${fotoUrl}"
-                    onclick="openPhotoViewer('${fotoUrl}')"
-                    class="w-28 h-28 object-cover rounded-2xl border shadow ring-4 ${genderClass} cursor-pointer transition-transform duration-200 hover:scale-105"
-                >
-                <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-md shadow">
-                    ${w['Status Keluarga'] || 'Warga'}
+            <div class="flex flex-col items-center">
+                <div class="relative">
+                    <img 
+                        src="${fotoUrl}"
+                        onclick="openPhotoViewer('${fotoUrl}')"
+                        class="w-28 h-28 object-cover rounded-2xl border shadow ring-4 ${genderClass} cursor-pointer transition-transform duration-200 hover:scale-105"
+                    >
+                    <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-md shadow">
+                        ${w['Status Keluarga'] || 'Warga'}
+                    </div>
                 </div>
+
+                <h2 class="text-[17px] font-black mt-3 text-center transition-colors duration-300" 
+                    style="color: var(--text-main);">
+                    ${w.Nama}
+                </h2>
+
+                <p class="text-[11px] tracking-wide transition-colors duration-300" 
+                   style="color: var(--text-muted);">
+                    ${w.NIK}
+                </p>
             </div>
 
-            <h2 class="text-[17px] font-black text-slate-800 mt-3 text-center">
-                ${w.Nama}
-            </h2>
+            <div class="my-3 border-t" style="border-color: var(--border-color);"></div>
 
-            <p class="text-[11px] text-slate-500 tracking-wide">
-                ${w.NIK}
-            </p>
+            <div class="space-y-[6px]"> 
+                ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
+                ${renderDetailItem('Agama', w.Agama)}
+                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+
+                ${renderDetailItem(
+                    'No HP',
+                    rawHp 
+                    ? `<a href="${waLink}" target="_blank" class="text-green-600 dark:text-green-400 font-semibold flex items-center gap-1">
+                            <span>${rawHp}</span>
+                            <span class="material-icons text-[14px]">open_in_new</span>
+                       </a>`
+                    : '-'
+                )}
+
+                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+            </div>
         </div>
+    `;
 
-        <div class="my-3 border-t border-slate-200"></div>
-
-        <!-- DETAIL (Compact Version) -->
-        <div class="space-y-[6px]"> 
-            ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
-            ${renderDetailItem('Agama', w.Agama)}
-            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-            ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-            ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
-            ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
-            ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
-            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-
-            ${renderDetailItem(
-                'No HP',
-                rawHp 
-                ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1">
-                        <span>${rawHp}</span>
-                        <span class="material-icons text-[14px]">open_in_new</span>
-                   </a>`
-                : '-'
-            )}
-
-            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
-            ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
-        </div>
-    </div>
-`;
-
-document.getElementById('detail-modal').style.display = 'flex';
+    document.getElementById('detail-modal').style.display = 'flex';
     }
 
    function renderDetailItem(label, value) {

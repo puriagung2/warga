@@ -55,7 +55,12 @@ body.dark #detail-content p,
 body.dark #detail-content span:not(.material-icons) {
     color: var(--text-main) !important;
 }
-
+body.dark .bg-slate-50, 
+body.dark .bg-slate-100 {
+    background-color: rgba(255, 255, 255, 0.05) !important; /* Background gelap transparan */
+    color: var(--text-muted) !important; /* Teks abu-abu terang */
+    border: 1px solid var(--border-color);
+}
 /* Label keterangan (NIK, No KK, dll) agar sedikit lebih redup tapi terbaca */
 body.dark #detail-content .text-slate-500,
 body.dark #detail-content .text-slate-400 {
@@ -1002,7 +1007,7 @@ function switchStatTab(tab) {
             <div class="warga-card" onclick="showDetail('${w.NIK}')">
                 <div class="avatar ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
                 <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p></div>
-                <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">RT 0${w.RT || '-'}</span>
+                <span class="text-[8px] font-black px-2 py-1 bg-slate-100 text-slate-500 rounded-lg dark:bg-slate-700 dark:text-slate-300">RT 0${w.RT || '-'}</span>`
             </div>
         `).join('');
     }

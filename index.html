@@ -358,6 +358,27 @@ body.dark span:not(.material-icons) {
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
+    /* Pastikan Modal Ulang Tahun Adaptif */
+#modal-ultah .bg-white {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+/* Judul Modal */
+#modal-ultah h3 {
+    color: var(--text-main) !important;
+}
+
+/* Tombol Close */
+#modal-ultah button .material-icons {
+    color: var(--text-muted);
+}
+
+/* Perbaikan untuk tombol Aamiin (agar tetap pink tapi teks putih) */
+#modal-ultah .bg-slate-800 {
+    background-color: #f5adbe !important; /* Warna pink soft */
+    color: white !important;
+}
   </style>
 </head>
 <body>
@@ -1488,25 +1509,32 @@ showToast("Data berhasil disimpan!");
     });
 
     if (birthdayKids.length > 0) {
-        const listContainer = document.getElementById('list-ultah-today');
-        listContainer.innerHTML = birthdayKids.map(w => {
-            const age = today.getFullYear() - new Date(w['Tanggal Lahir']).getFullYear();
-            return `
-                <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-pink-100">
-                    <div class="w-10 h-10 rounded-xl bg-pink-400 flex items-center justify-center text-white font-black text-sm">
-                        ${w.Nama[0]}
-                    </div>
-                    <div class="text-left">
-                        <h4 class="text-xs font-black text-slate-800">${w.Nama}</h4>
-                        <p class="text-[9px] font-bold text-pink-500 uppercase">Ulang Tahun ke-${age}th • Warga RT 0${w.RT}</p>
-                    </div>
+    const listContainer = document.getElementById('list-ultah-today');
+    listContainer.innerHTML = birthdayKids.map(w => {
+        const age = today.getFullYear() - new Date(w['Tanggal Lahir']).getFullYear();
+        return `
+            <div class="flex items-center gap-4 p-3 rounded-2xl border transition-colors duration-300" 
+                 style="background-color: var(--input-bg); border-color: var(--border-color);">
+                
+                <div class="w-10 h-10 rounded-xl bg-pink-400 flex items-center justify-center text-white font-black text-sm shadow-sm">
+                    ${w.Nama[0]}
                 </div>
-            `;
-        }).join('');
+                
+                <div class="text-left">
+                    <h4 class="text-xs font-black transition-colors duration-300" style="color: var(--text-main);">
+                        ${w.Nama}
+                    </h4>
+                    <p class="text-[9px] font-bold text-pink-500 uppercase tracking-tight">
+                        Ulang Tahun ke-${age}th • Warga RT 0${w.RT}
+                    </p>
+                </div>
+            </div>
+        `;
+    }).join('');
 
-        // Tampilkan Modal
-        document.getElementById('modal-ultah').classList.remove('hidden');
-    }
+    // Tampilkan Modal
+    document.getElementById('modal-ultah').classList.remove('hidden');
+}
 }
 
 function closeUltahModal() {

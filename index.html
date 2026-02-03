@@ -49,7 +49,30 @@
       --input-bg: #0f172a;
     }
 
-    
+ /* Khusus untuk teks di dalam modal detail saat Dark Mode */
+body.dark #detail-content h3, 
+body.dark #detail-content p,
+body.dark #detail-content span:not(.material-icons) {
+    color: var(--text-main) !important;
+}
+
+/* Label keterangan (NIK, No KK, dll) agar sedikit lebih redup tapi terbaca */
+body.dark #detail-content .text-slate-500,
+body.dark #detail-content .text-slate-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Card kecil di dalam detail (misal kotak NIK/No KK) */
+body.dark #detail-content .bg-slate-50 {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+/* Ikon di dalam detail agar warnanya tetap bagus */
+body.dark #detail-content .text-indigo-600,
+body.dark #detail-content .text-indigo-500 {
+    color: var(--pastel-primary) !important;
+}   
 body.dark h1, 
 body.dark h2, 
 body.dark h3, 

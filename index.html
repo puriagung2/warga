@@ -975,34 +975,37 @@ document.getElementById('detail-modal').style.display = 'flex';
 
 async function handleSaveWarga(e) {
     e.preventDefault();
-  // --- 1. AMBIL NILAI NIK ---
+ // --- 1. AMBIL NILAI NIK ---
     const nikInput = document.getElementById("f-nik").value;
     const originalNik = document.getElementById("f-original-nik").value;
+    const elErrorNik = document.getElementById("error-nik"); // Ambil elemen pesan teks
 
-    // --- 2. VALIDASI DUPLIKAT NIK (TAMBAHAN) ---
-    // Cek di array allData: apakah NIK sudah ada DAN bukan milik orang yang sedang diedit
+    // --- 2. VALIDASI DUPLIKAT NIK ---
     const isDuplicate = allData.some(warga => 
         warga.NIK.toString() === nikInput.toString() && 
         nikInput.toString() !== originalNik.toString()
     );
 
     if (isDuplicate) {
-        showToast("Gagal! NIK " + nikInput + " sudah terdaftar", "error");
+        showToast("Gagal! NIK sudah terdaftar", "error");
         
         const elNik = document.getElementById("f-nik");
         elNik.focus();
         
+        // --- TAMBAHKAN BARIS INI ---
+        if (elErrorNik) elErrorNik.classList.remove('hidden'); // Menghilangkan class hidden agar teks muncul
+        
         // Tambahkan kelas error dan animasi getar
         elNik.classList.add('border-red-500', 'bg-red-50', 'animate-shake');
         
-        // Hapus animasi getar setelah 500ms agar bisa dipicu lagi nanti
         setTimeout(() => {
             elNik.classList.remove('animate-shake');
         }, 500);
 
         return; 
     } else {
-        // Jika tidak duplikat, pastikan warna merah hilang
+        // Jika tidak duplikat, sembunyikan kembali teks dan hapus warna merah
+        if (elErrorNik) elErrorNik.classList.add('hidden'); 
         document.getElementById("f-nik").classList.remove('border-red-500', 'bg-red-50');
     }
     toggleLoading(true);

@@ -1256,6 +1256,16 @@ function closePhotoViewer() {
     }, duration);
 }
 
+    // duplikat NIK
+    function isNikDuplicate(nik, originalNik = null) {
+    // Jika sedang edit dan NIK tidak diubah, bukan duplikat
+    if (originalNik && nik === originalNik) {
+        return false;
+    }
+    
+    // Cek apakah NIK sudah ada di database (allData)
+    return allData.some(warga => warga.NIK.toString() === nik.toString());
+}
   </script>
 
   <div id="photo-viewer"

@@ -30,6 +30,22 @@
       --pastel-primary: #8b8cf8;   /* soft indigo */
       --pastel-active: #f163cd;    /* pastel pink */
       --pastel-muted: #94a3b8;
+      /* Warna Card & Text Default */
+      --card-bg: #ffffff;
+      --text-main: #334155;
+      --text-muted: #64748b;
+      --border-color: #f1f5f9;
+      --input-bg: #f8fafc;
+    }
+
+    /* Variabel Khusus Dark Mode */
+    body.dark {
+      --bg-milk: #0f172a; /* Slate 900 */
+      --card-bg: #1e293b; /* Slate 800 */
+      --text-main: #f1f5f9; /* Slate 100 */
+      --text-muted: #94a3b8; /* Slate 400 */
+      --border-color: #334155; /* Slate 700 */
+      --input-bg: #0f172a;
     }
 
     body { 
@@ -37,6 +53,7 @@
       background-color: var(--bg-milk); 
       color: #334155;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     #loading-overlay {
@@ -68,8 +85,11 @@
     'opsz' 24;
      }
     
+    /* input.modern-input, select.modern-input, textarea.modern-input {width: 100%; background: #f8fafc; border: 2px solid #f1f5f9; padding: 12px 16px 12px 35px; border-radius: 16px; font-size: 13px; font-weight: 600; color: #1e293b;} */
     input.modern-input, select.modern-input, textarea.modern-input {
-      width: 100%; background: #f8fafc; border: 2px solid #f1f5f9; padding: 12px 16px 12px 35px; border-radius: 16px; font-size: 13px; font-weight: 600; color: #1e293b;
+      background-color: var(--input-bg) !important;
+      border-color: var(--border-color) !important;
+      color: var(--text-main) !important;
     }
     textarea.modern-input { padding-left: 16px; min-height: 80px; }
 
@@ -77,11 +97,21 @@
     .btn-submit { width: 100%; background: #ff93ad; color: white; padding: 16px; border-radius: 20px; font-weight: 700; margin-top: 10px; }
 
     /* Dashboard UI */
-    .stat-card { background: white; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+    /* Update elemen agar mengikuti variabel */
+    .stat-card, .warga-card, .login-card, #detail-modal { 
+      background-color: var(--card-bg) !important; 
+      border-color: var(--border-color) !important; 
+      color: var(--text-main);
+    }
+    /* .stat-card { background: white; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; } */
     .stat-card2 { background: #f2d7ee; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
     .stat-card3 { background: #b1e9e5; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
 
-    .bottom-nav { position: fixed; bottom: 0px; left: 0px; right: 0px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); height: 70px; border-radius: 20px 20px 0 0; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 -6px 20px rgba(0,0,0,0.1); z-index: 4000; } 
+    .bottom-nav {
+      background: body.dark ? rgba(30,41,59,0.8) : rgba(255,255,255,0.9);
+      background-color: var(--card-bg);
+    }
+    /* .bottom-nav { position: fixed; bottom: 0px; left: 0px; right: 0px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); height: 70px; border-radius: 20px 20px 0 0; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 -6px 20px rgba(0,0,0,0.1); z-index: 4000; } */
     .nav-item { color: var(--pastel-muted); display: flex; flex-direction: column; align-items: center; font-size: 9px; font-weight: 800; text-transform: uppercase; border: none; background: none; outline: none; }
     .nav-item.active { color: var(--pastel-active); }
     .nav-item:hover {color: var(--pastel-primary); transform: translateY(-4px);}
@@ -193,6 +223,9 @@
             </div>
         </div>
         <div class="flex gap-4">
+          <button onclick="toggleDarkMode()" class="text-slate-300 bg-none border-none hover:text-yellow-500 transition-colors">
+        <span class="material-icons" id="dark-icon">dark_mode</span>
+    </button>
             <button onclick="refreshData()" class="text-slate-300 bg-none border-none hover:text-indigo-500 transition-colors">
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
@@ -684,6 +717,9 @@ function switchStatTab(tab) {
     }
 
     function renderCharts() {
+      const isDark = document.body.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b'; // Warna teks grid
+      
         const priaCount = allData.filter(w => (w.Kelamin || "").toLowerCase().startsWith('l')).length;
         const wanitaCount = allData.filter(w => (w.Kelamin || "").toLowerCase().startsWith('p')).length;
         document.getElementById('label-pria').innerText = priaCount;
@@ -703,6 +739,17 @@ function switchStatTab(tab) {
             data: { labels: ['RT 01', 'RT 02', 'RT 03', 'RT 04'], datasets: [{ data: rtCounts, backgroundColor: ['#A5B4FC', '#FDA4AF', '#FCD34D', '#6EE7B7'], borderRadius: 12 }] },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
         });
+      // Tambahkan opsi warna pada scales:
+        options: {
+            scales: {
+                y: { 
+                    ticks: { color: textColor } // Sesuaikan warna angka di grafik
+                },
+                x: { 
+                    ticks: { color: textColor } 
+                }
+            }
+        }
     }
 
     function renderList(data, target) {
@@ -1324,6 +1371,38 @@ function closePhotoViewer() {
     // Cek apakah NIK sudah ada di database (allData)
     return allData.some(warga => warga.NIK.toString() === nik.toString());
 }
+
+    // darkmode
+    function toggleDarkMode() {
+        const body = document.body;
+        const icon = document.getElementById('dark-icon');
+        
+        body.classList.toggle('dark');
+        
+        if (body.classList.contains('dark')) {
+            icon.innerText = 'light_mode';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            icon.innerText = 'dark_mode';
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    // Fungsi untuk memuat tema saat aplikasi dibuka
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const icon = document.getElementById('dark-icon');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark');
+            if(icon) icon.innerText = 'light_mode';
+        }
+    }
+
+    // Panggil applySavedTheme di dalam DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        checkLoginState();
+        applySavedTheme();
+    });
   </script>
 
   <div id="photo-viewer"

@@ -197,6 +197,7 @@ body.dark span:not(.material-icons) {
 
     /* Memperbaiki warna teks item nav agar tidak hilang */
     .nav-item { 
+      position: relative;
       color: var(--text-muted); 
       display: flex; 
       flex-direction: column; 
@@ -221,19 +222,46 @@ body.dark span:not(.material-icons) {
 
     /* Efek Klik (Active State) */
     .nav-item:active {
+      color: var(--pastel-active) !important;
       transform: scale(0.9);
     }
-
+    .nav-item.active::after {
+      transform: translateX(-50%) scaleX(1); /* Garis muncul */
+    }
+    /* Indikator Garis di Atas (Hanya muncul saat .active) */
+    .nav-item::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0); /* Sembunyi secara default */
+      width: 20px;
+      height: 4px;
+      background: var(--pastel-active);
+      border-radius: 0 0 4px 4px;
+      transition: transform 0.3s ease;
+    }
     /* Icon Animation pada Hover */
     .nav-item:hover .material-icons {
       transform: scale(1.1);
       filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.3));
     }
-/* Penyesuaian Dark Mode Hover */
+    /* Animasi Ikon saat Aktif */
+    .nav-item.active .material-icons {
+      transform: translateY(2px);
+      filter: drop-shadow(0 4px 6px rgba(241, 99, 205, 0.4));
+    }
+  /* Penyesuaian Dark Mode Hover */
     body.dark .nav-item:hover {
       background-color: rgba(255, 255, 255, 0.05);
       color: var(--pastel-active);
     }
+
+    /* Tambahkan sedikit cahaya (glow) pada background saat aktif di Dark Mode */
+    body.dark .nav-item.active {
+      background: radial-gradient(circle, rgba(241, 99, 205, 0.1) 0%, transparent 70%);
+    }
+    
     /* Memperbaiki tombol tambah tengah agar bordernya tidak putih mencolok di dark mode */
   .btn-add-center { 
       background: var(--pastel-primary); 
@@ -718,17 +746,29 @@ window.addEventListener('hashchange', () => {
     }
 });
     
-    function navigate(p) {
-      currentPage = p;
-      window.location.hash = p; // Baris tambahan untuk mengubah URL permalink
-      closeDetailSilent();
-      document.querySelectorAll('.page').forEach(e => e.classList.toggle('active', e.id === 'page-'+p));
-      document.querySelectorAll('.nav-item').forEach(e => e.classList.toggle('active', e.id === 'nav-'+p));
-      window.scrollTo(0, 0);
-      if (p === 'stats') {
-      switchStatTab(currentStatTab);
-      }
+   function navigate(p) {
+    currentPage = p;
+    window.location.hash = p; 
+    closeDetailSilent();
+    
+    // 1. Mengaktifkan halaman yang dipilih
+    document.querySelectorAll('.page').forEach(e => 
+        e.classList.toggle('active', e.id === 'page-' + p)
+    );
+    
+    // 2. Mengaktifkan menu di bottom-nav (Garis & Warna Aktif)
+    document.querySelectorAll('.nav-item').forEach(e => {
+        // Kita cek apakah ID elemen ini cocok dengan p (misal: nav-home, nav-stats, dll)
+        const isActive = e.id === 'nav-' + p;
+        e.classList.toggle('active', isActive);
+    });
+
+    window.scrollTo(0, 0);
+    
+    if (p === 'stats') {
+        switchStatTab(currentStatTab);
     }
+}
 
     function syncKtp() {
         const isChecked = document.getElementById('sync-ktp-check').checked;

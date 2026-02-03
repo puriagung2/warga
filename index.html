@@ -1125,7 +1125,16 @@ function pastelColorFromString(str) {
       
         history.pushState({modal: true}, null, "");
         document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
-        
+
+      // --- PERBAIKAN LOGIKA ROLE (Tambahkan ini) ---
+    const btnEdit = document.getElementById('btn-edit-trigger');
+    if (currentUser && currentUser.role === 'lihat') {
+        btnEdit.style.display = 'none'; // Sembunyikan tombol edit jika role 'lihat'
+    } else {
+        btnEdit.style.display = 'flex'; // Tampilkan jika admin atau petugas
+        btnEdit.onclick = () => openFormEdit(w);
+    }
+      
         const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
         let waLink = "";
         if (rawHp) {
@@ -1683,6 +1692,20 @@ function closePhotoViewer() {
         checkLoginState();
         applySavedTheme();
     });
+
+    let allData = []; // Data warga
+  let dataUsers = []; // Data dari sheet 'users'
+  let currentUser = JSON.parse(sessionStorage.getItem('session_user')) || null;
+
+    async function fetchUsers() {
+    try {
+        const response = await fetch('URL_WEB_APP_SCRIPT_ANDA?sheet=users');
+        dataUsers = await response.json();
+    } catch (error) {
+        console.error("Gagal mengambil data user:", error);
+    }
+}
+    
   </script>
 
   <div id="photo-viewer"

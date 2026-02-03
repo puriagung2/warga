@@ -105,11 +105,15 @@ body.dark span:not(.material-icons) {
 
     /* Dashboard UI */
     /* Update elemen agar mengikuti variabel */
-    .stat-card, .warga-card, .login-card, #detail-modal { 
-      background-color: var(--card-bg) !important; 
-      border-color: var(--border-color) !important; 
-      color: var(--text-main);
-    }
+   .stat-card, .warga-card, .login-card, #detail-modal { 
+    background-color: var(--card-bg) !important; 
+    border-color: var(--border-color) !important; 
+    color: var(--text-main);
+    /* Tambahkan/Pastikan baris ini ada: */
+    border-radius: 1.5rem !important; /* Sama dengan rounded-3xl di Tailwind */
+    overflow: hidden; /* Menjaga isi chart tidak keluar dari lengkungan */
+    transition: background-color 0.3s, border-color 0.3s;
+}
     /* .stat-card { background: white; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; } */
     .stat-card2 { background: #f2d7ee; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
     .stat-card3 { background: #b1e9e5; padding: 20px; border-radius: 24px; border: 1px solid #f1f5f9; position: relative; overflow: hidden; }

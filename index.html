@@ -134,14 +134,18 @@
 .animate-popup {
     animation: popupScale 0.4s ease;
 }
-    @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+/* Animasi Getar untuk Input Error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-8px); }
 }
+
 .animate-shake {
-  animation: shake 0.2s ease-in-out 0s 2;
-  border-color: #ef4444 !important;
+    animation: shake 0.3s ease-in-out;
+    border-color: #ef4444 !important; /* Merah tegas */
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
   </style>
@@ -314,8 +318,15 @@
           <form id="form-warga" onsubmit="handleSaveWarga(event)" class="space-y-4 pb-24">
               <input type="hidden" id="f-original-nik">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label class="form-label">NIK<span class="required-icon">*</span></label><input type="number" id="f-nik" class="modern-input" required></div>
-                  <div><label class="form-label">No KK</label><input type="number" id="f-kk" class="modern-input" ></div>
+        <div>
+        <label class="form-label">NIK<span class="required-icon">*</span></label>
+        
+        <input type="number" id="f-nik" class="modern-input" required>
+        <p id="error-nik" class="hidden text-[9px] text-red-500 font-bold mt-1 uppercase tracking-tight">
+            * NIK ini sudah digunakan oleh warga lain
+        </p>
+      </div>                 
+                <div><label class="form-label">No KK</label><input type="number" id="f-kk" class="modern-input" ></div>
               </div>
               <div><label class="form-label">Nama Lengkap<span class="required-icon">*</span></label><input type="text" id="f-nama" class="modern-input" required></div>
               <div class="grid grid-cols-2 gap-4">
@@ -977,8 +988,22 @@ async function handleSaveWarga(e) {
 
     if (isDuplicate) {
         showToast("Gagal! NIK " + nikInput + " sudah terdaftar", "error");
-        document.getElementById("f-nik").focus();
-        return; // Berhenti di sini, tidak lanjut simpan
+        
+        const elNik = document.getElementById("f-nik");
+        elNik.focus();
+        
+        // Tambahkan kelas error dan animasi getar
+        elNik.classList.add('border-red-500', 'bg-red-50', 'animate-shake');
+        
+        // Hapus animasi getar setelah 500ms agar bisa dipicu lagi nanti
+        setTimeout(() => {
+            elNik.classList.remove('animate-shake');
+        }, 500);
+
+        return; 
+    } else {
+        // Jika tidak duplikat, pastikan warna merah hilang
+        document.getElementById("f-nik").classList.remove('border-red-500', 'bg-red-50');
     }
     toggleLoading(true);
 
@@ -1118,6 +1143,11 @@ showToast("Data berhasil disimpan!");
         container.classList.add("hidden");      // Sembunyikan kotak foto
         placeholder.classList.remove("hidden"); // Munculkan ikon "Add Photo" lagi
     }
+      / Sembunyikan pesan error NIK jika sebelumnya sempat muncul
+    const elErrorNik = document.getElementById("error-nik");
+    if(elErrorNik) elErrorNik.classList.add('hidden');
+    
+    document.getElementById("f-nik").classList.remove('border-red-500', 'bg-red-50');
       
     // 5. Pindah ke halaman form
     navigate('add');

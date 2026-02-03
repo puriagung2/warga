@@ -510,6 +510,44 @@ body.dark span:not(.material-icons) {
             <div><label class="form-label" style="color: var(--text-muted)">Tanggal Lahir<span class="required-icon">*</span></label><input type="date" id="f-tanggal" class="modern-input" required></div>
         </div>
 
+      <div class="grid grid-cols-2 gap-4">
+    <div>
+        <label class="form-label" style="color: var(--text-muted)">Status Perkawinan<span class="required-icon">*</span></label>
+        <select id="f-perkawinan" class="modern-input">
+            <option value="Belum kawin">Belum kawin</option>
+            <option value="Kawin">Kawin</option>
+            <option value="Cerai Hidup">Cerai Hidup</option>
+            <option value="Cerai Mati">Cerai Mati</option>
+        </select>
+    </div>
+    <div>
+        <label class="form-label" style="color: var(--text-muted)">Status Tinggal<span class="required-icon">*</span></label>
+        <select id="f-tinggal" class="modern-input">
+            <option value="Tetap">Tetap</option>
+            <option value="Kontrak">Kontrak</option>
+            <option value="Kos">Kos</option>
+            <option value="Lainnya">Lainnya</option>
+        </select>
+    </div>
+</div>
+
+<div>
+    <label class="form-label" style="color: var(--text-muted)">Pekerjaan<span class="required-icon">*</span></label>
+    <select id="f-pekerjaan" class="modern-input">
+        <option value="Belum/Tidak Bekerja">Belum/Tidak Bekerja</option>
+        <option value="Mengurus Rumah Tangga">Mengurus Rumah Tangga</option>
+        <option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option>
+        <option value="Pensiunan">Pensiunan</option>
+        <option value="PNS">PNS</option>
+        <option value="TNI">TNI</option>
+        <option value="POLRI">POLRI</option>
+        <option value="Karyawan Swasta">Karyawan Swasta</option>
+        <option value="Wiraswasta">Wiraswasta</option>
+        <option value="Petani">Petani</option>
+        <option value="Nelayan">Nelayan</option>
+    </select>
+</div>
+      
         <div class="p-4 rounded-2xl space-y-4 border transition-colors duration-300" style="background-color: var(--input-bg); border-color: var(--border-color);">
             <p class="text-[10px] font-black uppercase tracking-widest" style="color: var(--pastel-primary)">Alamat Tinggal Sekarang</p>
             <div class="grid grid-cols-3 gap-2">

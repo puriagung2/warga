@@ -832,20 +832,59 @@ function logout() {
   location.reload();
 }
 
-    async function refreshData() {
-      toggleLoading(true);
-      try {
-        const res = await fetch(`${API_URL}?action=getAllWarga`);
-        allData = await res.json();
-        updateUI();
-        updateBirthdayBadge();
-        if (currentPage === "dashboard")  {
-            checkTodayBirthdayPopUp();
-        }
-        // 🔥 PAKSA render tab statistik default
-        switchStatTab(currentStatTab);
-      } catch (e) { console.error(e); } finally { toggleLoading(false); }
+ async function refreshData() {
+  toggleLoading(true);
+  try {
+    const res = await fetch(`${API_URL}?action=getAllWarga`);
+    const rawData = await res.json(); // Ambil data mentah dulu
+
+    // --- LOGIKA ROLE & FILTER RT ---
+    const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+    
+    if (userData && userData.role === 'petugas') {
+      // Jika petugas, hanya simpan data yang RT-nya cocok
+      allData = rawData.filter(w => String(w.RT) === String(userData.rt));
+    } else {
+      // Jika admin atau role 'lihat', simpan semua data
+      allData = rawData;
     }
+    // -------------------------------
+
+    updateUI();
+    updateBirthdayBadge();
+    
+    if (currentPage === "dashboard")  {
+        checkTodayBirthdayPopUp();
+    }
+    
+    // PAKSA render tab statistik default
+    switchStatTab(currentStatTab);
+    
+    // Tambahkan ini agar tombol tambah/edit hilang jika role 'lihat'
+    applyPermissions(); 
+
+  } catch (e) { 
+    console.error(e); 
+  } finally { 
+    toggleLoading(false); 
+  }
+}
+
+function applyPermissions() {
+    const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+    if (!userData) return;
+
+    const btnTambah = document.querySelector('.btn-add-center'); // Sesuaikan class tombol + Anda
+    const btnEdit = document.getElementById('btn-edit-trigger'); // Tombol edit di modal detail
+
+    if (userData.role === 'lihat') {
+        if (btnTambah) btnTambah.style.display = 'none';
+        if (btnEdit) btnEdit.style.display = 'none';
+    } else {
+        if (btnTambah) btnTambah.style.display = 'flex';
+        // Tombol edit biasanya diatur muncul/tidaknya di dalam fungsi showDetail
+    }
+}
 
     function updateUI() {
         document.getElementById('stat-total').innerText = allData.length;
@@ -1117,8 +1156,16 @@ function pastelColorFromString(str) {
     function showDetail(nik) {
         const w = allData.find(x => x.NIK.toString() === nik.toString());
         if(!w) return;
-     
-      // Tambahkan baris ini untuk mengubah URL sesuai nama/nik warga
+const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+    const btnEdit = document.getElementById('btn-edit-trigger');
+    
+    // Sembunyikan tombol edit jika role adalah 'lihat'
+    if (userData && userData.role === 'lihat') {
+        btnEdit.style.display = 'none';
+    } else {
+        btnEdit.style.display = 'flex';
+        btnEdit.onclick = () => openFormEdit(w);
+    }
       // Kita gunakan slug agar URL rapi: #detail/nik/nama-warga
           const slug = w.Nama.toLowerCase().replace(/ /g, '-');
           window.location.hash = `detail/${w.NIK}/${slug}`;
@@ -1433,6 +1480,50 @@ showToast("Data berhasil disimpan!");
       refreshData();
     }
   }
+
+    function getUsers() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sh = ss.getSheetByName(SHEET_USERS);
+  const data = sh.getDataRange().getValues();
+  const headers = data.shift();
+  
+  return data.map(row => {
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = row[i]);
+    return obj;
+  });
+}
+
+    async function doLogin() {
+    const user = document.getElementById('username-input').value; // Sesuaikan ID input Anda
+    const pass = document.getElementById('password-input').value; // Sesuaikan ID input Anda
+    
+    showLoading(true);
+    try {
+        // Memanggil fungsi checkLogin di kode .gs dengan parameter action dan args
+        const params = encodeURIComponent(JSON.stringify([user, pass]));
+        const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
+        const result = await response.json();
+
+        if (result.success) {
+            // Simpan data user lengkap (username, role, rt) ke localStorage
+            localStorage.setItem('ewarga_user', JSON.stringify(result));
+            
+            // Sembunyikan login, tampilkan aplikasi
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            // Refresh data agar filter RT berjalan
+            refreshData(); 
+        } else {
+            alert("Username atau Password salah!");
+        }
+    } catch (err) {
+        console.error("Login Error:", err);
+    } finally {
+        showLoading(false);
+    }
+}
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);

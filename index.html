@@ -425,16 +425,34 @@ body.dark span:not(.material-icons) {
                 <h1 id="welcome-text" class="text-xl font-extrabold text-slate-800 leading-tight">E-WARGA RW6</h1>
 
             </div>
+<div id="user-info-banner" class="px-6 py-2 transition-all duration-300" style="display: none;">
+    <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <p class="text-[11px] font-medium text-slate-500" id="user-display-text">
+            Memuat informasi user...
+        </p>
+    </div>
+</div>
+          
         </div>
-        <div class="flex gap-4">
-          <button onclick="toggleDarkMode()" class="text-slate-300 bg-none border-none hover:text-yellow-500 transition-colors">
+<div class="flex items-center gap-4">
+    <div id="user-info-display" class="hidden md:flex flex-col items-end leading-tight mr-1">
+        <span id="display-user-role" class="text-[11px] font-black text-white uppercase tracking-wider"></span>
+        <span id="display-user-rt" class="text-[9px] font-medium text-slate-400"></span>
+    </div>
+
+    <button onclick="toggleDarkMode()" class="text-slate-300 hover:text-yellow-500 transition-colors">
         <span class="material-icons" id="dark-icon">dark_mode</span>
     </button>
-            <button onclick="refreshData()" class="text-slate-300 bg-none border-none hover:text-indigo-500 transition-colors">
-                <span class="material-icons" id="refresh-icon">refresh</span>
-            </button>
-            <button onclick="logout()" class="text-slate-300 bg-none border-none"><span class="material-icons">logout</span></button>
-        </div>
+    
+    <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
+        <span class="material-icons" id="refresh-icon">refresh</span>
+    </button>
+    
+    <button onclick="logout()" class="text-slate-300 hover:text-red-500 transition-colors">
+        <span class="material-icons">logout</span>
+    </button>
+</div>
     </header>
 
     <main class="flex-1 p-6 pb-32">
@@ -828,8 +846,10 @@ window.addEventListener('hashchange', () => {
     }
 
 function logout() {
+  if(confirm("Apakah Anda ingin keluar dari sistem?")) {
   localStorage.removeItem('ewarga_user');
   location.reload();
+}
 }
 
 async function refreshData() {
@@ -1476,6 +1496,7 @@ showToast("Data berhasil disimpan!");
     if (user) {
       document.getElementById('auth-container').style.display = 'none';
       document.getElementById('main-app').style.display = 'flex';
+      updateUserInfoDisplay(); // <--- Tambahkan ini
       refreshData();
     }
   }
@@ -1793,6 +1814,32 @@ function closePhotoViewer() {
     } catch (error) {
         console.error("Gagal mengambil data user:", error);
     }
+}
+
+    function updateUserInfoDisplay() {
+    const rawUser = localStorage.getItem('ewarga_user');
+    const banner = document.getElementById('user-info-banner');
+    const textElement = document.getElementById('user-display-text');
+    
+    if (!rawUser) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    let userData;
+    try {
+        userData = JSON.parse(rawUser);
+    } catch (e) {
+        userData = { role: rawUser, rt: "" };
+    }
+
+    banner.style.display = 'block';
+
+    // Format tampilan teks agar lebih informatif
+    const roleCapitalized = userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
+    const rtInfo = userData.rt ? ` - RT 0${userData.rt}` : "";
+    
+    textElement.innerHTML = `Halo, <span class="font-bold text-slate-800">${roleCapitalized}${rtInfo}</span> • Sesi Aktif`;
 }
     
   </script>

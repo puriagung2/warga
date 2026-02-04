@@ -1174,7 +1174,6 @@ const userData = JSON.parse(localStorage.getItem('ewarga_user'));
         document.getElementById('btn-edit-trigger').onclick = () => openFormEdit(w);
 
       // --- PERBAIKAN LOGIKA ROLE (Tambahkan ini) ---
-    const btnEdit = document.getElementById('btn-edit-trigger');
     if (currentUser && currentUser.role === 'lihat') {
         btnEdit.style.display = 'none'; // Sembunyikan tombol edit jika role 'lihat'
     } else {

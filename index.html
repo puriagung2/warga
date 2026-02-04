@@ -417,43 +417,38 @@ body.dark span:not(.material-icons) {
   </div>
 
   <div id="main-app">
-    <header class="p-6 flex justify-between items-center">
+    <header class="p-6 pb-2 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" alt="Logo" class="w-10 h-10 object-contain">
             <div>
                 <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Puri Agung 2</p>
                 <h1 id="welcome-text" class="text-xl font-extrabold text-slate-800 leading-tight">E-WARGA RW6</h1>
-
             </div>
-<div id="user-info-banner" class="px-6 py-2 transition-all duration-300" style="display: none;">
-    <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-        <p class="text-[11px] font-medium text-slate-500" id="user-display-text">
-            Memuat informasi user...
-        </p>
-    </div>
-</div>
-          
         </div>
-<div class="flex items-center gap-4">
-    <div id="user-info-display" class="hidden md:flex flex-col items-end leading-tight mr-1">
-        <span id="display-user-role" class="text-[11px] font-black text-white uppercase tracking-wider"></span>
-        <span id="display-user-rt" class="text-[9px] font-medium text-slate-400"></span>
-    </div>
 
-    <button onclick="toggleDarkMode()" class="text-slate-300 hover:text-yellow-500 transition-colors">
-        <span class="material-icons" id="dark-icon">dark_mode</span>
-    </button>
-    
-    <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
-        <span class="material-icons" id="refresh-icon">refresh</span>
-    </button>
-    
-    <button onclick="logout()" class="text-slate-300 hover:text-red-500 transition-colors">
-        <span class="material-icons">logout</span>
-    </button>
-</div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleDarkMode()" class="text-slate-300 hover:text-yellow-500 transition-colors">
+                <span class="material-icons" id="dark-icon">dark_mode</span>
+            </button>
+            <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
+                <span class="material-icons" id="refresh-icon">refresh</span>
+            </button>
+            <button onclick="logout()" class="text-slate-300 hover:text-red-500 transition-colors">
+                <span class="material-icons">logout</span>
+            </button>
+        </div>
     </header>
+
+    <div id="user-info-banner" class="px-7 py-1 mb-2 transition-all duration-300" style="display: none;">
+        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 py-1.5 px-3 rounded-full w-fit border border-slate-100 dark:border-slate-700">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            <p class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide" id="user-display-text">
+                Memuat informasi user...
+            </p>
+        </div>
+    </div>
+    
+    </div>
 
     <main class="flex-1 p-6 pb-32">
       <!-- Dashboard -->
@@ -1816,7 +1811,7 @@ function closePhotoViewer() {
     }
 }
 
-    function updateUserInfoDisplay() {
+   function updateUserInfoDisplay() {
     const rawUser = localStorage.getItem('ewarga_user');
     const banner = document.getElementById('user-info-banner');
     const textElement = document.getElementById('user-display-text');
@@ -1830,16 +1825,17 @@ function closePhotoViewer() {
     try {
         userData = JSON.parse(rawUser);
     } catch (e) {
+        // Handle jika data masih format teks lama
         userData = { role: rawUser, rt: "" };
     }
 
     banner.style.display = 'block';
 
-    // Format tampilan teks agar lebih informatif
-    const roleCapitalized = userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
-    const rtInfo = userData.rt ? ` - RT 0${userData.rt}` : "";
+    // Format Teks: ADMIN atau PETUGAS RT 01
+    const roleName = userData.role.toUpperCase();
+    const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
     
-    textElement.innerHTML = `Halo, <span class="font-bold text-slate-800">${roleCapitalized}${rtInfo}</span>`;
+    textElement.innerHTML = `SESI: <span class="text-indigo-500">${roleName}</span> • ${rtInfo}`;
 }
     
   </script>

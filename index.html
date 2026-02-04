@@ -833,67 +833,71 @@ function logout() {
 }
 
 async function refreshData() {
-  toggleLoading(true);
-  try {
-    const res = await fetch(`${API_URL}?action=getAllWarga`);
-    const rawData = await res.json();
+    toggleLoading(true);
+    try {
+        const res = await fetch(`${API_URL}?action=getAllWarga`);
+        const rawData = await res.json();
 
-    // --- LOGIKA ROLE & FILTER RT (VERSI AMAN) ---
-    let userData = null;
-    const storedUser = localStorage.getItem('ewarga_user');
+        // AMBIL DATA USER DENGAN AMAN
+        const rawUser = localStorage.getItem('ewarga_user');
+        let userData = null;
+        if (rawUser) {
+            try { userData = JSON.parse(rawUser); } 
+            catch (e) { userData = { role: rawUser, rt: "" }; }
+        }
 
-    if (storedUser) {
-      try {
-        // Coba baca sebagai JSON (format: {"role":"petugas", "rt":"1"})
-        userData = JSON.parse(storedUser);
-      } catch (e) {
-        // Jika gagal (isinya cuma teks "rw6"), buat objek manual
-        userData = { role: storedUser, rt: "" };
-      }
+        // LOGIKA FILTER
+        if (userData && userData.role === 'petugas') {
+            allData = rawData.filter(w => String(w.RT) === String(userData.rt));
+        } else if (userData && userData.role?.startsWith('rt')) { 
+            // Tambahan jika role ditulis langsung "rt1", "rt2"
+            const nomorRt = userData.role.replace('rt', '');
+            allData = rawData.filter(w => String(w.RT) === nomorRt);
+        } else {
+            allData = rawData;
+        }
+
+        updateUI();
+        updateBirthdayBadge();
+        if (currentPage === "dashboard") checkTodayBirthdayPopUp();
+        switchStatTab(currentStatTab);
+        
+        applyPermissions(); 
+
+    } catch (e) {
+        console.error("Error di refreshData:", e);
+    } finally {
+        toggleLoading(false);
     }
-    
-    // Proses Filter berdasarkan data yang sudah divalidasi
-    if (userData && userData.role === 'petugas') {
-      // Jika petugas, hanya simpan data yang RT-nya cocok
-      allData = rawData.filter(w => String(w.RT) === String(userData.rt));
-    } else {
-      // Jika admin, lihat, atau rw6, simpan semua data
-      allData = rawData;
-    }
-    // --------------------------------------------
-
-    updateUI();
-    updateBirthdayBadge();
-    
-    if (currentPage === "dashboard")  {
-        checkTodayBirthdayPopUp();
-    }
-    
-    switchStatTab(currentStatTab);
-    
-    // Pastikan fungsi ini ada untuk mengatur tombol tambah/edit
-    applyPermissions(); 
-
-  } catch (e) { 
-    console.error("Error di refreshData:", e); 
-  } finally { 
-    toggleLoading(false); 
-  }
 }
 
 function applyPermissions() {
-    const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+    const rawUser = localStorage.getItem('ewarga_user');
+    let userData = null;
+
+    if (rawUser) {
+        try {
+            // Coba baca sebagai JSON
+            userData = JSON.parse(rawUser);
+        } catch (e) {
+            // Jika error (isinya cuma teks "admin"), buat objek manual
+            userData = { role: rawUser, rt: "" };
+        }
+    }
+
     if (!userData) return;
 
-    const btnTambah = document.querySelector('.btn-add-center'); // Sesuaikan class tombol + Anda
-    const btnEdit = document.getElementById('btn-edit-trigger'); // Tombol edit di modal detail
+    const btnTambah = document.querySelector('.btn-add-center');
+    const btnEdit = document.getElementById('btn-edit-trigger');
 
-    if (userData.role === 'lihat') {
+    // Cek role (mendukung teks "lihat", "rw6", atau objek)
+    const userRole = userData.role || userData; 
+
+    if (userRole === 'lihat' || userRole === 'rw6') {
         if (btnTambah) btnTambah.style.display = 'none';
         if (btnEdit) btnEdit.style.display = 'none';
     } else {
         if (btnTambah) btnTambah.style.display = 'flex';
-        // Tombol edit biasanya diatur muncul/tidaknya di dalam fungsi showDetail
     }
 }
 

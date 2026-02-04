@@ -832,23 +832,35 @@ function logout() {
   location.reload();
 }
 
- async function refreshData() {
+async function refreshData() {
   toggleLoading(true);
   try {
     const res = await fetch(`${API_URL}?action=getAllWarga`);
-    const rawData = await res.json(); // Ambil data mentah dulu
+    const rawData = await res.json();
 
-    // --- LOGIKA ROLE & FILTER RT ---
-    const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+    // --- LOGIKA ROLE & FILTER RT (VERSI AMAN) ---
+    let userData = null;
+    const storedUser = localStorage.getItem('ewarga_user');
+
+    if (storedUser) {
+      try {
+        // Coba baca sebagai JSON (format: {"role":"petugas", "rt":"1"})
+        userData = JSON.parse(storedUser);
+      } catch (e) {
+        // Jika gagal (isinya cuma teks "rw6"), buat objek manual
+        userData = { role: storedUser, rt: "" };
+      }
+    }
     
+    // Proses Filter berdasarkan data yang sudah divalidasi
     if (userData && userData.role === 'petugas') {
       // Jika petugas, hanya simpan data yang RT-nya cocok
       allData = rawData.filter(w => String(w.RT) === String(userData.rt));
     } else {
-      // Jika admin atau role 'lihat', simpan semua data
+      // Jika admin, lihat, atau rw6, simpan semua data
       allData = rawData;
     }
-    // -------------------------------
+    // --------------------------------------------
 
     updateUI();
     updateBirthdayBadge();
@@ -857,14 +869,13 @@ function logout() {
         checkTodayBirthdayPopUp();
     }
     
-    // PAKSA render tab statistik default
     switchStatTab(currentStatTab);
     
-    // Tambahkan ini agar tombol tambah/edit hilang jika role 'lihat'
+    // Pastikan fungsi ini ada untuk mengatur tombol tambah/edit
     applyPermissions(); 
 
   } catch (e) { 
-    console.error(e); 
+    console.error("Error di refreshData:", e); 
   } finally { 
     toggleLoading(false); 
   }

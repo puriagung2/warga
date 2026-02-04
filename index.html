@@ -105,7 +105,12 @@ body.dark span:not(.material-icons) {
     }
 
     #auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
-    #main-app { display: none; min-height: 100vh; flex-direction: column; }
+    #main-app { display: none; min-height: 100vh; flex-direction: column; justify-content: flex-start; gap: 0; }
+    #user-info-banner {
+    padding-top: 0 !important;
+    padding-bottom: 10px !important;
+    margin-top: -4px; /* Menarik sedikit ke atas agar lebih rapat */
+}    
     .page { display: none; }
     .page.active { display: block; animation: fadeIn 0.3s ease-out; }
     

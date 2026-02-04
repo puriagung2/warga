@@ -1612,26 +1612,32 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
     // 3. Ubah Judul Form menjadi Input Data (bukan Edit)
     document.getElementById('form-title').innerText = "Input Data Warga";
 
-     // --- TAMBAHKAN LOGIKA PENGUNCI RT DI SINI ---
+     // --- LOGIKA PENGUNCI RT YANG LEBIH AMAN ---
     const rawUser = localStorage.getItem('ewarga_user');
-    const rtInput = document.getElementById("f-rt"); // Pastikan ID ini sesuai dengan input RT di form Anda
+    const rtInput = document.getElementById("f-rt");
 
     if (rawUser && rtInput) {
-        const userData = JSON.parse(rawUser);
-        if (userData.role === 'petugas') {
-            // Petugas hanya bisa input di RT-nya sendiri
+        let userData;
+        try {
+            // Coba baca sebagai JSON
+            userData = JSON.parse(rawUser);
+        } catch (e) {
+            // Jika error (seperti kasus Anda), buat objek darurat
+            userData = { role: 'petugas', rt: rawUser.replace(/\D/g, "") }; 
+        }
+
+        if (userData && userData.role === 'petugas') {
             rtInput.value = userData.rt;
             rtInput.readOnly = true;
-            rtInput.style.backgroundColor = "#f1f5f9"; // Warna abu-abu soft (slate-100)
+            rtInput.style.backgroundColor = "#f1f5f9";
             rtInput.style.cursor = "not-allowed";
         } else {
-            // Admin bebas pilih RT
             rtInput.readOnly = false;
             rtInput.style.backgroundColor = "white";
             rtInput.style.cursor = "default";
         }
     }
-    // --- AKHIR LOGIKA PENGUNCI --- 
+    // --- AKHIR LOGIKA AMAN ---
     
     // 4. Pastikan checkbox alamat KTP tidak tercentang
     const checkKtp = document.getElementById('sync-ktp-check');

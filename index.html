@@ -1471,7 +1471,7 @@ async function handleSaveWarga(e) {
         statusKel: document.getElementById("f-status-kel").value,
         hp: document.getElementById("f-hp").value,
         pekerjaan: document.getElementById("f-pekerjaan").value,
-        fotoData: fotoBase64 || ""   // jika kosong → pakai foto lama di server
+        fotoData: fotoBase64 || "",   // jika kosong → pakai foto lama di server
         // --- TAMBAHKAN DUA BARIS INI KE PAYLOAD ---
         updatedBy: currentUserData.role + (currentUserData.rt ? ` RT${currentUserData.rt}` : ""),
         lastUpdate: new Date().toLocaleString('id-ID')

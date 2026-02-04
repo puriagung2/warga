@@ -1466,6 +1466,7 @@ async function handleSaveWarga(e) {
         blok: fBlok,
         nomer: fNomer,
         rt: fRT,
+        currentUser: currentUserData, // Tambahkan ini agar divalidasi oleh code.gs
         alamatKTP: document.getElementById("f-alamat-ktp").value,
         alamatTinggal: alamatTinggal,
         statusKel: document.getElementById("f-status-kel").value,
@@ -1610,6 +1611,27 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
     
     // 3. Ubah Judul Form menjadi Input Data (bukan Edit)
     document.getElementById('form-title').innerText = "Input Data Warga";
+
+     // --- TAMBAHKAN LOGIKA PENGUNCI RT DI SINI ---
+    const rawUser = localStorage.getItem('ewarga_user');
+    const rtInput = document.getElementById("f-rt"); // Pastikan ID ini sesuai dengan input RT di form Anda
+
+    if (rawUser && rtInput) {
+        const userData = JSON.parse(rawUser);
+        if (userData.role === 'petugas') {
+            // Petugas hanya bisa input di RT-nya sendiri
+            rtInput.value = userData.rt;
+            rtInput.readOnly = true;
+            rtInput.style.backgroundColor = "#f1f5f9"; // Warna abu-abu soft (slate-100)
+            rtInput.style.cursor = "not-allowed";
+        } else {
+            // Admin bebas pilih RT
+            rtInput.readOnly = false;
+            rtInput.style.backgroundColor = "white";
+            rtInput.style.cursor = "default";
+        }
+    }
+    // --- AKHIR LOGIKA PENGUNCI --- 
     
     // 4. Pastikan checkbox alamat KTP tidak tercentang
     const checkKtp = document.getElementById('sync-ktp-check');

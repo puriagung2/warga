@@ -1528,7 +1528,7 @@ showToast("Data berhasil disimpan!");
         if (result.success) {
             // Simpan data user lengkap (username, role, rt) ke localStorage
             localStorage.setItem('ewarga_user', JSON.stringify(result));
-            
+            updateUserInfoDisplay();
             // Sembunyikan login, tampilkan aplikasi
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';

@@ -837,6 +837,7 @@ window.addEventListener('hashchange', () => {
         if(result.success) {
            <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
             localStorage.setItem('ewarga_user', u);
+            updateUserInfoDisplay();
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
             refreshData();

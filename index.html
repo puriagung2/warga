@@ -1473,8 +1473,8 @@ async function handleSaveWarga(e) {
         pekerjaan: document.getElementById("f-pekerjaan").value,
         fotoData: fotoBase64 || ""   // jika kosong → pakai foto lama di server
         // --- TAMBAHKAN DUA BARIS INI KE PAYLOAD ---
-        updatedBy: currentUserData.role + (currentUserData.rt ? ` RT${currentUserData.rt}` : ""),
-        clientTimestamp: new Date().toISOString() // Opsional: waktu dari HP user
+        updatedBy: currentUserData.role + (currentUserData.rt ? ` RT${currentUserData.rt}` : ""), // Tambahkan koma
+        clientTimestamp: new Date().toISOString()
     };
 
     try {

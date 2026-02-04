@@ -1277,6 +1277,8 @@ function showDetail(nik) {
                 ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
                 ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
                 ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
+                ${renderDetailItem('Terakhir Update', w['Tanggal Update'] || '-')}
+                ${renderDetailItem('Oleh', w['Updated By'] || '-')}
             </div>
         </div>
     `;
@@ -1439,6 +1441,17 @@ async function handleSaveWarga(e) {
     const fRT    = document.getElementById("f-rt").value;
     const alamatTinggal = `Blok ${fBlok} No ${fNomer} RT 0${fRT}`;
 
+    // --- TAMBAHKAN INI SEBELUM PAYLOAD ---
+    const rawUser = localStorage.getItem('ewarga_user');
+    let currentUserData = { role: 'Guest', rt: '' };
+    if (rawUser) {
+        try {
+            currentUserData = JSON.parse(rawUser);
+        } catch (e) {
+            currentUserData = { role: rawUser, rt: '' };
+        }
+    }
+    
     const payload = {
         originalNik: originalNik,
         nik: document.getElementById("f-nik").value,
@@ -1459,6 +1472,9 @@ async function handleSaveWarga(e) {
         hp: document.getElementById("f-hp").value,
         pekerjaan: document.getElementById("f-pekerjaan").value,
         fotoData: fotoBase64 || ""   // jika kosong → pakai foto lama di server
+        // --- TAMBAHKAN DUA BARIS INI KE PAYLOAD ---
+        updatedBy: currentUserData.role + (currentUserData.rt ? ` RT${currentUserData.rt}` : ""),
+        clientTimestamp: new Date().toISOString() // Opsional: waktu dari HP user
     };
 
     try {

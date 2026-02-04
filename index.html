@@ -1172,24 +1172,36 @@ function showDetail(nik) {
   const w = allData.find(x => x.NIK.toString() === nik.toString());
   if (!w) return;
 
-  // 1. Ambil data User dari localStorage
-  const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+  // --- PERBAIKAN LOGIKA AMBIL USER (SAFE PARSE) ---
+  const rawUser = localStorage.getItem('ewarga_user');
+  let userData = null;
+
+  if (rawUser) {
+    try {
+      // Jika isinya JSON {"role":"admin"}, ini akan berhasil
+      userData = JSON.parse(rawUser);
+    } catch (e) {
+      // Jika isinya cuma teks "admin", kita buat jadi objek manual
+      userData = { role: rawUser, rt: "" };
+    }
+  }
+
   const btnEdit = document.getElementById('btn-edit-trigger');
 
-  // 2. Logika Role: Tampilkan/Sembunyikan tombol Edit
-  if (userData && userData.role === 'lihat') {
+  // Logika Role: Sembunyikan jika role adalah 'lihat' atau 'rw6'
+  const userRole = userData ? userData.role : '';
+  if (userRole === 'lihat' || userRole === 'rw6') {
     btnEdit.style.display = 'none';
   } else {
     btnEdit.style.display = 'flex';
     btnEdit.onclick = () => openFormEdit(w);
   }
+  // -----------------------------------------------
 
-  // 3. Update URL Hash agar rapi
   const slug = w.Nama.toLowerCase().replace(/ /g, '-');
   window.location.hash = `detail/${w.NIK}/${slug}`;
   history.pushState({ modal: true }, null, "");
 
-  // 4. Logika WhatsApp Link
   const rawHp = (w['No HP'] || w['NO HP'] || "").toString();
   let waLink = "";
   if (rawHp) {
@@ -1199,7 +1211,6 @@ function showDetail(nik) {
     waLink = `https://wa.me/${cleanHp}`;
   }
 
-  // 5. Logika Foto & Gender Class
   const fotoUrl = (w.Foto && w.Foto !== '')
     ? w.Foto
     : "https://raw.githubusercontent.com/puriagung2/warga/refs/heads/main/default-foto.png";
@@ -1209,7 +1220,6 @@ function showDetail(nik) {
     (w.Kelamin || '').toLowerCase().startsWith('p') ? "ring-pink-400" :
     "ring-slate-300";
 
-  // 6. Render Konten ke Modal
   document.getElementById('detail-content').innerHTML = `
         <div class="p-5 rounded-3xl shadow-lg border transition-colors duration-300" style="background-color: var(--card-bg); border-color: var(--border-color);">
             <div class="flex flex-col items-center">
@@ -1223,18 +1233,10 @@ function showDetail(nik) {
                         ${w['Status Keluarga'] || 'Warga'}
                     </div>
                 </div>
-
-                <h2 class="text-[17px] font-black mt-3 text-center transition-colors duration-300" style="color: var(--text-main);">
-                    ${w.Nama}
-                </h2>
-
-                <p class="text-[11px] tracking-wide transition-colors duration-300" style="color: var(--text-muted);">
-                    ${w.NIK}
-                </p>
+                <h2 class="text-[17px] font-black mt-3 text-center" style="color: var(--text-main);">${w.Nama}</h2>
+                <p class="text-[11px] tracking-wide" style="color: var(--text-muted);">${w.NIK}</p>
             </div>
-
             <div class="my-3 border-t" style="border-color: var(--border-color);"></div>
-
             <div class="space-y-[6px]"> 
                 ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
                 ${renderDetailItem('Agama', w.Agama)}
@@ -1244,17 +1246,7 @@ function showDetail(nik) {
                 ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
                 ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
                 ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-
-                ${renderDetailItem(
-                  'No HP',
-                  rawHp 
-                  ? `<a href="${waLink}" target="_blank" class="text-green-600 dark:text-green-400 font-semibold flex items-center gap-1">
-                          <span>${rawHp}</span>
-                          <span class="material-icons text-[14px]">open_in_new</span>
-                     </a>`
-                  : '-'
-                )}
-
+                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
                 ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
                 ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
             </div>

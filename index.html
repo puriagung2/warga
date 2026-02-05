@@ -2116,9 +2116,11 @@ function exportToPDF(data, judul) {
         styles: { fontSize: 7, cellPadding: 2 },
         headStyles: { fillColor: [99, 102, 241], halign: 'center' },
         columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 40 },
-            6: { cellWidth: 50 } // Beri ruang lebih untuk alamat
+            0: { cellWidth: 8 },  // No
+            1: { cellWidth: 35 }, // Nama
+            2: { cellWidth: 30 }, // NIK
+            4: { cellWidth: 35 }, // Tempat/Tgl Lahir
+            6: { cellWidth: 45 }, // Alamat Tinggal
         }
     });
 

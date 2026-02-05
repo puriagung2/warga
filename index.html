@@ -544,7 +544,6 @@ body.dark span:not(.material-icons) {
                     <option value="2">RT 02</option>
                     <option value="3">RT 03</option>
                     <option value="4">RT 04</option>
-                    <option value="5">RT 05</option>
                 </select>
             </div>
 
@@ -2091,23 +2090,20 @@ function closePhotoViewer() {
     });
 }
 
+// 1. Fungsi Utama Export
 function prosesExport(format) {
     const filterRT = document.getElementById('export-rt').value;
     const filterTinggal = document.getElementById('export-tinggal').value;
     const filterKategori = document.getElementById('export-kategori').value;
 
-    // 1. Proses Filtering
+    // Logika filtering data
     let filtered = allData.filter(w => {
-        // Filter RT
         const matchRT = (filterRT === "ALL") || (String(w.RT || w.rt) === filterRT);
-        
-        // Filter Status Tinggal
         const statusTinggalRaw = (w['Status Tinggal'] || w['TINGGAL'] || "").toUpperCase();
         const matchTinggal = (filterTinggal === "ALL") || (statusTinggalRaw === filterTinggal);
         
-        // Filter Kategori Khusus
         const tglLahir = w['Tanggal Lahir'] || w['TANGGAL LAHIR'];
-        const umur = tglLahir ? calculateAge(tglLahir) : 0;
+        const umur = tglLahir ? calculateAge(tglLahir) : 0; // Pastikan fungsi calculateAge sudah ada
         const statusKel = (w['Status Keluarga'] || "").toUpperCase();
         
         let matchKategori = true;
@@ -2119,33 +2115,53 @@ function prosesExport(format) {
     });
 
     if (filtered.length === 0) {
-        alert("Data tidak ditemukan! Silakan cek filter Anda kembali.");
+        alert("Data tidak ditemukan!");
         return;
     }
 
-    // 2. Mapping Kolom untuk Export (Menambahkan Alamat Tinggal)
     const dataExport = filtered.map((w, index) => ({
         "No": index + 1,
         "Nama Lengkap": w.Nama,
         "NIK": `'${w.NIK}`,
         "RT": w.RT || w.rt,
-        "Blok": w.Blok || w.BLOK || "",
-        "No. Rumah": w.Nomer || w.NOMER || "",
         "Status Keluarga": w['Status Keluarga'],
         "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
-        "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || w.Alamat || "", // Kolom Baru
+        "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
         "No HP": w.HP || w['No HP'] || ""
     }));
 
-    // 3. Jalankan Export berdasarkan format
     if (format === 'xlsx') {
         const worksheet = XLSX.utils.json_to_sheet(dataExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Data_Warga");
-        XLSX.writeFile(workbook, `Laporan_RW06_RT${filterRT}_${formatTanggal(new Date())}.xlsx`);
-    } else {
-        exportToPDF(dataExport);
+        XLSX.writeFile(workbook, `Laporan_Warga_RW06.xlsx`);
+    } else if (format === 'pdf') {
+        // PEMANGGILAN FOTO PDF
+        exportToPDF(dataExport); 
     }
+}
+
+// 2. Definisi Fungsi exportToPDF (Harus sejajar dengan prosesExport)
+function exportToPDF(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+    
+    doc.setFontSize(14);
+    doc.text("LAPORAN DATA WARGA RW 06", 14, 15);
+
+    const headers = [Object.keys(data[0])];
+    const body = data.map(item => Object.values(item));
+
+    doc.autoTable({
+        head: headers,
+        body: body,
+        startY: 25,
+        theme: 'grid',
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [99, 102, 241] }
+    });
+
+    doc.save(`Laporan_Warga_RW06.pdf`);
 }
 
 // Fungsi pembantu format tanggal untuk nama file

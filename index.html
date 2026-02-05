@@ -2147,7 +2147,7 @@ function exportToPDF(data) {
     const doc = new jsPDF('l', 'mm', 'a4'); 
     
     doc.setFontSize(14);
-    doc.text("LAPORAN DATA WARGA RW 06", 14, 15);
+    doc.text("DATA WARGA RW 06", 14, 15);
 
     const headers = [Object.keys(data[0])];
     const body = data.map(item => Object.values(item));
@@ -2206,10 +2206,11 @@ function prosesExport(format) {
         "No": index + 1,
         "Nama Lengkap": w.Nama,
         "NIK": `'${w.NIK}`,
+        "No KK": `'${w['No KK'] || w['NO KK']}`,
         "RT": w.RT || w.rt,
         "Blok": w.Blok || w.BLOK || "",
         "No. Rumah": w.Nomer || w.NOMER || "",
-        "Status Keluarga": w['Status Keluarga'],
+        // "Status Keluarga": w['Status Keluarga'],
         "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
         "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || w.Alamat || "", // Kolom Baru
         "No HP": w.HP || w['No HP'] || ""

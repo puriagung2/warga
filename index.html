@@ -1299,45 +1299,70 @@ function renderDetailItem(label, value) {
 function showFamily(noKk) {
     const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
     
-    // --- LOGIKA SORTING BERDASARKAN STATUS KELUARGA ---
+    // 1. Tentukan Prioritas Status
     const priority = {
         "KEPALA KELUARGA": 1,
         "ISTRI": 2,
-        "ANAK": 3,
-        "LAINNYA": 4 // Untuk status lain seperti Mertua, Pembantu, dll
+        "ANAK": 3
     };
 
+    // 2. Logika Sorting Multi-Level
     members.sort((a, b) => {
         const statusA = (a['Status Keluarga'] || "").toUpperCase();
         const statusB = (b['Status Keluarga'] || "").toUpperCase();
         
-        // Ambil bobot, jika tidak ada di daftar priority, beri nilai besar (99)
         const weightA = priority[statusA] || 99;
         const weightB = priority[statusB] || 99;
-        
-        return weightA - weightB;
-    });
-    // --- AKHIR LOGIKA SORTING ---
 
+        // Jika statusnya berbeda (misal KK vs Istri), urutkan berdasarkan status
+        if (weightA !== weightB) {
+            return weightA - weightB;
+        }
+
+        // Jika statusnya SAMA (misal sama-sama ANAK), urutkan berdasarkan umur
+        // Kita bandingkan Tanggal Lahir (Kolom: 'Tanggal Lahir' atau 'TANGGAL LAHIR')
+        const tglA = new Date(a['Tanggal Lahir'] || a['TANGGAL LAHIR'] || "1900-01-01");
+        const tglB = new Date(b['Tanggal Lahir'] || b['TANGGAL LAHIR'] || "1900-01-01");
+
+        // Tanggal yang lebih kecil (lebih tua) muncul lebih dulu
+        return tglA - tglB;
+    });
+
+    // --- Sisa kode untuk menampilkan UI (sama seperti sebelumnya) ---
     window.location.hash = `detail-kk/${noKk}`;
     history.pushState({modal: true}, null, "");
-    
     document.getElementById('btn-edit-trigger').style.display = 'none';
     
     let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;
     
     members.forEach(m => {
-        html += `<div class="warga-card" onclick="showDetail('${m.NIK}')">
-            <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(m.Nama || 'W')[0]}</div>
-            <div class="flex-1">
-                <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p>
-            </div>
-        </div>`;
+        html += `
+            <div class="warga-card" onclick="showDetail('${m.NIK}')">
+                <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">
+                    ${(m.Nama || 'W')[0]}
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">
+                        ${m['Status Keluarga']} ${m['Status Keluarga'].toUpperCase() === 'ANAK' ? '• ' + calculateAge(m['Tanggal Lahir']) + ' Thn' : ''}
+                    </p>
+                </div>
+            </div>`;
     });
     
     document.getElementById('detail-content').innerHTML = html;
     document.getElementById('detail-modal').style.display = 'flex';
+}
+
+// Fungsi tambahan untuk menghitung umur (agar tampilan lebih informatif)
+function calculateAge(birthDate) {
+    if (!birthDate) return "";
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
 }
 
     function handleBackAction() { if (history.state && history.state.modal) { history.back(); } else { closeDetail(); } }

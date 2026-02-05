@@ -1296,23 +1296,49 @@ function renderDetailItem(label, value) {
 }
 
 
-    function showFamily(noKk) {
-        const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
-      // 1. Ubah URL Hash
-        window.location.hash = `detail-kk/${noKk}`;
-      
-        history.pushState({modal: true}, null, "");
-        document.getElementById('btn-edit-trigger').style.display = 'none';
-        let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;
-        members.forEach(m => {
-            html += `<div class="warga-card" onclick="showDetail('${m.NIK}')">
-                <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(m.Nama || 'W')[0]}</div>
-                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p></div>
-            </div>`;
-        });
-        document.getElementById('detail-content').innerHTML = html;
-        document.getElementById('detail-modal').style.display = 'flex';
-    }
+function showFamily(noKk) {
+    const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
+    
+    // --- LOGIKA SORTING BERDASARKAN STATUS KELUARGA ---
+    const priority = {
+        "KEPALA KELUARGA": 1,
+        "ISTRI": 2,
+        "ANAK": 3,
+        "LAINNYA": 4 // Untuk status lain seperti Mertua, Pembantu, dll
+    };
+
+    members.sort((a, b) => {
+        const statusA = (a['Status Keluarga'] || "").toUpperCase();
+        const statusB = (b['Status Keluarga'] || "").toUpperCase();
+        
+        // Ambil bobot, jika tidak ada di daftar priority, beri nilai besar (99)
+        const weightA = priority[statusA] || 99;
+        const weightB = priority[statusB] || 99;
+        
+        return weightA - weightB;
+    });
+    // --- AKHIR LOGIKA SORTING ---
+
+    window.location.hash = `detail-kk/${noKk}`;
+    history.pushState({modal: true}, null, "");
+    
+    document.getElementById('btn-edit-trigger').style.display = 'none';
+    
+    let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;
+    
+    members.forEach(m => {
+        html += `<div class="warga-card" onclick="showDetail('${m.NIK}')">
+            <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(m.Nama || 'W')[0]}</div>
+            <div class="flex-1">
+                <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">${m['Status Keluarga']}</p>
+            </div>
+        </div>`;
+    });
+    
+    document.getElementById('detail-content').innerHTML = html;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
 
     function handleBackAction() { if (history.state && history.state.modal) { history.back(); } else { closeDetail(); } }
 

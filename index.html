@@ -438,6 +438,9 @@ body.dark span:not(.material-icons) {
             <button onclick="toggleDarkMode()" class="text-slate-300 hover:text-yellow-500 transition-colors">
                 <span class="material-icons" id="dark-icon">dark_mode</span>
             </button>
+          <button onclick="toggleExportPanel()" class="p-2 bg-slate-100 rounded-full text-slate-600">
+                <span class="material-icons">summarize</span>
+          </button>
             <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
@@ -746,7 +749,6 @@ body.dark span:not(.material-icons) {
         <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active"><span class="material-symbols-rounded">dashboard</span><span>Beranda</span></button>
         <button onclick="navigate('warga')" id="nav-warga" class="nav-item"><span class="material-symbols-rounded">group_search</span><span>Warga</span></button>
         <button onclick="openFormTambah()" class="btn-add-center"><span class="material-icons">add</span></button>  
-        <!-- <button onclick="navigate('add'); closeDetail();" class="btn-add-center"><span class="material-icons">add</span></button> -->
         <button onclick="navigate('kk')" id="nav-kk" class="nav-item"><span class="material-symbols-rounded">diversity_1</span><span>Keluarga</span></button>
 
       <button onclick="navigate('stats')" id="nav-stats" class="nav-item relative">
@@ -756,8 +758,8 @@ body.dark span:not(.material-icons) {
         0
     </span>
 </button>
-    
     </nav>
+    
   </div>
 </div> <!-- div tutup main-app -->
   <script>

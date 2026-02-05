@@ -486,6 +486,15 @@ body.dark span:not(.material-icons) {
         </div>
 
         <div class="stat-card">
+    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Status Tinggal</p>
+    <div class="flex items-center gap-4">
+        <div class="w-24 h-24"><canvas id="chartTinggal"></canvas></div>
+        
+        <div id="tinggal-legend" class="flex-1 space-y-2"> </div>
+    </div>
+    </div>
+
+        <div class="stat-card">
             <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Distribusi Per RT</p>
             <div class="h-40">
                 <canvas id="chartRT"></canvas>
@@ -889,7 +898,7 @@ async function refreshData() {
         updateBirthdayBadge();
         if (currentPage === "dashboard") checkTodayBirthdayPopUp();
         switchStatTab(currentStatTab);
-        
+        updateTinggalChart();
         applyPermissions(); 
 
     } catch (e) {
@@ -1961,6 +1970,69 @@ function closePhotoViewer() {
     const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
     
     textElement.innerHTML = `HALO: <span class="text-indigo-500">${roleName}</span> • ${rtInfo}`;
+}
+
+    function updateTinggalChart() {
+    const ctx = document.getElementById('chartTinggal').getContext('2d');
+    
+    // 1. Hitung Frekuensi Data
+    const stats = {};
+    allData.forEach(w => {
+        let status = w['Status Tinggal'] || w['TINGGAL'] || 'Lainnya';
+        status = status.toUpperCase(); // Biar seragam
+        stats[status] = (stats[status] || 0) + 1;
+    });
+
+    const labels = Object.keys(stats);
+    const counts = Object.values(stats);
+    
+    // Warna untuk masing-masing status
+    const colorMap = {
+        'TETAP': '#6366f1',    // Indigo
+        'KONTRAK': '#f59e0b',  // Amber
+        'DOMISILI': '#10b981', // Emerald
+        'KOSONG': '#94a3b8'    // Slate
+    };
+    const colors = labels.map(label => colorMap[label] || '#' + Math.floor(Math.random()*16777215).toString(16));
+
+    // 2. Render Legend secara Dinamis
+    const legendContainer = document.getElementById('tinggal-legend');
+    legendContainer.innerHTML = ''; // Reset legend
+    labels.forEach((label, index) => {
+        legendContainer.innerHTML += `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full" style="background-color: ${colors[index]}"></div>
+                    <span class="text-[9px] font-bold text-slate-500 uppercase">${label}</span>
+                </div>
+                <span class="text-xs font-black text-slate-800">${counts[index]}</span>
+            </div>`;
+    });
+
+    // 3. Hancurkan chart lama jika ada (penting agar tidak error saat refresh)
+    if (window.myTinggalChart) window.myTinggalChart.destroy();
+
+    // 4. Buat Chart Baru
+    window.myTinggalChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: colors,
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%', // Membuat ring lebih tipis dan elegan
+            plugins: {
+                legend: { display: false } // Legend kita buat sendiri secara manual di atas
+            }
+        }
+    });
 }
     
   </script>

@@ -2090,56 +2090,6 @@ function closePhotoViewer() {
     });
 }
 
-// 1. Fungsi Utama Export
-function prosesExport(format) {
-    const filterRT = document.getElementById('export-rt').value;
-    const filterTinggal = document.getElementById('export-tinggal').value;
-    const filterKategori = document.getElementById('export-kategori').value;
-
-    // Logika filtering data
-    let filtered = allData.filter(w => {
-        const matchRT = (filterRT === "ALL") || (String(w.RT || w.rt) === filterRT);
-        const statusTinggalRaw = (w['Status Tinggal'] || w['TINGGAL'] || "").toUpperCase();
-        const matchTinggal = (filterTinggal === "ALL") || (statusTinggalRaw === filterTinggal);
-        
-        const tglLahir = w['Tanggal Lahir'] || w['TANGGAL LAHIR'];
-        const umur = tglLahir ? calculateAge(tglLahir) : 0; // Pastikan fungsi calculateAge sudah ada
-        const statusKel = (w['Status Keluarga'] || "").toUpperCase();
-        
-        let matchKategori = true;
-        if (filterKategori === "BALITA") matchKategori = (umur <= 5);
-        else if (filterKategori === "LANSIA") matchKategori = (umur >= 60);
-        else if (filterKategori === "KEPALA KELUARGA") matchKategori = (statusKel === "KEPALA KELUARGA");
-
-        return matchRT && matchTinggal && matchKategori;
-    });
-
-    if (filtered.length === 0) {
-        alert("Data tidak ditemukan!");
-        return;
-    }
-
-    const dataExport = filtered.map((w, index) => ({
-        "No": index + 1,
-        "Nama Lengkap": w.Nama,
-        "NIK": `'${w.NIK}`,
-        "RT": w.RT || w.rt,
-        "Status Keluarga": w['Status Keluarga'],
-        "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
-        "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
-        "No HP": w.HP || w['No HP'] || ""
-    }));
-
-    if (format === 'xlsx') {
-        const worksheet = XLSX.utils.json_to_sheet(dataExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Data_Warga");
-        XLSX.writeFile(workbook, `Laporan_Warga_RW06.xlsx`);
-    } else if (format === 'pdf') {
-        // PEMANGGILAN FOTO PDF
-        exportToPDF(dataExport); 
-    }
-}
 
 // 2. Definisi Fungsi exportToPDF (Harus sejajar dengan prosesExport)
 function exportToPDF(data, judul) {
@@ -2232,16 +2182,42 @@ function prosesExport(format) {
         return;
     }
 
-    const dataExport = filtered.map((w, index) => ({
-        "No": index + 1,
-        "Nama Lengkap": w.Nama,
-        "NIK": `'${w.NIK}`,
-        "RT": w.RT || w.rt,
-        "Status Keluarga": w['Status Keluarga'],
-        "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
-        "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
-        "No HP": w.HP || w['No HP'] || ""
-    }));
+const dataExport = filtered.map((w, index) => {
+        // 1. Ambil data tempat dan tanggal
+        const tempat = w['Tempat Lahir'] || w['TEMPAT LAHIR'] || "";
+        const tglRaw = w['Tanggal Lahir'] || w['TANGGAL LAHIR'] || "";
+        
+        // 2. Format tanggal agar rapi (dd/mm/yyyy)
+        let tglFormatted = "";
+        if (tglRaw) {
+            const d = new Date(tglRaw);
+            // Cek apakah tanggal valid
+            if (!isNaN(d.getTime())) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                tglFormatted = `${day}/${month}/${year}`;
+            } else {
+                tglFormatted = tglRaw; // Gunakan teks asli jika bukan format Date
+            }
+        }
+
+        // 3. Gabungkan Tempat dan Tanggal
+        const tempatTglLahir = (tempat && tglFormatted) 
+            ? `${tempat}, ${tglFormatted}` 
+            : (tempat || tglFormatted);
+
+        return {
+            "No": index + 1,
+            "Nama Lengkap": w.Nama,
+            "NIK": `'${w.NIK}`,
+            "No KK": `'${w['No KK'] || w['NO KK']}`,
+            "Tempat/Tgl Lahir": tempatTglLahir, // Kolom Baru hasil penggabungan
+            "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
+            "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
+            "No HP": w.HP || w['No HP'] || ""
+        };
+    });
 
     // 4. Eksekusi Export dengan Judul Baru
     if (format === 'xlsx') {

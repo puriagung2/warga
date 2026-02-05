@@ -438,9 +438,6 @@ body.dark span:not(.material-icons) {
             <button onclick="toggleDarkMode()" class="text-slate-300 hover:text-yellow-500 transition-colors">
                 <span class="material-icons" id="dark-icon">dark_mode</span>
             </button>
-          <button onclick="toggleExportPanel()" class="p-2 bg-slate-100 rounded-full text-slate-600">
-                <span class="material-icons">summarize</span>
-          </button>
             <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
@@ -511,9 +508,13 @@ body.dark span:not(.material-icons) {
         <div id="latest-list"></div>
       </section>
 
-      <!-- Statistik Detail -->
-<section id="page-stats" class="page space-y-4">
-    <h2 class="text-xl font-black text-slate-800 mb-4">Demografi Warga</h2>
+     <section id="page-stats" class="page space-y-4">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-black text-slate-800">Demografi Warga</h2>
+        <button onclick="openExportSheet()" class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center active:scale-90 transition-transform">
+            <span class="material-icons">ios_share</span>
+        </button>
+    </div>
     
     <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
         <button onclick="switchStatTab('balita')" id="tab-balita" class="tab-btn active">Balita</button>
@@ -522,9 +523,58 @@ body.dark span:not(.material-icons) {
     </div>
 
     <div id="stat-list-container" class="space-y-3">
-        <!-- List akan diinjeksi di sini oleh JavaScript -->
-    </div>
+        </div>
 </section>
+
+<div id="export-sheet" class="fixed inset-0 z-[10000] hidden">
+    <div onclick="closeExportSheet()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    
+    <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[40px] p-8 animate-in slide-in-from-bottom duration-300">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+        
+        <h3 class="text-lg font-black text-slate-800 mb-1">Ekspor Laporan</h3>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Pilih filter data yang diinginkan</p>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Wilayah RT</label>
+                <select id="export-rt" class="w-full bg-slate-50 border-none rounded-2xl text-xs font-bold p-4 mt-1 focus:ring-2 focus:ring-indigo-500">
+                    <option value="ALL">Semua RT (RW 06)</option>
+                    <option value="1">RT 01</option>
+                    <option value="2">RT 02</option>
+                    <option value="3">RT 03</option>
+                    <option value="4">RT 04</option>
+                    <option value="5">RT 05</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Status Tinggal</label>
+                    <select id="export-tinggal" class="w-full bg-slate-50 border-none rounded-2xl text-xs font-bold p-4 mt-1">
+                        <option value="ALL">Semua</option>
+                        <option value="TETAP">Tetap</option>
+                        <option value="KONTRAK">Kontrak</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Kategori</label>
+                    <select id="export-kategori" class="w-full bg-slate-50 border-none rounded-2xl text-xs font-bold p-4 mt-1">
+                        <option value="ALL">Semua</option>
+                        <option value="BALITA">Balita</option>
+                        <option value="LANSIA">Lansia</option>
+                        <option value="KEPALA KELUARGA">KK Saja</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button onclick="prosesExport('xlsx')" class="flex-1 bg-emerald-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-100">Excel</button>
+                <button onclick="prosesExport('pdf')" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-rose-100">PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
      
       <!-- Daftar Warga -->
       <section id="page-warga" class="page">
@@ -2117,6 +2167,21 @@ function exportToPDF(data) {
 
     doc.save(`Data_Warga_RW06_${new Date().getTime()}.pdf`);
 }
+
+    function openExportSheet() {
+    const sheet = document.getElementById('export-sheet');
+    sheet.classList.remove('hidden');
+    sheet.classList.add('flex');
+}
+
+function closeExportSheet() {
+    const sheet = document.getElementById('export-sheet');
+    sheet.classList.add('hidden');
+    sheet.classList.remove('flex');
+}
+
+// Tambahkan pencegahan tutup jika area panel diklik (opsional)
+// document.querySelector('#export-sheet > div:last-child').onclick = (e) => e.stopPropagation();
     
   </script>
 

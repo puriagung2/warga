@@ -1079,18 +1079,39 @@ function switchStatTab(tab) {
     `).join('');
 }
 
-    function filterWargaList() {
-        const query = document.getElementById('search-warga').value.toLowerCase();
-        const rtFilter = document.getElementById('filter-rt').value;
-        const filtered = allData.filter(w => {
-            const matchSearch = (w.Nama || "").toLowerCase().includes(query) || (w.NIK || "").toString().includes(query) || (w.Blok || "").toLowerCase().includes(query);
-            const matchRT = rtFilter === "" || (w.RT && w.RT.toString() === rtFilter);
-            return matchSearch && matchRT;
+function filterWargaList() {
+    const query = document.getElementById('search-warga').value.toLowerCase().trim();
+    const rtFilter = document.getElementById('filter-rt').value;
+    
+    // Pecah input menjadi array kata kunci (misal: "A 10" -> ["a", "10"])
+    const keywords = query.split(/\s+/);
+
+    const filtered = allData.filter(w => {
+        // 1. Logika Pencarian Multi-Kata
+        // Menggunakan .every() artinya SEMUA kata kunci harus ditemukan di baris data ini
+        const matchSearch = keywords.every(key => {
+            const nama = (w.Nama || "").toLowerCase();
+            const nik = (w.NIK || "").toString();
+            const blok = (w.Blok || "").toLowerCase();
+            const nomer = (w.Nomer || w.NOMER || "").toString().toLowerCase(); // Ambil kolom nomor rumah
+            
+            return nama.includes(key) || 
+                   nik.includes(key) || 
+                   blok.includes(key) || 
+                   nomer.includes(key);
         });
-        const start = (wargaPage - 1) * PAGE_SIZE;
-        renderList(filtered.slice(start, start + PAGE_SIZE), 'all-warga-list');
-        renderPagination(filtered.length, wargaPage, 'warga-pagination', 'changeWargaPage');
-    }
+
+        // 2. Logika Filter RT
+        const matchRT = rtFilter === "" || (w.RT && w.RT.toString() === rtFilter);
+
+        return matchSearch && matchRT;
+    });
+
+    // 3. Render dengan Pagination
+    const start = (wargaPage - 1) * PAGE_SIZE;
+    renderList(filtered.slice(start, start + PAGE_SIZE), 'all-warga-list');
+    renderPagination(filtered.length, wargaPage, 'warga-pagination', 'changeWargaPage');
+}
 
     function resetWargaPage() { wargaPage = 1; }
     function changeWargaPage(step) { wargaPage += step; filterWargaList(); window.scrollTo(0, 0); }

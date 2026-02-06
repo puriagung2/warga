@@ -2388,7 +2388,7 @@ async function handleOcrKtp(event) {
 
         if (result.OCRExitCode === 1) {
             const rawText = result.ParsedResults[0].ParsedText;
-            console.log("Hasil OCR Cloud Engine 3:", rawText);
+            // console.log("Hasil OCR Cloud Engine 3:", rawText);
             extractKtpData(rawText);
             alert("Scan Berhasil, Lakukan Verifikasi ! ");
         } else {

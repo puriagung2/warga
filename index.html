@@ -1083,28 +1083,30 @@ function filterWargaList() {
     const query = document.getElementById('search-warga').value.toLowerCase().trim();
     const rtFilter = document.getElementById('filter-rt').value;
     
-    // Pecah input menjadi array kata kunci (misal: "A 10" -> ["a", "10"])
+    // Pecah input menjadi array kata kunci
     const keywords = query.split(/\s+/);
 
     const filtered = allData.filter(w => {
-        // 1. Logika Pencarian Multi-Kata
-        // Menggunakan .every() artinya SEMUA kata kunci harus ditemukan di baris data ini
-        const matchSearch = keywords.every(key => {
+        // 1. Logika Filter RT (Harus Cocok Lebih Dulu)
+        const matchRT = rtFilter === "" || (w.RT && w.RT.toString() === rtFilter);
+        if (!matchRT) return false;
+
+        // 2. Logika Pencarian Multi-Kata
+        return keywords.every(key => {
             const nama = (w.Nama || "").toLowerCase();
-            const nik = (w.NIK || "").toString();
+            const nik = (w.NIK || "").toString().toLowerCase();
             const blok = (w.Blok || "").toLowerCase();
-            const nomer = (w.Nomer || w.NOMER || "").toString().toLowerCase(); // Ambil kolom nomor rumah
+            const nomer = (w.Nomer || w.NOMER || "").toString().toLowerCase();
             
+            // LOGIKA AKURASI:
+            // - Jika panjang kunci hanya 1-2 karakter, kemungkinan besar itu Blok atau No.
+            // - Kita gunakan perbandingan sama persis (===) untuk Blok dan Nomor
             return nama.includes(key) || 
                    nik.includes(key) || 
-                   blok.includes(key) || 
-                   nomer.includes(key);
+                   blok === key ||      // Pencocokan Blok harus persis (G tidak akan kena AG)
+                   nomer === key ||     // Pencocokan Nomor harus persis (16 tidak akan kena 116)
+                   (blok + nomer) === key.replace(/\s/g, ''); // Menangani input "G16"
         });
-
-        // 2. Logika Filter RT
-        const matchRT = rtFilter === "" || (w.RT && w.RT.toString() === rtFilter);
-
-        return matchSearch && matchRT;
     });
 
     // 3. Render dengan Pagination

@@ -2442,70 +2442,94 @@ function extractKtpData(rawText) {
     const text = rawText.toUpperCase();
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-    let alamatDetail = {
-        jalan: "",
-        rtRw: "",
-        kel: "",
-        kec: "",
-        kota: "",
-        prov: ""
-    };
+    let alamatDetail = { jalan: "", rtRw: "", kel: "", kec: "", kota: "", prov: "" };
 
     lines.forEach((line, i) => {
-        // 1. Logika PROVINSI & KOTA (Berdasarkan Posisi Baris)
+        // --- 1. PROVINSI & KOTA ---
         if (line.includes("PROVINSI")) {
             alamatDetail.prov = line.replace("PROVINSI", "").trim();
-            
-            // Baris tepat di bawah PROVINSI biasanya adalah Kota/Kabupaten
             if (lines[i + 1] && !lines[i + 1].includes("NIK")) {
                 alamatDetail.kota = lines[i + 1].trim();
             }
         }
 
-        // 2. NIK & NAMA
+        // --- 2. NIK ---
         if (line.includes("NIK")) {
             const nikMatch = line.replace(/\D/g, "").match(/\d{16}/);
             if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
         }
+
+        // --- 3. NAMA ---
         if (line.includes("NAMA")) {
-            let namaVal = line.split(':').pop().trim() || lines[i+1] || "";
+            let namaVal = line.replace(/.*NAMA\s*[:;i\s]*/i, "").trim();
+            if (!namaVal) namaVal = lines[i+1] || "";
             document.getElementById('f-nama').value = namaVal.replace(/[^A-Z ]/g, "").trim();
         }
 
-        // 3. DETAIL ALAMAT (Jalan, RT/RW, Kel, Kec)
-        if (line.includes("ALAMAT")) alamatDetail.jalan = line.split(':').pop().trim();
-        if (line.includes("RT/RW")) {
-            let rtrw = line.split(':').pop().trim();
-            if (rtrw.includes("/")) {
-                let parts = rtrw.split("/");
-                alamatDetail.rtRw = `RT ${parts[0].trim()} RW ${parts[1].trim()}`;
+        // --- 4. TEMPAT & TANGGAL LAHIR ---
+        if (line.includes("LAHIR")) {
+            // Ambil teks setelah kata LAHIR, abaikan simbol apa pun
+            let ttlVal = line.replace(/.*LAHIR\s*[:;i\s]*/i, "").trim();
+            let parts = ttlVal.split(',');
+            
+            // Tempat
+            if (parts.length > 0) {
+                document.getElementById('f-tempat').value = parts[0].trim();
+            }
+            
+            // Tanggal (Cari pola 00-00-0000)
+            let dateMatch = ttlVal.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+            if (dateMatch) {
+                document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
             }
         }
-        if (line.includes("KEL/DESA") || line.includes("KEL/")) {
-            alamatDetail.kel = line.split(':').pop().trim();
+
+        // --- 5. JENIS KELAMIN ---
+        if (line.includes("KELAMIN") || line.includes("LAKI") || line.includes("PEREMPUAN")) {
+            if (line.includes("LAKI")) document.getElementById('f-kelamin').value = "Laki-laki";
+            else if (line.includes("PEREMPUAN")) document.getElementById('f-kelamin').value = "Perempuan";
         }
-        if (line.includes("KECAMATAN")) {
-            alamatDetail.kec = line.split(':').pop().trim();
+
+        // --- 6. AGAMA (Format Title Case untuk Select) ---
+        const listAgama = ["Islam", "Kristen", "Katolik", "Buddha", "Hindu", "Konghucu"];
+        listAgama.forEach(ag => {
+            if (line.includes(ag.toUpperCase())) {
+                document.getElementById('f-agama').value = ag;
+            }
+        });
+
+        // --- 7. STATUS PERKAWINAN ---
+        if (line.includes("KAWIN") || line.includes("STATUS")) {
+            if (line.includes("BELUM")) document.getElementById('f-perkawinan').value = "Belum kawin";
+            else if (line.includes("KAWIN")) document.getElementById('f-perkawinan').value = "Kawin";
+            else if (line.includes("CERAI")) document.getElementById('f-perkawinan').value = "Cerai";
         }
+
+        // --- 8. PEKERJAAN ---
+        if (line.includes("KERJAAN") || line.includes("SWASTA") || line.includes("WIRASWASTA") || line.includes("PNS")) {
+            let pekVal = line.replace(/.*PEKERJAAN\s*[:;i\s]*/i, "").trim();
+            if (pekVal.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
+            else if (pekVal.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
+            else document.getElementById('f-pekerjaan').value = pekVal; // Input manual jika beda
+        }
+
+        // --- 9. BAGIAN ALAMAT ---
+        if (line.includes("ALAMAT")) alamatDetail.jalan = line.replace(/.*ALAMAT\s*[:;i\s]*/i, "").trim();
+        if (line.includes("RT/RW")) {
+            let rtrw = line.replace(/.*RT\/RW\s*[:;i\s]*/i, "").trim();
+            let rtrwParts = rtrw.split('/');
+            if (rtrwParts.length === 2) {
+                alamatDetail.rtRw = `RT ${rtrwParts[0].trim()} RW ${rtrwParts[1].trim()}`;
+            }
+        }
+        if (line.includes("KEL/DESA")) alamatDetail.kel = line.replace(/.*KEL\/DESA\s*[:;i\s]*/i, "").trim();
+        if (line.includes("KECAMATAN")) alamatDetail.kec = line.replace(/.*KECAMATAN\s*[:;i\s]*/i, "").trim();
     });
 
-    // 4. MERANGKAI ALAMAT (Menghindari Duplikasi Kota di Alamat)
-    // Jika baris Kota tidak sengaja terambil dua kali, kita bersihkan
-    const komponenAlamat = [
-        alamatDetail.jalan,
-        alamatDetail.rtRw,
-        alamatDetail.kel,
-        alamatDetail.kec,
-        alamatDetail.kota,
-        alamatDetail.prov
-    ].filter((item, index, self) => item && item.length > 0 && self.indexOf(item) === index);
-
-    const alamatLengkap = komponenAlamat.join(", ");
-    
-    const inputAlamatKtp = document.getElementById('f-alamat-ktp');
-    if (inputAlamatKtp) {
-        inputAlamatKtp.value = alamatLengkap;
-    }
+    // Rangkai Alamat Lengkap
+    const komponenAlamat = [alamatDetail.jalan, alamatDetail.rtRw, alamatDetail.kel, alamatDetail.kec, alamatDetail.kota, alamatDetail.prov]
+        .filter(item => item && item.length > 1);
+    document.getElementById('f-alamat-ktp').value = komponenAlamat.join(", ");
 }
     
   </script>

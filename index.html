@@ -2366,96 +2366,77 @@ async function handleOcrKtp(event) {
     const btnLabel = event.target.nextElementSibling;
     const originalText = btnLabel.innerText;
     
-    btnLabel.innerText = "MENGOLAH...";
+    btnLabel.innerText = "MENGIRIM KE CLOUD...";
     btnLabel.style.pointerEvents = "none";
 
-    // Buat objek Image untuk memproses canvas
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.src = objectUrl;
-    
-    img.onload = async () => {
-        try {
-            // Jalankan Pre-process
-            const processedImageData = preprocessImage(img);
+    // 1. Siapkan Form Data
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("apikey", "K83312111388957"); // GANTI DENGAN API KEY ANDA
+    formData.append("language", "ind");           // Bahasa Indonesia
+    formData.append("isOverlayRequired", "false");
+    formData.append("OCREngine", "2");             // Engine 2 lebih baik untuk KTP
+
+    try {
+        const response = await fetch("https://api.ocr.space/parse/image", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.OCRExitCode === 1) {
+            const rawText = result.ParsedResults[0].ParsedText;
+            console.log("OCR.space Result:", rawText);
             
-            btnLabel.innerText = "MEMBACA...";
-
-            // Inisialisasi Tesseract (Gunakan versi terbaru)
-            const worker = await Tesseract.createWorker('ind');
+            // Panggil fungsi ekstraksi yang sudah kita buat sebelumnya
+            extractKtpData(rawText);
             
-            const { data: { text } } = await worker.recognize(processedImageData);
-            console.log("Hasil Mentah:", text); // Cek di console log browser
-
-            // Kirim ke fungsi ekstraksi data
-            extractKtpData(text);
-
-            await worker.terminate();
-            alert("Scan Berhasil!");
-        } catch (err) {
-            console.error("Detail Error OCR:", err);
-            alert("Gagal memproses OCR: " + err.message);
-        } finally {
-            btnLabel.innerText = originalText;
-            btnLabel.style.pointerEvents = "auto";
-            URL.revokeObjectURL(objectUrl); // Bersihkan memori
+            alert("Scan Cloud Berhasil!");
+        } else {
+            alert("Gagal membaca: " + result.ErrorMessage);
         }
-    };
 
-    img.onerror = () => {
-        alert("Gagal memuat file gambar.");
+    } catch (err) {
+        console.error("API Error:", err);
+        alert("Koneksi ke server OCR gagal.");
+    } finally {
         btnLabel.innerText = originalText;
-    };
+        btnLabel.style.pointerEvents = "auto";
+        event.target.value = ""; // Reset input
+    }
 }
 
 function extractKtpData(rawText) {
     const text = rawText.toUpperCase();
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     
-    console.log("Memproses baris data...", lines);
+    // --- NIK ---
+    const nikMatch = text.replace(/\s/g, '').match(/\d{16}/);
+    if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
 
-    // 1. Ekstraksi NIK (Mencari baris yang mengandung banyak angka atau pola NIK)
-    // Karena NIK Anda terbaca '2 IAOL?89005', kita cari angka yang berderet
-    let allNumbers = text.replace(/[^0-9]/g, "");
-    // Cari 16 digit angka di dalam tumpukan teks
-    const nikMatch = text.match(/\d/g);
-    if (nikMatch && nikMatch.length >= 10) {
-        // Jika tidak sampai 16, kita ambil apa adanya dulu untuk dikoreksi manual
-        document.getElementById('f-nik').value = nikMatch.join("").substring(0, 16);
-    }
+    // --- NAMA (Biasanya baris pertama setelah NIK atau 'PROVINSI') ---
+    lines.forEach((line, i) => {
+        if (line.includes("NAMA") || (line.includes("NIK") && lines[i+1])) {
+            let nama = line.includes("NAMA") ? line.split(':').pop() : lines[i+1];
+            document.getElementById('f-nama').value = nama.replace(/[^A-Z ]/g, "").trim();
+        }
 
-    // 2. Ekstraksi NAMA
-    // Biasanya nama ada di baris ke-2 atau ke-3 setelah teks 'PROVINSI' atau di awal
-    // Berdasarkan hasil Anda, Nama 'GRAN PRIYANTG' ada di baris ke-3
-    if (lines[2]) {
-        let namaKotor = lines[2].replace(/^(IT|NS|SI|NI|NAMA|MA)\s+/g, "");
-        document.getElementById('f-nama').value = namaKotor.replace(/[^A-Z ]/g, "").trim();
-    }
-
-    // 3. Tempat & Tanggal Lahir
-    // Hasil Anda: 'SI SAI MADIUN L-01-1928'
-    lines.forEach(line => {
-        if (line.includes("MADIUN") || line.includes("19") || line.includes("18")) {
-            let parts = line.split(" ");
-            // Cari kata yang bukan angka (Tempat)
-            let tempat = parts.find(p => p.length > 3 && !/\d/.test(p));
-            if (tempat) document.getElementById('f-tempat').value = tempat;
-
-            // Cari tanggal (Pola DD-MM-YYYY)
-            let tglMatch = line.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
-            if (tglMatch) {
-                document.getElementById('f-tanggal').value = `${tglMatch[3]}-${tglMatch[2]}-${tglMatch[1]}`;
+        // --- TTL ---
+        if (line.includes("TEMPAT") || line.includes("LAHIR")) {
+            let ttl = line.split(':').pop() || "";
+            let parts = ttl.split(',');
+            if (parts.length > 0) document.getElementById('f-tempat').value = parts[0].trim();
+            
+            let dateMatch = ttl.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+            if (dateMatch) {
+                document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
             }
         }
-
-        // 4. Pekerjaan (Hasil Anda: ARYAWAN SWASTA)
-        if (line.includes("SWASTA") || line.includes("KARYAWAN")) {
-            document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
-        }
         
-        // 5. Jenis Kelamin (Hasil Anda: ARILARI) -> Sering salah baca dari LAKI-LAKI
-        if (line.includes("LAKI") || line.includes("ARI") || line.includes("LAKH")) {
-            document.getElementById('f-kelamin').value = "Laki-laki";
+        // --- PEKERJAAN ---
+        if (line.includes("KERJA") || line.includes("SWASTA")) {
+            if (line.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
         }
     });
 }

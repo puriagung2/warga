@@ -1417,81 +1417,61 @@ function renderDetailItem(label, value) {
 function showFamily(noKk) {
     const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
     
-    // 1. Logika Sorting
-    const priority = { "KEPALA KELUARGA": 1, "ISTRI": 2, "ANAK": 3 };
+    // 1. Tentukan Prioritas Status
+    const priority = {
+        "KEPALA KELUARGA": 1,
+        "ISTRI": 2,
+        "ANAK": 3
+    };
+
+    // 2. Logika Sorting Multi-Level
     members.sort((a, b) => {
         const statusA = (a['Status Keluarga'] || "").toUpperCase();
         const statusB = (b['Status Keluarga'] || "").toUpperCase();
+        
         const weightA = priority[statusA] || 99;
         const weightB = priority[statusB] || 99;
-        if (weightA !== weightB) return weightA - weightB;
-        return new Date(a['Tanggal Lahir'] || a['TANGGAL LAHIR']) - new Date(b['Tanggal Lahir'] || b['TANGGAL LAHIR']);
+
+        // Jika statusnya berbeda (misal KK vs Istri), urutkan berdasarkan status
+        if (weightA !== weightB) {
+            return weightA - weightB;
+        }
+
+        // Jika statusnya SAMA (misal sama-sama ANAK), urutkan berdasarkan umur
+        // Kita bandingkan Tanggal Lahir (Kolom: 'Tanggal Lahir' atau 'TANGGAL LAHIR')
+        const tglA = new Date(a['Tanggal Lahir'] || a['TANGGAL LAHIR'] || "1900-01-01");
+        const tglB = new Date(b['Tanggal Lahir'] || b['TANGGAL LAHIR'] || "1900-01-01");
+
+        // Tanggal yang lebih kecil (lebih tua) muncul lebih dulu
+        return tglA - tglB;
     });
 
+    // --- Sisa kode untuk menampilkan UI (sama seperti sebelumnya) ---
     window.location.hash = `detail-kk/${noKk}`;
     history.pushState({modal: true}, null, "");
+    document.getElementById('btn-edit-trigger').style.display = 'none';
     
-    // 2. Desain Header Modal (Dark Mode Friendly)
-    let html = `
-        <div class="mb-6 bg-slate-50 dark:bg-slate-800/80 p-5 rounded-[32px] flex items-center gap-4 border border-slate-100 dark:border-slate-700 transition-colors">
-            <div class="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-                <span class="material-icons">family_restroom</span>
-            </div>
-            <div>
-                <p class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] leading-none mb-1.5">Anggota Keluarga</p>
-                <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">NO KK: ${noKk}</h3>
-            </div>
-        </div>
-        
-        <div class="space-y-3 relative">
-            <div class="absolute left-7 top-4 bottom-4 w-px bg-slate-100 dark:bg-slate-800"></div>
-    `;
+    let html = `<h3 class="text-xs font-black text-slate-800 mb-4 px-2 uppercase tracking-widest">Keluarga No KK: ${noKk}</h3>`;
     
-   members.forEach((m) => {
-    const status = (m['Status Keluarga'] || "").toUpperCase();
-    const isKK = status === 'KEPALA KELUARGA';
-    const isIstri = status === 'ISTRI';
-    const age = calculateAge(m['Tanggal Lahir'] || m['TANGGAL LAHIR']);
-    
-    html += `
-        <div class="relative flex items-center gap-4 p-4 mb-3 bg-white dark:bg-slate-800/60 rounded-[28px] border ${isKK ? 'border-indigo-300 dark:border-indigo-500 bg-indigo-50/30 dark:bg-indigo-500/10' : 'border-slate-100 dark:border-slate-700'} active:scale-95 transition-all" onclick="showDetail('${m.NIK}')">
-            
-            <div class="relative z-10">
-                <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-md
-                    ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-500' : 'bg-pink-500'}">
+    members.forEach(m => {
+        html += `
+            <div class="warga-card" onclick="showDetail('${m.NIK}')">
+                <div class="avatar ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">
                     ${(m.Nama || 'W')[0]}
                 </div>
-                ${isKK ? '<div class="absolute -top-2 -right-1 text-amber-500"><span class="material-icons text-xs">stars</span></div>' : ''}
-            </div>
-
-            <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-bold text-slate-800 dark:text-white truncate mb-1">
-                    ${m.Nama}
-                </h4>
-                
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-wider
-                        ${isKK ? 'bg-indigo-500 text-white' : 
-                          isIstri ? 'bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-300' : 
-                          'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-200'}">
-                        ${m['Status Keluarga']}
-                    </span>
-                    
-                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-300">
-                        ${age} Thn
-                    </span>
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-100">${m.Nama}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">
+                        ${m['Status Keluarga']} ${m['Status Keluarga'].toUpperCase() === 'ANAK' ? '• ' + calculateAge(m['Tanggal Lahir']) + ' Thn' : ''}
+                    </p>
                 </div>
-            </div>
-
-            <span class="material-icons text-slate-300 dark:text-slate-500">chevron_right</span>
-        </div>`;
-});
-    
-    html += `</div>`;
+            </div>`;
+    });
     
     document.getElementById('detail-content').innerHTML = html;
     document.getElementById('detail-modal').style.display = 'flex';
 }
+
 
 // Fungsi tambahan untuk menghitung umur (agar tampilan lebih informatif)
 function calculateAge(birthDate) {

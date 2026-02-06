@@ -2329,38 +2329,60 @@ function closeExportSheet() {
 // document.querySelector('#export-sheet > div:last-child').onclick = (e) => e.stopPropagation();
 
     // ocr scan ktp
-async function scanKTP(file) {
-    // Tampilkan loader/indikator loading
-    showLoading(true);
+async function handleOcrKtp(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const worker = await Tesseract.createWorker('ind'); // Menggunakan bahasa Indonesia
+    // Tampilkan Loading (Gunakan swal atau loading manual)
+    const btnLabel = event.target.nextElementSibling;
+    const originalText = btnLabel.innerText;
+    btnLabel.innerText = "MEMPROSES...";
+    btnLabel.style.opacity = "0.7";
+    btnLabel.style.pointerEvents = "none";
 
     try {
+        // Inisialisasi Tesseract dengan bahasa Indonesia
+        const worker = await Tesseract.createWorker('ind');
         const { data: { text } } = await worker.recognize(file);
         
-        // Logika sederhana mengambil NIK (mencari 16 digit angka berurutan)
+        console.log("OCR Result:", text); // Untuk debugging
+
+        // 1. Ekstrak NIK (Cari 16 digit angka)
         const nikMatch = text.match(/\d{16}/);
         if (nikMatch) {
-            document.getElementById('input-nik').value = nikMatch[0];
+            document.getElementById('f-nik').value = nikMatch[0];
         }
 
-        // Contoh mencari Nama (Logika ini perlu disempurnakan berdasarkan hasil scan)
+        // 2. Ekstrak Nama (Mencari teks setelah kata 'Nama')
         const lines = text.split('\n');
         lines.forEach((line, index) => {
-            if (line.toUpperCase().includes("NAMA")) {
-                const namaValue = line.split(':')[1] || lines[index+1];
-                document.getElementById('input-nama').value = namaValue.trim();
+            const cleanLine = line.toUpperCase().replace(/[^A-Z ]/g, "");
+            if (cleanLine.includes("NAMA")) {
+                // Ambil baris yang sama setelah titik dua, atau baris di bawahnya
+                let extractedNama = line.split(':').pop() || lines[index + 1];
+                document.getElementById('f-nama').value = extractedNama.replace(/[^A-Za-z ]/g, "").trim().toUpperCase();
             }
         });
 
-        alert("Scan selesai! Silakan periksa kembali datanya.");
+        // 3. Ekstrak Jenis Kelamin
+        if (text.toUpperCase().includes("PEREMPUAN")) {
+            document.getElementById('f-kelamin').value = "Perempuan";
+        } else if (text.toUpperCase().includes("LAKI")) {
+            document.getElementById('f-kelamin').value = "Laki-laki";
+        }
+
+        alert("Scan Berhasil! Beberapa kolom telah terisi otomatis. Mohon periksa kembali.");
+
+        await worker.terminate();
     } catch (error) {
         console.error(error);
-        alert("Gagal membaca KTP. Pastikan foto terang dan jelas.");
+        alert("Gagal membaca gambar. Pastikan foto KTP jelas dan terang.");
+    } finally {
+        btnLabel.innerText = originalText;
+        btnLabel.style.opacity = "1";
+        btnLabel.style.pointerEvents = "auto";
+        event.target.value = ""; // Reset input file
     }
-
-    await worker.terminate();
-    showLoading(false);
 }
     
   </script>

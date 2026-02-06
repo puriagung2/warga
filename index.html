@@ -26,20 +26,29 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
-    :root {
-      --soft-indigo: #6366f1;
-      --bg-milk: #F8FAFC; 
-      --pastel-bg: rgba(255,255,255,0.92);
-      --pastel-primary: #8b8cf8;   /* soft indigo */
-      --pastel-active: #f163cd;    /* pastel pink */
-      --pastel-muted: #94a3b8;
-      /* Warna Card & Text Default */
-      --card-bg: #ffffff;
-      --text-main: #334155;
-      --text-muted: #64748b;
-      --border-color: #cbd5e1;
-      --input-bg: #ffffff;    
-    }
+:root {
+  --soft-indigo: #6366f1;
+  --bg-milk: #F8FAFC; 
+  --pastel-bg: rgba(255,255,255,0.92);
+  --pastel-primary: #8b8cf8;
+  --pastel-active: #f163cd;
+  --pastel-muted: #94a3b8;
+  
+  /* Variabel tambahan untuk Input & Popup */
+  --card-bg: #ffffff;
+  --text-main: #334155;
+  --input-text: #1e293b;
+  --input-bg: #f1f5f9;
+}
+
+/* Tambahkan ini jika Anda menggunakan class .dark pada body/html */
+.dark {
+  --bg-milk: #0f172a; /* Slate 900 */
+  --card-bg: #1e293b; /* Slate 800 */
+  --text-main: #f1f5f9; /* Slate 100 */
+  --input-text: #f8fafc;
+  --input-bg: #334155; /* Slate 700 */
+}
 
     /* Variabel Khusus Dark Mode */
     body.dark {
@@ -529,63 +538,50 @@ body.dark span:not(.material-icons) {
 <div id="export-sheet" class="fixed inset-0 z-[10000] hidden items-end sm:items-center justify-center p-0 sm:p-6">
     <div onclick="closeExportSheet()" class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"></div>
 
-    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in duration-300">
-        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 sm:hidden"></div>
+    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in duration-300 border-t dark:border-slate-800">
+        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-8 sm:hidden"></div>
       
-        <div class="mb-8">
-            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Ekspor Data</h3>
-            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Format Laporan: PDF & Excel</p>
-        </div>
+        <h3 class="text-xl font-black text-slate-800 dark:text-slate-100 mb-1">Ekspor Laporan</h3>
+        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-8">Format: Excel & PDF Berwarna</p>
 
-        <div class="space-y-6">
-            <div class="group">
-                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 mb-2 tracking-wider">Wilayah RT</label>
-                <div class="relative">
-                    <select id="export-rt" class="appearance-none w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 text-slate-800 dark:text-slate-100 transition-all outline-none">
-                        <option value="ALL" class="dark:bg-slate-900">Semua RT (RW 06)</option>
-                        <option value="1" class="dark:bg-slate-900">RT 01</option>
-                        <option value="2" class="dark:bg-slate-900">RT 02</option>
-                        <option value="3" class="dark:bg-slate-900">RT 03</option>
-                        <option value="4" class="dark:bg-slate-900">RT 04</option>
-                    </select>
-                    <span class="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-                </div>
+        <div class="space-y-5">
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 tracking-widest">Wilayah Kerja</label>
+                <select id="export-rt" class="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 outline-none transition-all">
+                    <option value="ALL" class="bg-white dark:bg-slate-900">Semua RT (RW 06)</option>
+                    <option value="1" class="bg-white dark:bg-slate-900">RT 1</option>
+                    <option value="2" class="bg-white dark:bg-slate-900">RT 2</option>
+                    <option value="3" class="bg-white dark:bg-slate-900">RT 3</option>
+                    <option value="4" class="bg-white dark:bg-slate-900">RT 4</option>
+                </select>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 mb-2 tracking-wider">Status Tinggal</label>
-                    <div class="relative">
-                        <select id="export-tinggal" class="appearance-none w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 text-slate-800 dark:text-slate-100 transition-all outline-none">
-                            <option value="ALL" class="dark:bg-slate-900">Semua</option>
-                            <option value="TETAP" class="dark:bg-slate-900">Tetap</option>
-                            <option value="KONTRAK" class="dark:bg-slate-900">Kontrak</option>
-                            <option value="KOS" class="dark:bg-slate-900">Kos</option>
-                        </select>
-                        <span class="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-                    </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 tracking-widest">Status</label>
+                    <select id="export-tinggal" class="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 outline-none transition-all">
+                        <option value="ALL" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Semua</option>
+                        <option value="TETAP" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Tetap</option>
+                        <option value="KONTRAK" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Kontrak</option>
+                        <option value="KOS" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Kos</option>
+
+                    </select>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 mb-2 tracking-wider">Kategori</label>
-                    <div class="relative">
-                        <select id="export-kategori" class="appearance-none w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-indigo-500 dark:focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 text-slate-800 dark:text-slate-100 transition-all outline-none">
-                            <option value="ALL" class="dark:bg-slate-900">Semua</option>
-                            <option value="BALITA" class="dark:bg-slate-900">Balita</option>
-                            <option value="LANSIA" class="dark:bg-slate-900">Lansia</option>
-                            <option value="KEPALA KELUARGA" class="dark:bg-slate-900">KK Saja</option>
-                        </select>
-                        <span class="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-                    </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 tracking-widest">Usia</label>
+                    <select id="export-kategori" class="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 outline-none transition-all">
+                        <option value="ALL" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Semua</option>
+                        <option value="BALITA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Balita</option>
+                        <option value="LANSIA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Lansia</option>
+                        <option value="KEPALA KELUARGA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">KK Saja</option>
+
+                    </select>
                 </div>
             </div>
 
             <div class="flex gap-4 pt-6">
-                <button onclick="prosesExport('xlsx')" class="group flex-1 bg-emerald-500 hover:bg-emerald-600 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <span class="material-icons text-sm">description</span> EXCEL
-                </button>
-                <button onclick="prosesExport('pdf')" class="group flex-1 bg-rose-500 hover:bg-rose-600 text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <span class="material-icons text-sm">picture_as_pdf</span> PDF
-                </button>
+                <button onclick="prosesExport('xlsx')" class="flex-1 bg-emerald-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Excel</button>
+                <button onclick="prosesExport('pdf')" class="flex-1 bg-rose-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-rose-500/20 active:scale-95 transition-all">PDF</button>
             </div>
         </div>
     </div>

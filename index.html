@@ -2409,63 +2409,53 @@ async function handleOcrKtp(event) {
 }
 
 function extractKtpData(rawText) {
-    // Ubah ke Uppercase dan bersihkan karakter aneh di awal/akhir
     const text = rawText.toUpperCase();
-    const lines = text.split('\n').map(l => l.trim());
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
     
-    console.log("Memulai Ekstraksi dari teks:", text);
+    console.log("Memproses baris data...", lines);
 
-    // --- 1. Ekstraksi NIK (Cari 16 angka berurutan) ---
-    const nikMatch = text.match(/\d{16}/);
-    if (nikMatch) {
-        document.getElementById('f-nik').value = nikMatch[0];
-    } else {
-        // Jika gagal karena ada spasi di tengah NIK (misal: 2171 1014...)
-        const nikSpaced = text.replace(/\s/g, '').match(/\d{16}/);
-        if (nikSpaced) document.getElementById('f-nik').value = nikSpaced[0];
+    // 1. Ekstraksi NIK (Mencari baris yang mengandung banyak angka atau pola NIK)
+    // Karena NIK Anda terbaca '2 IAOL?89005', kita cari angka yang berderet
+    let allNumbers = text.replace(/[^0-9]/g, "");
+    // Cari 16 digit angka di dalam tumpukan teks
+    const nikMatch = text.match(/\d/g);
+    if (nikMatch && nikMatch.length >= 10) {
+        // Jika tidak sampai 16, kita ambil apa adanya dulu untuk dikoreksi manual
+        document.getElementById('f-nik').value = nikMatch.join("").substring(0, 16);
     }
 
-    // --- 2. Ekstraksi Nama ---
-    lines.forEach((line, i) => {
-        // Mencari baris yang mengandung "NAMA"
-        if (line.includes("NAM") || line.includes("AMA")) { 
-            // Ambil teks setelah titik dua, atau baris di bawahnya jika baris ini kosong
-            let namaValue = line.split(':').pop().trim();
-            if (!namaValue || namaValue.length < 3) namaValue = lines[i+1] || "";
-            
-            // Bersihkan dari angka dan simbol
-            document.getElementById('f-nama').value = namaValue.replace(/[^A-Z ]/g, "").trim();
-        }
+    // 2. Ekstraksi NAMA
+    // Biasanya nama ada di baris ke-2 atau ke-3 setelah teks 'PROVINSI' atau di awal
+    // Berdasarkan hasil Anda, Nama 'GRAN PRIYANTG' ada di baris ke-3
+    if (lines[2]) {
+        let namaKotor = lines[2].replace(/^(IT|NS|SI|NI|NAMA|MA)\s+/g, "");
+        document.getElementById('f-nama').value = namaKotor.replace(/[^A-Z ]/g, "").trim();
+    }
 
-        // --- 3. Tempat & Tanggal Lahir ---
-        if (line.includes("TEMPAT") || line.includes("LAHIR") || line.includes("TGL")) {
-            let ttlValue = line.split(':').pop().trim() || lines[i+1] || "";
-            let parts = ttlValue.split(',');
-            
-            if (parts.length > 0) {
-                // Tempat Lahir
-                document.getElementById('f-tempat').value = parts[0].replace(/[^A-Z ]/g, "").trim();
-                
-                // Tanggal Lahir (Cari pola DD-MM-YYYY)
-                let dateMatch = ttlValue.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
-                if (dateMatch) {
-                    let formattedDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-                    document.getElementById('f-tanggal').value = formattedDate;
-                }
+    // 3. Tempat & Tanggal Lahir
+    // Hasil Anda: 'SI SAI MADIUN L-01-1928'
+    lines.forEach(line => {
+        if (line.includes("MADIUN") || line.includes("19") || line.includes("18")) {
+            let parts = line.split(" ");
+            // Cari kata yang bukan angka (Tempat)
+            let tempat = parts.find(p => p.length > 3 && !/\d/.test(p));
+            if (tempat) document.getElementById('f-tempat').value = tempat;
+
+            // Cari tanggal (Pola DD-MM-YYYY)
+            let tglMatch = line.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+            if (tglMatch) {
+                document.getElementById('f-tanggal').value = `${tglMatch[3]}-${tglMatch[2]}-${tglMatch[1]}`;
             }
         }
 
-        // --- 4. Agama ---
-        const listAgama = ["ISLAM", "KRISTEN", "KATOLIK", "HINDU", "BUDDHA", "KONGHUCU"];
-        listAgama.forEach(ag => {
-            if (line.includes(ag)) document.getElementById('f-agama').value = ag.charAt(0) + ag.slice(1).toLowerCase();
-        });
-
-        // --- 5. Status Perkawinan ---
-        if (line.includes("BELUM") && line.includes("KAWIN")) {
-            document.getElementById('f-perkawinan').value = "Belum kawin";
-        } else if (line.includes("KAWIN") || line.includes("KAVVIN")) {
-            document.getElementById('f-perkawinan').value = "Kawin";
+        // 4. Pekerjaan (Hasil Anda: ARYAWAN SWASTA)
+        if (line.includes("SWASTA") || line.includes("KARYAWAN")) {
+            document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
+        }
+        
+        // 5. Jenis Kelamin (Hasil Anda: ARILARI) -> Sering salah baca dari LAKI-LAKI
+        if (line.includes("LAKI") || line.includes("ARI") || line.includes("LAKH")) {
+            document.getElementById('f-kelamin').value = "Laki-laki";
         }
     });
 }

@@ -2412,53 +2412,87 @@ async function handleOcrKtp(event) {
 }
 
 function extractKtpData(rawText) {
-    // Bersihkan teks: ubah ke UPPERCASE dan hapus karakter aneh
     const text = rawText.toUpperCase();
     const lines = text.split('\n').map(l => l.trim());
 
-    // 1. NIK - Mencari 16 digit angka (paling akurat)
+    // Objek sementara untuk menampung bagian alamat
+    let alamatDetail = {
+        jalan: "",
+        rtRw: "",
+        kel: "",
+        kec: "",
+        kota: "",
+        prov: ""
+    };
+
+    // 1. Ekstrak NIK (Tetap sama)
     const cleanNumbers = text.replace(/\D/g, ""); 
     const nikMatch = cleanNumbers.match(/\d{16}/);
-    if (nikMatch) {
-        document.getElementById('f-nik').value = nikMatch[0];
-    }
+    if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
 
-    // 2. NAMA - Mencari baris setelah kata NIK atau baris yang mengandung NAMA
+    // 2. Loop baris untuk mengambil data spesifik
     lines.forEach((line, i) => {
+        // PROVINSI & KOTA (Biasanya ada di baris paling atas)
+        if (line.includes("PROVINSI")) alamatDetail.prov = line.replace("PROVINSI", "").trim();
+        if (line.includes("KOTA") || line.includes("KABUPATEN")) alamatDetail.kota = line.trim();
+
+        // NAMA
         if (line.includes("NAMA")) {
-            // Mengambil setelah titik dua (:)
-            let namaVal = line.split(':').pop().trim();
-            // Jika kosong, biasanya nama ada di baris bawahnya (ciri khas Engine 3)
-            if (namaVal.length < 3) namaVal = lines[i+1] || "";
+            let namaVal = line.split(':').pop().trim() || lines[i+1] || "";
             document.getElementById('f-nama').value = namaVal.replace(/[^A-Z ]/g, "").trim();
         }
 
-        // 3. TTL (Tempat, Tanggal Lahir)
-        if (line.includes("LAHIR") || line.includes("TEMPAT")) {
+        // TEMPAT TANGGAL LAHIR
+        if (line.includes("LAHIR")) {
             let ttl = line.split(':').pop().trim();
-            // Ambil Tempat (sebelum koma)
-            if (ttl.includes(",")) {
-                document.getElementById('f-tempat').value = ttl.split(',')[0].trim();
-            }
-            // Ambil Tanggal (pola angka)
+            if (ttl.includes(",")) document.getElementById('f-tempat').value = ttl.split(',')[0].trim();
             let dateMatch = ttl.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
-            if (dateMatch) {
-                document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-            }
+            if (dateMatch) document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
         }
 
-        // 4. PEKERJAAN
-        if (line.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
-        if (line.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
-        if (line.includes("PELAJAR") || line.includes("MAHASISWA")) document.getElementById('f-pekerjaan').value = "Pelajar/Mahasiswa";
-        
-        // 5. STATUS PERKAWINAN
-        if (line.includes("BELUM KAWIN")) {
-            document.getElementById('f-perkawinan').value = "Belum kawin";
-        } else if (line.includes("KAWIN")) {
-            document.getElementById('f-perkawinan').value = "Kawin";
+        // JENIS KELAMIN
+        if (line.includes("KELAMIN")) {
+            if (line.includes("LAKI")) document.getElementById('f-kelamin').value = "Laki-laki";
+            else if (line.includes("PEREMPUAN")) document.getElementById('f-kelamin').value = "Perempuan";
+        }
+
+        // --- BAGIAN ALAMAT ---
+        if (line.includes("ALAMAT")) alamatDetail.jalan = line.split(':').pop().trim();
+        if (line.includes("RT/RW")) {
+            let rtrw = line.split(':').pop().trim();
+            // Mengubah 004/006 menjadi RT 004 RW 006
+            if (rtrw.includes("/")) {
+                let parts = rtrw.split("/");
+                alamatDetail.rtRw = `RT ${parts[0].trim()} RW ${parts[1].trim()}`;
+            }
+        }
+        if (line.includes("KEL/DESA")) alamatDetail.kel = line.split(':').pop().trim();
+        if (line.includes("KECAMATAN")) alamatDetail.kec = line.split(':').pop().trim();
+
+        // AGAMA, STATUS, PEKERJAAN
+        if (line.includes("AGAMA")) document.getElementById('f-agama').value = line.split(':').pop().trim();
+        if (line.includes("PERKAWINAN")) {
+            let stat = line.split(':').pop().trim();
+            if (stat.includes("BELUM")) document.getElementById('f-perkawinan').value = "Belum kawin";
+            else document.getElementById('f-perkawinan').value = "Kawin";
+        }
+        if (line.includes("PEKERJAAN")) {
+            let pek = line.split(':').pop().trim();
+            if (pek.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
+            else if (pek.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
+            else if (pek.includes("PELAJAR")) document.getElementById('f-pekerjaan').value = "Pelajar/Mahasiswa";
         }
     });
+
+    // 3. RANGKAI ALAMAT LENGKAP
+    // Format: JALAN RT RW KEL, KEC, KOTA, PROVINSI
+    const alamatLengkap = `${alamatDetail.jalan} ${alamatDetail.rtRw} ${alamatDetail.kel}, ${alamatDetail.kec}, ${alamatDetail.kota}, ${alamatDetail.prov}`.trim();
+    
+    // Masukkan ke input Alamat KTP
+    const inputAlamatKtp = document.getElementById('f-alamat-ktp');
+    if (inputAlamatKtp) {
+        inputAlamatKtp.value = alamatLengkap.replace(/\s\s+/g, ' '); // Hapus spasi ganda jika ada
+    }
 }
     
   </script>

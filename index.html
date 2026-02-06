@@ -2389,7 +2389,7 @@ async function handleOcrKtp(event) {
         if (result.OCRExitCode === 1) {
             const rawText = result.ParsedResults[0].ParsedText;
             extractKtpData(rawText);
-            alert("Scan Berhasil!");
+            alert("Scan Berhasil, Lakukan Verifikasi ! ");
         } else {
             alert("Pesan Server: " + result.ErrorMessage);
         }

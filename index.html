@@ -1194,17 +1194,35 @@ function filterWargaList() {
         }
     }
 
-    function renderList(data, target) {
-        const container = document.getElementById(target);
-        if (data.length === 0) { container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold text-xs">Kosong</div>`; return; }
-        container.innerHTML = data.map(w => `
-            <div class="warga-card" onclick="showDetail('${w.NIK}')">
-                <div class="avatar ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">${(w.Nama || 'W')[0]}</div>
-                <div class="flex-1"><h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4><p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p></div>
-                 <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">RT ${w.RT || '-'}</span>
-            </div>
-        `).join('');
+function renderList(data, target) {
+    const container = document.getElementById(target);
+    if (data.length === 0) { 
+        container.innerHTML = `<div class="p-8 text-center text-slate-300 font-bold text-xs">Kosong</div>`; 
+        return; 
     }
+    
+    container.innerHTML = data.map(w => {
+        // Ambil data blok dan nomer, pastikan tidak muncul 'undefined' jika kosong
+        const blok = w.Blok || w.BLOK || "";
+        const nomer = w.Nomer || w.NOMER || "";
+        const alamatSingkat = (blok || nomer) ? `${blok}${nomer} ` : "";
+
+        return `
+            <div class="warga-card" onclick="showDetail('${w.NIK}')">
+                <div class="avatar ${(w.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-400' : 'bg-pink-400'}">
+                    ${(w.Nama || 'W')[0]}
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p>
+                </div>
+                <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">
+                    ${alamatSingkat}RT ${w.RT || '-'}
+                </span>
+            </div>
+        `;
+    }).join('');
+}
 
 
     // Ambil inisial nama (maks 2 huruf)

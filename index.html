@@ -2470,7 +2470,26 @@ function extractKtpData(rawText) {
         if (line.includes("KECAMATAN")) alamatDetail.kec = line.split(':').pop().trim();
 
         // AGAMA, STATUS, PEKERJAAN
-        if (line.includes("AGAMA")) document.getElementById('f-agama').value = line.split(':').pop().trim();
+if (line.includes("AGAMA")) {
+    let agamaRaw = line.split(':').pop().trim().toUpperCase(); // Ambil teks dan ubah ke KAPITAL
+    
+    // Daftar opsi yang tersedia di form Anda
+    const daftarAgama = ["Islam", "Kristen", "Katolik", "Buddha", "Hindu", "Konghucu"];
+    
+    // Cari yang cocok (case-insensitive)
+    const agamaCocok = daftarAgama.find(a => a.toUpperCase() === agamaRaw);
+    
+    if (agamaCocok) {
+        document.getElementById('f-agama').value = agamaCocok;
+    } else {
+        // Jika tidak ketemu langsung (misal ada noise), coba cek per kata
+        daftarAgama.forEach(ag => {
+            if (agamaRaw.includes(ag.toUpperCase())) {
+                document.getElementById('f-agama').value = ag;
+            }
+        });
+    }
+}
         if (line.includes("PERKAWINAN")) {
             let stat = line.split(':').pop().trim();
             if (stat.includes("BELUM")) document.getElementById('f-perkawinan').value = "Belum kawin";

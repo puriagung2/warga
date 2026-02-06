@@ -2365,23 +2365,20 @@ async function handleOcrKtp(event) {
 
     const btnLabel = event.target.nextElementSibling;
     const originalText = btnLabel.innerText;
-    
-    btnLabel.innerText = "MOHON TUNGGU...";
+    btnLabel.innerText = "MENGOMPRES & MENGIRIM...";
     btnLabel.style.pointerEvents = "none";
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("apikey", "K83312111388957"); // Masukkan API Key Anda
-    
-    // Gunakan OCREngine 3
-    formData.append("OCREngine", "3"); 
-    
-    // Engine 3 mendukung fitur-fitur ini untuk hasil lebih tajam
-    formData.append("isOverlayRequired", "false");
-    formData.append("scale", "true");
-    formData.append("detectOrientation", "true");
-
     try {
+        // --- PROSES KOMPRESI ---
+        const compressedFile = await compressImage(file);
+        
+        const formData = new FormData();
+        formData.append("file", compressedFile); // Kirim file yang sudah kecil
+        formData.append("apikey", "K83312111388957"); 
+        formData.append("OCREngine", "3"); 
+        formData.append("scale", "true");
+
+        // Set timeout manual untuk fetch (opsional, default browser biasanya cukup)
         const response = await fetch("https://api.ocr.space/parse/image", {
             method: "POST",
             body: formData
@@ -2390,25 +2387,54 @@ async function handleOcrKtp(event) {
         const result = await response.json();
 
         if (result.OCRExitCode === 1) {
-            // Engine 3 kadang mengembalikan teks dalam satu baris panjang atau blok
             const rawText = result.ParsedResults[0].ParsedText;
-            console.log("Hasil OCR Cloud Engine 3:", rawText);
-            
             extractKtpData(rawText);
-            
-            alert("Scan Berhasil, Lakukan Verifikasi ! ");
+            alert("Scan Berhasil!");
         } else {
             alert("Pesan Server: " + result.ErrorMessage);
         }
-
     } catch (err) {
         console.error("API Error:", err);
-        alert("Gagal terhubung ke OCR.space.");
+        alert("Koneksi Timeout atau Gagal. Pastikan internet stabil.");
     } finally {
         btnLabel.innerText = originalText;
         btnLabel.style.pointerEvents = "auto";
         event.target.value = ""; 
     }
+}
+
+// Fungsi pembantu untuk kompresi gambar
+function compressImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1500; // Resolusi ideal untuk OCR Engine 3
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                
+                // Gambar ulang dengan kualitas tinggi tapi ukuran file lebih kecil
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                }, 'image/jpeg', 0.8); // Kualitas 80% (Sangat tajam tapi ringan)
+            };
+        };
+    });
 }
 
 function extractKtpData(rawText) {

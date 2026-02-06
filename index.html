@@ -23,6 +23,7 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
@@ -2309,6 +2310,41 @@ function closeExportSheet() {
 
 // Tambahkan pencegahan tutup jika area panel diklik (opsional)
 // document.querySelector('#export-sheet > div:last-child').onclick = (e) => e.stopPropagation();
+
+    // ocr scan ktp
+async function scanKTP(file) {
+    // Tampilkan loader/indikator loading
+    showLoading(true);
+
+    const worker = await Tesseract.createWorker('ind'); // Menggunakan bahasa Indonesia
+
+    try {
+        const { data: { text } } = await worker.recognize(file);
+        
+        // Logika sederhana mengambil NIK (mencari 16 digit angka berurutan)
+        const nikMatch = text.match(/\d{16}/);
+        if (nikMatch) {
+            document.getElementById('input-nik').value = nikMatch[0];
+        }
+
+        // Contoh mencari Nama (Logika ini perlu disempurnakan berdasarkan hasil scan)
+        const lines = text.split('\n');
+        lines.forEach((line, index) => {
+            if (line.toUpperCase().includes("NAMA")) {
+                const namaValue = line.split(':')[1] || lines[index+1];
+                document.getElementById('input-nama').value = namaValue.trim();
+            }
+        });
+
+        alert("Scan selesai! Silakan periksa kembali datanya.");
+    } catch (error) {
+        console.error(error);
+        alert("Gagal membaca KTP. Pastikan foto terang dan jelas.");
+    }
+
+    await worker.terminate();
+    showLoading(false);
+}
     
   </script>
 

@@ -1216,9 +1216,9 @@ function renderList(data, target) {
                     <h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4>
                     <p class="text-[9px] font-bold text-slate-400 uppercase">NIK: ${w.NIK}</p>
                 </div>
-                <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg text-slate-400">
-                    ${alamatSingkat}RT ${w.RT || '-'}
-                </span>
+              <span class="text-[8px] font-black px-2 py-1 bg-slate-100 rounded-lg text-slate-500">
+              <span class="text-indigo-500">${alamatSingkat}</span>RT ${w.RT || '-'}
+              </span>
             </div>
         `;
     }).join('');

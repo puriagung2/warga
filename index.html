@@ -568,7 +568,7 @@ body.dark span:not(.material-icons) {
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 tracking-widest">Usia</label>
+                    <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase ml-2 tracking-widest">Kategori</label>
                     <select id="export-kategori" class="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 outline-none transition-all">
                         <option value="ALL" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Semua</option>
                         <option value="BALITA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Balita</option>
@@ -2269,7 +2269,7 @@ const dataExport = filtered.map((w, index) => {
             "Tempat/Tgl Lahir": tempatTglLahir, // Kolom Baru hasil penggabungan
             "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
             "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
-            "No HP": w.HP || w['No HP'] || ""
+            "No HP": w.HP || w['NO HP'] || ""
         };
     });
 

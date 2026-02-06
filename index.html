@@ -2408,23 +2408,66 @@ async function handleOcrKtp(event) {
     };
 }
 
-    function extractKtpData(rawText) {
+function extractKtpData(rawText) {
+    // Ubah ke Uppercase dan bersihkan karakter aneh di awal/akhir
     const text = rawText.toUpperCase();
+    const lines = text.split('\n').map(l => l.trim());
     
-    // NIK (16 angka)
-    const nikMatch = text.match(/\d{16}/);
-    if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
+    console.log("Memulai Ekstraksi dari teks:", text);
 
-    // Nama (Cari baris setelah kata NAMA)
-    const lines = text.split('\n');
+    // --- 1. Ekstraksi NIK (Cari 16 angka berurutan) ---
+    const nikMatch = text.match(/\d{16}/);
+    if (nikMatch) {
+        document.getElementById('f-nik').value = nikMatch[0];
+    } else {
+        // Jika gagal karena ada spasi di tengah NIK (misal: 2171 1014...)
+        const nikSpaced = text.replace(/\s/g, '').match(/\d{16}/);
+        if (nikSpaced) document.getElementById('f-nik').value = nikSpaced[0];
+    }
+
+    // --- 2. Ekstraksi Nama ---
     lines.forEach((line, i) => {
-        if (line.includes("NAMA")) {
-            let n = line.split(':').pop() || lines[i+1] || "";
-            document.getElementById('f-nama').value = n.replace(/[^A-Z ]/g, "").trim();
+        // Mencari baris yang mengandung "NAMA"
+        if (line.includes("NAM") || line.includes("AMA")) { 
+            // Ambil teks setelah titik dua, atau baris di bawahnya jika baris ini kosong
+            let namaValue = line.split(':').pop().trim();
+            if (!namaValue || namaValue.length < 3) namaValue = lines[i+1] || "";
+            
+            // Bersihkan dari angka dan simbol
+            document.getElementById('f-nama').value = namaValue.replace(/[^A-Z ]/g, "").trim();
+        }
+
+        // --- 3. Tempat & Tanggal Lahir ---
+        if (line.includes("TEMPAT") || line.includes("LAHIR") || line.includes("TGL")) {
+            let ttlValue = line.split(':').pop().trim() || lines[i+1] || "";
+            let parts = ttlValue.split(',');
+            
+            if (parts.length > 0) {
+                // Tempat Lahir
+                document.getElementById('f-tempat').value = parts[0].replace(/[^A-Z ]/g, "").trim();
+                
+                // Tanggal Lahir (Cari pola DD-MM-YYYY)
+                let dateMatch = ttlValue.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+                if (dateMatch) {
+                    let formattedDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+                    document.getElementById('f-tanggal').value = formattedDate;
+                }
+            }
+        }
+
+        // --- 4. Agama ---
+        const listAgama = ["ISLAM", "KRISTEN", "KATOLIK", "HINDU", "BUDDHA", "KONGHUCU"];
+        listAgama.forEach(ag => {
+            if (line.includes(ag)) document.getElementById('f-agama').value = ag.charAt(0) + ag.slice(1).toLowerCase();
+        });
+
+        // --- 5. Status Perkawinan ---
+        if (line.includes("BELUM") && line.includes("KAWIN")) {
+            document.getElementById('f-perkawinan').value = "Belum kawin";
+        } else if (line.includes("KAWIN") || line.includes("KAVVIN")) {
+            document.getElementById('f-perkawinan').value = "Kawin";
         }
     });
-
-    // Dan seterusnya untuk kolom lain...
 }
     
   </script>

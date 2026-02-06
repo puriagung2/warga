@@ -2333,7 +2333,6 @@ async function handleOcrKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Tampilkan Loading (Gunakan swal atau loading manual)
     const btnLabel = event.target.nextElementSibling;
     const originalText = btnLabel.innerText;
     btnLabel.innerText = "MEMPROSES...";
@@ -2341,47 +2340,94 @@ async function handleOcrKtp(event) {
     btnLabel.style.pointerEvents = "none";
 
     try {
-        // Inisialisasi Tesseract dengan bahasa Indonesia
         const worker = await Tesseract.createWorker('ind');
         const { data: { text } } = await worker.recognize(file);
+        const rawText = text.toUpperCase();
+        const lines = text.split('\n').map(l => l.toUpperCase().trim());
         
-        console.log("OCR Result:", text); // Untuk debugging
+        console.log("Raw OCR:", rawText);
 
-        // 1. Ekstrak NIK (Cari 16 digit angka)
-        const nikMatch = text.match(/\d{16}/);
-        if (nikMatch) {
-            document.getElementById('f-nik').value = nikMatch[0];
-        }
+        // 1. NIK (16 Digit)
+        const nikMatch = rawText.match(/\d{16}/);
+        if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
 
-        // 2. Ekstrak Nama (Mencari teks setelah kata 'Nama')
-        const lines = text.split('\n');
         lines.forEach((line, index) => {
-            const cleanLine = line.toUpperCase().replace(/[^A-Z ]/g, "");
-            if (cleanLine.includes("NAMA")) {
-                // Ambil baris yang sama setelah titik dua, atau baris di bawahnya
-                let extractedNama = line.split(':').pop() || lines[index + 1];
-                document.getElementById('f-nama').value = extractedNama.replace(/[^A-Za-z ]/g, "").trim().toUpperCase();
+            // 2. NAMA
+            if (line.includes("NAMA")) {
+                let nama = line.split(':').pop() || lines[index + 1] || "";
+                document.getElementById('f-nama').value = nama.replace(/[^A-Z ]/g, "").trim();
+            }
+
+            // 3. TEMPAT & TANGGAL LAHIR (Contoh: JAKARTA, 01-01-1990)
+            if (line.includes("TEMPAT") || line.includes("LAHIR")) {
+                let ttlPart = line.split(':').pop() || lines[index + 1] || "";
+                let parts = ttlPart.split(',');
+                if (parts.length > 1) {
+                    document.getElementById('f-tempat').value = parts[0].replace(/[^A-Z ]/g, "").trim();
+                    // Cari format tanggal DD-MM-YYYY
+                    let tglMatch = parts[1].match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+                    if (tglMatch) {
+                        let formattedDate = `${tglMatch[3]}-${tglMatch[2]}-${tglMatch[1]}`; // YYYY-MM-DD
+                        document.getElementById('f-tanggal').value = formattedDate;
+                    }
+                }
             }
         });
 
-        // 3. Ekstrak Jenis Kelamin
-        if (text.toUpperCase().includes("PEREMPUAN")) {
+        // 4. JENIS KELAMIN
+        if (rawText.includes("PEREMPUAN") || rawText.includes("REMPUAN")) {
             document.getElementById('f-kelamin').value = "Perempuan";
-        } else if (text.toUpperCase().includes("LAKI")) {
+        } else if (rawText.includes("LAKI")) {
             document.getElementById('f-kelamin').value = "Laki-laki";
         }
 
-        alert("Scan Berhasil! Beberapa kolom telah terisi otomatis. Mohon periksa kembali.");
+        // 5. AGAMA
+        const daftarAgama = ["ISLAM", "KRISTEN", "KATOLIK", "HINDU", "BUDDHA", "KONGHUCU"];
+        daftarAgama.forEach(ag => {
+            if (rawText.includes(ag)) document.getElementById('f-agama').value = ag.charAt(0) + ag.slice(1).toLowerCase();
+        });
 
+        // 6. STATUS PERKAWINAN
+        if (rawText.includes("BELUM KAWIN")) {
+            document.getElementById('f-perkawinan').value = "Belum kawin";
+        } else if (rawText.includes("CERAI MATI")) {
+            document.getElementById('f-perkawinan').value = "Cerai Mati";
+        } else if (rawText.includes("CERAI HIDUP")) {
+            document.getElementById('f-perkawinan').value = "Cerai Hidup";
+        } else if (rawText.includes("KAWIN") || rawText.includes("KAVVIN")) {
+            document.getElementById('f-perkawinan').value = "Kawin";
+        }
+
+        // 7. PEKERJAAN
+        const daftarKerja = {
+            "PELAJAR": "Pelajar/Mahasiswa",
+            "MAHASISWA": "Pelajar/Mahasiswa",
+            "KARYAWAN SWASTA": "Karyawan Swasta",
+            "PNS": "PNS",
+            "WIRASWASTA": "Wiraswasta",
+            "RUMAH TANGGA": "Mengurus Rumah Tangga",
+            "TIDAK BEKERJA": "Belum/Tidak Bekerja",
+            "PENSIUN": "Pensiunan",
+            "TNI": "TNI",
+            "POLRI": "POLRI"
+        };
+        for (let key in daftarKerja) {
+            if (rawText.includes(key)) {
+                document.getElementById('f-pekerjaan').value = daftarKerja[key];
+                break;
+            }
+        }
+
+        alert("Scan selesai! Silakan lengkapi data yang masih kosong.");
         await worker.terminate();
+
     } catch (error) {
         console.error(error);
-        alert("Gagal membaca gambar. Pastikan foto KTP jelas dan terang.");
+        alert("Gagal membaca KTP secara otomatis.");
     } finally {
         btnLabel.innerText = originalText;
         btnLabel.style.opacity = "1";
         btnLabel.style.pointerEvents = "auto";
-        event.target.value = ""; // Reset input file
     }
 }
     

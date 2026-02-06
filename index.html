@@ -2334,101 +2334,74 @@ async function handleOcrKtp(event) {
     if (!file) return;
 
     const btnLabel = event.target.nextElementSibling;
-    const originalText = btnLabel.innerText;
-    btnLabel.innerText = "MEMPROSES...";
-    btnLabel.style.opacity = "0.7";
-    btnLabel.style.pointerEvents = "none";
+    btnLabel.innerText = "MENGOLAH GAMBAR...";
 
-    try {
-        const worker = await Tesseract.createWorker('ind');
-        const { data: { text } } = await worker.recognize(file);
-        const rawText = text.toUpperCase();
-        const lines = text.split('\n').map(l => l.toUpperCase().trim());
+    // 1. Load gambar ke elemen Image sementara
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+        // 2. Pre-process gambar (Hitam Putih)
+        const processedImage = preprocessImage(img);
         
-        console.log("Raw OCR:", rawText);
+        btnLabel.innerText = "MEMBACA TEKS...";
 
-        // 1. NIK (16 Digit)
-        const nikMatch = rawText.match(/\d{16}/);
-        if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
+        try {
+            const worker = await Tesseract.createWorker('ind');
+            
+            // 3. Scan gambar yang sudah di-process
+            const { data: { text } } = await worker.recognize(processedImage);
+            
+            // Tambahkan logika pembersihan teks (Cleaning)
+            const cleanText = text.toUpperCase()
+                .replace(/SWA5TA/g, 'SWASTA')
+                .replace(/KAVVIN/g, 'KAWIN')
+                .replace(/LAKH-LAKH/g, 'LAKI-LAKI')
+                .replace(/15LAM/g, 'ISLAM');
 
-        lines.forEach((line, index) => {
-            // 2. NAMA
-            if (line.includes("NAMA")) {
-                let nama = line.split(':').pop() || lines[index + 1] || "";
-                document.getElementById('f-nama').value = nama.replace(/[^A-Z ]/g, "").trim();
-            }
+            // Jalankan logika ekstraksi (NIK, Nama, dll) seperti sebelumnya
+            extractKtpData(cleanText); 
 
-            // 3. TEMPAT & TANGGAL LAHIR (Contoh: JAKARTA, 01-01-1990)
-            if (line.includes("TEMPAT") || line.includes("LAHIR")) {
-                let ttlPart = line.split(':').pop() || lines[index + 1] || "";
-                let parts = ttlPart.split(',');
-                if (parts.length > 1) {
-                    document.getElementById('f-tempat').value = parts[0].replace(/[^A-Z ]/g, "").trim();
-                    // Cari format tanggal DD-MM-YYYY
-                    let tglMatch = parts[1].match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
-                    if (tglMatch) {
-                        let formattedDate = `${tglMatch[3]}-${tglMatch[2]}-${tglMatch[1]}`; // YYYY-MM-DD
-                        document.getElementById('f-tanggal').value = formattedDate;
-                    }
-                }
-            }
-        });
-
-        // 4. JENIS KELAMIN
-        if (rawText.includes("PEREMPUAN") || rawText.includes("REMPUAN")) {
-            document.getElementById('f-kelamin').value = "Perempuan";
-        } else if (rawText.includes("LAKI")) {
-            document.getElementById('f-kelamin').value = "Laki-laki";
+            alert("Selesai! Data berhasil diekstrak dengan optimasi kontras.");
+            await worker.terminate();
+        } catch (err) {
+            alert("Gagal memproses OCR.");
+        } finally {
+            btnLabel.innerText = "Ambil Foto";
+            btnLabel.style.opacity = "1";
         }
+    };
+}
 
-        // 5. AGAMA
-        const daftarAgama = ["ISLAM", "KRISTEN", "KATOLIK", "HINDU", "BUDDHA", "KONGHUCU"];
-        daftarAgama.forEach(ag => {
-            if (rawText.includes(ag)) document.getElementById('f-agama').value = ag.charAt(0) + ag.slice(1).toLowerCase();
-        });
-
-        // 6. STATUS PERKAWINAN
-        if (rawText.includes("BELUM KAWIN")) {
-            document.getElementById('f-perkawinan').value = "Belum kawin";
-        } else if (rawText.includes("CERAI MATI")) {
-            document.getElementById('f-perkawinan').value = "Cerai Mati";
-        } else if (rawText.includes("CERAI HIDUP")) {
-            document.getElementById('f-perkawinan').value = "Cerai Hidup";
-        } else if (rawText.includes("KAWIN") || rawText.includes("KAVVIN")) {
-            document.getElementById('f-perkawinan').value = "Kawin";
-        }
-
-        // 7. PEKERJAAN
-        const daftarKerja = {
-            "PELAJAR": "Pelajar/Mahasiswa",
-            "MAHASISWA": "Pelajar/Mahasiswa",
-            "KARYAWAN SWASTA": "Karyawan Swasta",
-            "PNS": "PNS",
-            "WIRASWASTA": "Wiraswasta",
-            "RUMAH TANGGA": "Mengurus Rumah Tangga",
-            "TIDAK BEKERJA": "Belum/Tidak Bekerja",
-            "PENSIUN": "Pensiunan",
-            "TNI": "TNI",
-            "POLRI": "POLRI"
-        };
-        for (let key in daftarKerja) {
-            if (rawText.includes(key)) {
-                document.getElementById('f-pekerjaan').value = daftarKerja[key];
-                break;
-            }
-        }
-
-        alert("Scan selesai! Silakan lengkapi data yang masih kosong.");
-        await worker.terminate();
-
-    } catch (error) {
-        console.error(error);
-        alert("Gagal membaca KTP secara otomatis.");
-    } finally {
-        btnLabel.innerText = originalText;
-        btnLabel.style.opacity = "1";
-        btnLabel.style.pointerEvents = "auto";
+    function preprocessImage(imageElement) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = imageElement.width;
+    canvas.height = imageElement.height;
+    
+    ctx.drawImage(imageElement, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    // Iterasi setiap pixel
+    for (let i = 0; i < data.length; i += 4) {
+        // Ambil rata-rata RGB untuk grayscale
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        
+        // Thresholding: Jika lebih gelap dari 128 (tengah), jadikan hitam pekat. 
+        // Jika lebih terang, jadikan putih bersih.
+        // Ini akan menghilangkan background biru pulau di KTP.
+        const v = avg < 128 ? 0 : 255; 
+        
+        data[i] = v;     // Red
+        data[i + 1] = v; // Green
+        data[i + 2] = v; // Blue
     }
+    
+    ctx.putImageData(imageData, 0, 0);
+    return canvas.toDataURL('image/jpeg', 1.0);
 }
     
   </script>

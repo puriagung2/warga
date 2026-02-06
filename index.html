@@ -2440,9 +2440,8 @@ function compressImage(file) {
 
 function extractKtpData(rawText) {
     const text = rawText.toUpperCase();
-    const lines = text.split('\n').map(l => l.trim());
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-    // Objek sementara untuk menampung bagian alamat
     let alamatDetail = {
         jalan: "",
         rtRw: "",
@@ -2452,92 +2451,60 @@ function extractKtpData(rawText) {
         prov: ""
     };
 
-    // 1. Ekstrak NIK (Tetap sama)
-    const cleanNumbers = text.replace(/\D/g, ""); 
-    const nikMatch = cleanNumbers.match(/\d{16}/);
-    if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
-
-    // 2. Loop baris untuk mengambil data spesifik
     lines.forEach((line, i) => {
-        // PROVINSI & KOTA (Biasanya ada di baris paling atas)
-        if (line.includes("PROVINSI")) alamatDetail.prov = line.replace("PROVINSI", "").trim();
-        if (line.includes("KOTA") || line.includes("KABUPATEN")) alamatDetail.kota = line.trim();
+        // 1. Logika PROVINSI & KOTA (Berdasarkan Posisi Baris)
+        if (line.includes("PROVINSI")) {
+            alamatDetail.prov = line.replace("PROVINSI", "").trim();
+            
+            // Baris tepat di bawah PROVINSI biasanya adalah Kota/Kabupaten
+            if (lines[i + 1] && !lines[i + 1].includes("NIK")) {
+                alamatDetail.kota = lines[i + 1].trim();
+            }
+        }
 
-        // NAMA
+        // 2. NIK & NAMA
+        if (line.includes("NIK")) {
+            const nikMatch = line.replace(/\D/g, "").match(/\d{16}/);
+            if (nikMatch) document.getElementById('f-nik').value = nikMatch[0];
+        }
         if (line.includes("NAMA")) {
             let namaVal = line.split(':').pop().trim() || lines[i+1] || "";
             document.getElementById('f-nama').value = namaVal.replace(/[^A-Z ]/g, "").trim();
         }
 
-        // TEMPAT TANGGAL LAHIR
-        if (line.includes("LAHIR")) {
-            let ttl = line.split(':').pop().trim();
-            if (ttl.includes(",")) document.getElementById('f-tempat').value = ttl.split(',')[0].trim();
-            let dateMatch = ttl.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
-            if (dateMatch) document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-        }
-
-        // JENIS KELAMIN
-        if (line.includes("KELAMIN")) {
-            if (line.includes("LAKI")) document.getElementById('f-kelamin').value = "Laki-laki";
-            else if (line.includes("PEREMPUAN")) document.getElementById('f-kelamin').value = "Perempuan";
-        }
-
-        // --- BAGIAN ALAMAT ---
+        // 3. DETAIL ALAMAT (Jalan, RT/RW, Kel, Kec)
         if (line.includes("ALAMAT")) alamatDetail.jalan = line.split(':').pop().trim();
         if (line.includes("RT/RW")) {
             let rtrw = line.split(':').pop().trim();
-            // Mengubah 004/006 menjadi RT 004 RW 006
             if (rtrw.includes("/")) {
                 let parts = rtrw.split("/");
                 alamatDetail.rtRw = `RT ${parts[0].trim()} RW ${parts[1].trim()}`;
             }
         }
-        if (line.includes("KEL/DESA")) alamatDetail.kel = line.split(':').pop().trim();
-        if (line.includes("KECAMATAN")) alamatDetail.kec = line.split(':').pop().trim();
-
-        // AGAMA, STATUS, PEKERJAAN
-if (line.includes("AGAMA")) {
-    let agamaRaw = line.split(':').pop().trim().toUpperCase(); // Ambil teks dan ubah ke KAPITAL
-    
-    // Daftar opsi yang tersedia di form Anda
-    const daftarAgama = ["Islam", "Kristen", "Katolik", "Buddha", "Hindu", "Konghucu"];
-    
-    // Cari yang cocok (case-insensitive)
-    const agamaCocok = daftarAgama.find(a => a.toUpperCase() === agamaRaw);
-    
-    if (agamaCocok) {
-        document.getElementById('f-agama').value = agamaCocok;
-    } else {
-        // Jika tidak ketemu langsung (misal ada noise), coba cek per kata
-        daftarAgama.forEach(ag => {
-            if (agamaRaw.includes(ag.toUpperCase())) {
-                document.getElementById('f-agama').value = ag;
-            }
-        });
-    }
-}
-        if (line.includes("PERKAWINAN")) {
-            let stat = line.split(':').pop().trim();
-            if (stat.includes("BELUM")) document.getElementById('f-perkawinan').value = "Belum kawin";
-            else document.getElementById('f-perkawinan').value = "Kawin";
+        if (line.includes("KEL/DESA") || line.includes("KEL/")) {
+            alamatDetail.kel = line.split(':').pop().trim();
         }
-        if (line.includes("PEKERJAAN")) {
-            let pek = line.split(':').pop().trim();
-            if (pek.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
-            else if (pek.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
-            else if (pek.includes("PELAJAR")) document.getElementById('f-pekerjaan').value = "Pelajar/Mahasiswa";
+        if (line.includes("KECAMATAN")) {
+            alamatDetail.kec = line.split(':').pop().trim();
         }
     });
 
-    // 3. RANGKAI ALAMAT LENGKAP
-    // Format: JALAN RT RW KEL, KEC, KOTA, PROVINSI
-    const alamatLengkap = `${alamatDetail.jalan} ${alamatDetail.rtRw} ${alamatDetail.kel}, ${alamatDetail.kec}, ${alamatDetail.kota}, ${alamatDetail.prov}`.trim();
+    // 4. MERANGKAI ALAMAT (Menghindari Duplikasi Kota di Alamat)
+    // Jika baris Kota tidak sengaja terambil dua kali, kita bersihkan
+    const komponenAlamat = [
+        alamatDetail.jalan,
+        alamatDetail.rtRw,
+        alamatDetail.kel,
+        alamatDetail.kec,
+        alamatDetail.kota,
+        alamatDetail.prov
+    ].filter((item, index, self) => item && item.length > 0 && self.indexOf(item) === index);
+
+    const alamatLengkap = komponenAlamat.join(", ");
     
-    // Masukkan ke input Alamat KTP
     const inputAlamatKtp = document.getElementById('f-alamat-ktp');
     if (inputAlamatKtp) {
-        inputAlamatKtp.value = alamatLengkap.replace(/\s\s+/g, ' '); // Hapus spasi ganda jika ada
+        inputAlamatKtp.value = alamatLengkap;
     }
 }
     

@@ -1417,7 +1417,7 @@ function renderDetailItem(label, value) {
 function showFamily(noKk) {
     const members = allData.filter(w => (w['No KK'] || w['NO KK'] || "").toString() === noKk.toString());
     
-    // 1. Logika Sorting (Tetap sama seperti milik Anda)
+    // 1. Logika Sorting
     const priority = { "KEPALA KELUARGA": 1, "ISTRI": 2, "ANAK": 3 };
     members.sort((a, b) => {
         const statusA = (a['Status Keluarga'] || "").toUpperCase();
@@ -1430,60 +1430,58 @@ function showFamily(noKk) {
 
     window.location.hash = `detail-kk/${noKk}`;
     history.pushState({modal: true}, null, "");
-    document.getElementById('btn-edit-trigger').style.display = 'none';
-
-    // 2. Desain Header Modal
+    
+    // 2. Desain Header Modal (Dark Mode Friendly)
     let html = `
-        <div class="mb-6 bg-indigo-50 dark:bg-slate-800/50 p-4 rounded-3xl flex items-center gap-3 border border-indigo-100 dark:border-slate-700">
-            <div class="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-                <span class="material-icons text-sm">family_restroom</span>
+        <div class="mb-6 bg-slate-50 dark:bg-slate-800/80 p-5 rounded-[32px] flex items-center gap-4 border border-slate-100 dark:border-slate-700 transition-colors">
+            <div class="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+                <span class="material-icons">family_restroom</span>
             </div>
             <div>
-                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] leading-none mb-1">Dokumen Keluarga</p>
-                <h3 class="text-xs font-black text-slate-800 dark:text-slate-100 uppercase">NO. KK: ${noKk}</h3>
+                <p class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] leading-none mb-1.5">Keluarga Besar</p>
+                <h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">KK: ${noKk}</h3>
             </div>
         </div>
+        
         <div class="space-y-3 relative">
-            <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-100 dark:bg-slate-800 -z-10"></div>
+            <div class="absolute left-7 top-4 bottom-4 w-px bg-slate-100 dark:bg-slate-800"></div>
     `;
     
-    members.forEach((m, index) => {
-        const isKK = m['Status Keluarga'].toUpperCase() === 'KEPALA KELUARGA';
-        const isIstri = m['Status Keluarga'].toUpperCase() === 'ISTRI';
+    members.forEach((m) => {
+        const status = (m['Status Keluarga'] || "").toUpperCase();
+        const isKK = status === 'KEPALA KELUARGA';
+        const isIstri = status === 'ISTRI';
         const age = calculateAge(m['Tanggal Lahir'] || m['TANGGAL LAHIR']);
         
         html += `
-            <div class="group relative flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-[24px] border ${isKK ? 'border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/30' : 'border-slate-100 dark:border-slate-800'} active:scale-95 transition-all" onclick="showDetail('${m.NIK}')">
+            <div class="relative flex items-center gap-4 p-4 bg-white dark:bg-slate-800/40 rounded-[28px] border ${isKK ? 'border-indigo-200 dark:border-indigo-500/50 bg-indigo-50/20' : 'border-slate-50 dark:border-slate-800'} active:scale-95 transition-all" onclick="showDetail('${m.NIK}')">
                 
-                <div class="relative">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-sm
-                        ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-gradient-to-br from-indigo-400 to-indigo-600' : 'bg-gradient-to-br from-pink-400 to-rose-500'}">
+                <div class="relative z-10">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white text-sm shadow-md
+                        ${(m.Kelamin || '').toLowerCase().startsWith('l') ? 'bg-indigo-500' : 'bg-pink-500'}">
                         ${(m.Nama || 'W')[0]}
                     </div>
-                    ${isKK ? '<div class="absolute -top-2 -right-1 text-amber-400 drop-shadow-sm"><span class="material-icons text-xs">workspace_premium</span></div>' : ''}
+                    ${isKK ? '<div class="absolute -top-2 -right-1 text-amber-500"><span class="material-icons text-xs">stars</span></div>' : ''}
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-0.5">
-                        <h4 class="text-xs font-black text-slate-800 dark:text-slate-100 truncate">${m.Nama}</h4>
-                    </div>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate mb-1">${m.Nama}</h4>
                     
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter
-                            ${isKK ? 'bg-indigo-500 text-white' : isIstri ? 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-wider
+                            ${isKK ? 'bg-indigo-500 text-white' : isIstri ? 'bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}">
                             ${m['Status Keluarga']}
                         </span>
                         
-                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500">• ${age} Tahun</span>
-                        <span class="text-[9px] font-bold text-slate-300 dark:text-slate-600">• ${m.NIK}</span>
+                        <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500">${age} Thn</span>
                     </div>
                 </div>
 
-                <span class="material-icons text-slate-300 text-sm">chevron_right</span>
+                <span class="material-icons text-slate-300 dark:text-slate-600">chevron_right</span>
             </div>`;
     });
     
-    html += `</div>`; // Tutup space-y-3
+    html += `</div>`;
     
     document.getElementById('detail-content').innerHTML = html;
     document.getElementById('detail-modal').style.display = 'flex';

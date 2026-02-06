@@ -2366,22 +2366,20 @@ async function handleOcrKtp(event) {
     const btnLabel = event.target.nextElementSibling;
     const originalText = btnLabel.innerText;
     
-    btnLabel.innerText = "MENGHUBUNGI CLOUD...";
+    btnLabel.innerText = "MENGHUBUNGI CLOUD (E3)...";
     btnLabel.style.pointerEvents = "none";
 
-    // 1. Siapkan Form Data sesuai aturan Engine 2
     const formData = new FormData();
     formData.append("file", file);
     formData.append("apikey", "K83312111388957"); // Masukkan API Key Anda
     
-    // PENTING: Untuk Engine 2, jangan gunakan parameter 'language' jika ingin autodetection.
-    // Atau gunakan 'eng' sebagai default karena Engine 2 akan otomatis mendeteksi karakter Latin.
-    formData.append("isOverlayRequired", "false");
-    formData.append("OCREngine", "2"); 
+    // Gunakan OCREngine 3
+    formData.append("OCREngine", "3"); 
     
-    // Tambahan untuk mengoptimalkan pembacaan angka (NIK)
-    formData.append("detectOrientation", "true");
+    // Engine 3 mendukung fitur-fitur ini untuk hasil lebih tajam
+    formData.append("isOverlayRequired", "false");
     formData.append("scale", "true");
+    formData.append("detectOrientation", "true");
 
     try {
         const response = await fetch("https://api.ocr.space/parse/image", {
@@ -2392,21 +2390,20 @@ async function handleOcrKtp(event) {
         const result = await response.json();
 
         if (result.OCRExitCode === 1) {
+            // Engine 3 kadang mengembalikan teks dalam satu baris panjang atau blok
             const rawText = result.ParsedResults[0].ParsedText;
-            console.log("Hasil OCR Cloud:", rawText);
+            console.log("Hasil OCR Cloud Engine 3:", rawText);
             
-            // Jalankan ekstraksi data ke form
             extractKtpData(rawText);
             
-            alert("Scan Berhasil! Data telah diproses oleh Cloud Engine.");
+            alert("Scan Berhasil dengan Engine 3!");
         } else {
-            // Menangkap error spesifik dari server (seperti E201 tadi)
             alert("Pesan Server: " + result.ErrorMessage);
         }
 
     } catch (err) {
         console.error("API Error:", err);
-        alert("Gagal terhubung ke OCR.space. Periksa koneksi internet Anda.");
+        alert("Gagal terhubung ke OCR.space.");
     } finally {
         btnLabel.innerText = originalText;
         btnLabel.style.pointerEvents = "auto";
@@ -2415,27 +2412,51 @@ async function handleOcrKtp(event) {
 }
 
 function extractKtpData(rawText) {
+    // Bersihkan teks: ubah ke UPPERCASE dan hapus karakter aneh
     const text = rawText.toUpperCase();
     const lines = text.split('\n').map(l => l.trim());
 
-    // Ekstrak NIK: Hapus semua spasi dan karakter non-angka, cari 16 digit
+    // 1. NIK - Mencari 16 digit angka (paling akurat)
     const cleanNumbers = text.replace(/\D/g, ""); 
     const nikMatch = cleanNumbers.match(/\d{16}/);
     if (nikMatch) {
         document.getElementById('f-nik').value = nikMatch[0];
     }
 
-    // Ekstrak Nama: Cari baris yang mengandung 'NAMA' atau baris setelah NIK
+    // 2. NAMA - Mencari baris setelah kata NIK atau baris yang mengandung NAMA
     lines.forEach((line, i) => {
         if (line.includes("NAMA")) {
-            let namaVal = line.split(':').pop().trim() || lines[i+1] || "";
+            // Mengambil setelah titik dua (:)
+            let namaVal = line.split(':').pop().trim();
+            // Jika kosong, biasanya nama ada di baris bawahnya (ciri khas Engine 3)
+            if (namaVal.length < 3) namaVal = lines[i+1] || "";
             document.getElementById('f-nama').value = namaVal.replace(/[^A-Z ]/g, "").trim();
         }
+
+        // 3. TTL (Tempat, Tanggal Lahir)
+        if (line.includes("LAHIR") || line.includes("TEMPAT")) {
+            let ttl = line.split(':').pop().trim();
+            // Ambil Tempat (sebelum koma)
+            if (ttl.includes(",")) {
+                document.getElementById('f-tempat').value = ttl.split(',')[0].trim();
+            }
+            // Ambil Tanggal (pola angka)
+            let dateMatch = ttl.match(/(\d{2})[\s-]*(\d{2})[\s-]*(\d{4})/);
+            if (dateMatch) {
+                document.getElementById('f-tanggal').value = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+            }
+        }
+
+        // 4. PEKERJAAN
+        if (line.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
+        if (line.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
+        if (line.includes("PELAJAR") || line.includes("MAHASISWA")) document.getElementById('f-pekerjaan').value = "Pelajar/Mahasiswa";
         
-        // Cari Pekerjaan: SWASTA, PNS, atau WIRASWASTA
-        if (line.includes("SWASTA") || line.includes("WIRASWASTA") || line.includes("KERJA")) {
-             if (line.includes("SWASTA")) document.getElementById('f-pekerjaan').value = "Karyawan Swasta";
-             if (line.includes("WIRASWASTA")) document.getElementById('f-pekerjaan').value = "Wiraswasta";
+        // 5. STATUS PERKAWINAN
+        if (line.includes("BELUM KAWIN")) {
+            document.getElementById('f-perkawinan').value = "Belum kawin";
+        } else if (line.includes("KAWIN")) {
+            document.getElementById('f-perkawinan').value = "Kawin";
         }
     });
 }

@@ -2407,7 +2407,7 @@ async function handleOcrKtp(event) {
     if (!file) return;
 
     // Tampilkan Loading
-    const overlay = document.getElementById('loading-overlay-lama');
+    const overlay = document.getElementById('loading-overlay');
     const statusText = document.getElementById('status-text');
     overlay.style.display = 'flex';
     statusText.innerText = "MENGOMPRES GAMBAR...";
@@ -2442,7 +2442,7 @@ async function handleOcrKtp(event) {
                 text: 'Data KTP telah otomatis masuk ke formulir.',
                 icon: 'success',
                 confirmButtonColor: '#3085d6',
-                timer: 5000 // Otomatis tutup dalam 3 detik
+                timer: 3000 // Otomatis tutup dalam 3 detik
             });
 
         } else {
@@ -2453,7 +2453,7 @@ async function handleOcrKtp(event) {
         overlay.style.display = 'none';
         Swal.fire({
             title: 'Gagal Scan',
-            text: err.message || 'Terjadi kesalahan koneksi.',
+            text: err.message || 'Terjadi kesalahan koneksi. Ulangi lagi !',
             icon: 'error'
         });
     } finally {

@@ -544,7 +544,7 @@ body.dark span:not(.material-icons) {
         </div>
 
 <div class="stat-card">
-    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Usia (Kemenkes)</p>
+    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Usia</p>
     <div class="flex items-center gap-4">
         <div class="w-24 h-24 relative"><canvas id="chartAge"></canvas></div>
         
@@ -2658,7 +2658,7 @@ function updateAgeStatistics(data) {
         else if (age <= 59) counts.dewasa++;
         else counts.lansia++;
     });
-
+// log statistik usia di console
     console.log("Statistik Berhasil Dihitung:", counts);
 
     // Update Angka Label di UI

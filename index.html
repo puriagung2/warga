@@ -544,6 +544,35 @@ body.dark span:not(.material-icons) {
         </div>
 
         <div class="stat-card">
+    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Usia (Kemenkes)</p>
+    <div class="flex items-center gap-4">
+        <div class="w-24 h-24"><canvas id="chartAge"></canvas></div>
+        <div class="flex-1 space-y-1">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-cyan-400"></div><span class="text-[9px] font-bold text-slate-500">Balita (0-4)</span></div>
+                <span id="label-balita" class="text-xs font-black text-slate-800">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-lime-400"></div><span class="text-[9px] font-bold text-slate-500">Anak (5-11)</span></div>
+                <span id="label-anak" class="text-xs font-black text-slate-800">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div><span class="text-[9px] font-bold text-slate-500">Remaja (12-18)</span></div>
+                <span id="label-remaja" class="text-xs font-black text-slate-800">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-600"></div><span class="text-[9px] font-bold text-slate-500">Dewasa (19-59)</span></div>
+                <span id="label-dewasa" class="text-xs font-black text-slate-800">0</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500"></div><span class="text-[9px] font-bold text-slate-500">Lansia (60+)</span></div>
+                <span id="label-lansia" class="text-xs font-black text-slate-800">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <div class="stat-card">
     <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Status Tinggal</p>
     <div class="flex items-center gap-4">
         <div class="w-24 h-24"><canvas id="chartTinggal"></canvas></div>
@@ -2587,6 +2616,71 @@ function extractKtpData(rawText) {
     const komponenAlamat = [alamatDetail.jalan, alamatDetail.rtRw, alamatDetail.kel, alamatDetail.kec, alamatDetail.kota, alamatDetail.prov]
         .filter(item => item && item.length > 1);
     document.getElementById('f-alamat-ktp').value = komponenAlamat.join(", ");
+}
+
+    // chart usia
+    let ageChart; 
+
+function updateAgeStatistics(dataWarga) {
+    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0 };
+    const today = new Date();
+
+    dataWarga.forEach(w => {
+        if (!w.tanggal_lahir) return;
+        
+        const birthDate = new Date(w.tanggal_lahir);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+        // Klasifikasi Kelompok Usia Standar Kemenkes (Tegas)
+        if (age < 5) counts.balita++;
+        else if (age <= 11) counts.anak++;
+        else if (age <= 18) counts.remaja++;
+        else if (age <= 59) counts.dewasa++;
+        else counts.lansia++;
+    });
+
+    // Update Label Angka
+    document.getElementById('label-balita').innerText = counts.balita;
+    document.getElementById('label-anak').innerText = counts.anak;
+    document.getElementById('label-remaja').innerText = counts.remaja;
+    document.getElementById('label-dewasa').innerText = counts.dewasa;
+    document.getElementById('label-lansia').innerText = counts.lansia;
+
+    const ctx = document.getElementById('chartAge').getContext('2d');
+    const dataValues = [counts.balita, counts.anak, counts.remaja, counts.dewasa, counts.lansia];
+
+    if (ageChart) {
+        ageChart.data.datasets[0].data = dataValues;
+        ageChart.update();
+    } else {
+        ageChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: [
+                        '#22d3ee', // Cyan (Balita)
+                        '#a3e635', // Lime (Anak)
+                        '#10b981', // Emerald (Remaja)
+                        '#2563eb', // Blue (Dewasa)
+                        '#f97316'  // Orange (Lansia)
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
 }
     
   </script>

@@ -109,7 +109,7 @@ body.dark span:not(.material-icons) {
       transition: background-color 0.3s, color 0.3s;
     }
 
-    #loading-overlay {
+    #loading-overlay-lama {
       position: fixed;
       inset: 0;
       background: rgba(255, 255, 255, 0.8);
@@ -118,6 +118,43 @@ body.dark span:not(.material-icons) {
       display: none;
       align-items: center; justify-content: center;
     }
+
+    /* Overlay Loading */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none; /* Sembunyikan secara default */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: white;
+    font-family: sans-serif;
+}
+
+/* Animasi Spinner */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+    @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
 
     #auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
     #main-app { display: none; flex-direction: column; justify-content: flex-start; gap: 0; }
@@ -406,7 +443,13 @@ body.dark span:not(.material-icons) {
 </head>
 <body>
 
-  <div id="loading-overlay">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="status-text">MENGOLAH GAMBAR...</div>
+</div>
+  
+  <div id="loading-overlay-lama">
     <div class="flex flex-col items-center">
       <div class="w-10 h-10 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
     </div>
@@ -2363,43 +2406,57 @@ async function handleOcrKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const btnLabel = event.target.nextElementSibling;
-    const originalText = btnLabel.innerText;
-    btnLabel.innerText = "MOHON TUNGGU...";
-    btnLabel.style.pointerEvents = "none";
+    // Tampilkan Loading
+    const overlay = document.getElementById('loading-overlay');
+    const statusText = document.getElementById('status-text');
+    overlay.style.display = 'flex';
+    statusText.innerText = "MENGOMPRES GAMBAR...";
 
     try {
-        // --- PROSES KOMPRESI ---
         const compressedFile = await compressImage(file);
         
         const formData = new FormData();
-        formData.append("file", compressedFile); // Kirim file yang sudah kecil
-        formData.append("apikey", "K83312111388957"); 
+        formData.append("file", compressedFile);
+        formData.append("apikey", "K83312111388957"); // API KEY ANDA
         formData.append("OCREngine", "3"); 
         formData.append("scale", "true");
 
-        // Set timeout manual untuk fetch (opsional, default browser biasanya cukup)
-        const response = await fetch("https://api.ocr.space/parse/image", {
+        statusText.innerText = "MENGIRIM KE CLOUD...";
+
+        let response = await fetch("https://api.ocr.space/parse/image", {
             method: "POST",
             body: formData
         });
+        let result = await response.json();
 
-        const result = await response.json();
-
-        if (result.OCRExitCode === 1) {
+        if (result && result.OCRExitCode === 1) {
             const rawText = result.ParsedResults[0].ParsedText;
-            // console.log("Hasil OCR Cloud Engine 3:", rawText);
             extractKtpData(rawText);
-            alert("Scan Berhasil, Lakukan Verifikasi ! ");
+
+            // Sembunyikan loading
+            overlay.style.display = 'none';
+
+            // Tampilkan Alert Sukses yang Cantik
+            Swal.fire({
+                title: 'Scan Berhasil, Lakukan Verifikasi!',
+                text: 'Data KTP telah otomatis masuk ke formulir.',
+                icon: 'success',
+                confirmButtonColor: '#3085d6',
+                timer: 3000 // Otomatis tutup dalam 3 detik
+            });
+
         } else {
-            alert("Pesan Server: " + result.ErrorMessage);
+            throw new Error(result.ErrorMessage || "Gagal memproses gambar");
         }
+
     } catch (err) {
-        console.error("API Error:", err);
-        alert("Koneksi Timeout atau Gagal. Pastikan internet stabil.");
+        overlay.style.display = 'none';
+        Swal.fire({
+            title: 'Gagal Scan',
+            text: err.message || 'Terjadi kesalahan koneksi.',
+            icon: 'error'
+        });
     } finally {
-        btnLabel.innerText = originalText;
-        btnLabel.style.pointerEvents = "auto";
         event.target.value = ""; 
     }
 }

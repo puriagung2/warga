@@ -2623,18 +2623,28 @@ function extractKtpData(rawText) {
     let ageChart; 
 
 function updateAgeStatistics(dataWarga) {
+    if (!dataWarga || dataWarga.length === 0) return;
+
     let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0 };
     const today = new Date();
 
     dataWarga.forEach(w => {
-        if (!w.tanggal_lahir) return;
-        
-        const birthDate = new Date(w.tanggal_lahir);
+        let tgl = w.tanggal_lahir || w.TanggalLahir; // sesuaikan key-nya
+        if (!tgl) return;
+
+        // Penanganan format DD-MM-YYYY ke YYYY-MM-DD
+        if (tgl.includes('-') && tgl.split('-')[0].length === 2) {
+            const p = tgl.split('-');
+            tgl = `${p[2]}-${p[1]}-${p[0]}`;
+        }
+
+        const birthDate = new Date(tgl);
+        if (isNaN(birthDate)) return; // Skip jika tanggal tidak valid
+
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
 
-        // Klasifikasi Kelompok Usia Standar Kemenkes (Tegas)
         if (age < 5) counts.balita++;
         else if (age <= 11) counts.anak++;
         else if (age <= 18) counts.remaja++;
@@ -2642,46 +2652,37 @@ function updateAgeStatistics(dataWarga) {
         else counts.lansia++;
     });
 
-    // Update Label Angka
-    document.getElementById('label-balita').innerText = counts.balita;
-    document.getElementById('label-anak').innerText = counts.anak;
-    document.getElementById('label-remaja').innerText = counts.remaja;
-    document.getElementById('label-dewasa').innerText = counts.dewasa;
-    document.getElementById('label-lansia').innerText = counts.lansia;
+    // Update Label UI
+    const labels = ['balita', 'anak', 'remaja', 'dewasa', 'lansia'];
+    labels.forEach(l => {
+        const el = document.getElementById(`label-${l}`);
+        if(el) el.innerText = counts[l];
+    });
 
-    const ctx = document.getElementById('chartAge').getContext('2d');
-    const dataValues = [counts.balita, counts.anak, counts.remaja, counts.dewasa, counts.lansia];
+    const ctx = document.getElementById('chartAge');
+    if (!ctx) return;
 
+    // Menghancurkan chart lama jika ada agar tidak error "Canvas in use"
     if (ageChart) {
-        ageChart.data.datasets[0].data = dataValues;
-        ageChart.update();
-    } else {
-        ageChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
-                datasets: [{
-                    data: dataValues,
-                    backgroundColor: [
-                        '#22d3ee', // Cyan (Balita)
-                        '#a3e635', // Lime (Anak)
-                        '#10b981', // Emerald (Remaja)
-                        '#2563eb', // Blue (Dewasa)
-                        '#f97316'  // Orange (Lansia)
-                    ],
-                    borderWidth: 1,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                }
-            }
-        });
+        ageChart.destroy();
     }
+
+    ageChart = new Chart(ctx.getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
+            datasets: [{
+                data: [counts.balita, counts.anak, counts.remaja, counts.dewasa, counts.lansia],
+                backgroundColor: ['#22d3ee', '#a3e635', '#10b981', '#2563eb', '#f97316'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
 }
     
   </script>

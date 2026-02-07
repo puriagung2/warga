@@ -1057,7 +1057,7 @@ async function refreshData() {
         if (currentPage === "dashboard") checkTodayBirthdayPopUp();
         switchStatTab(currentStatTab);
         updateTinggalChart();
-        updateAgeStatistics();
+        updateAgeStatistics(dataWarga);
         applyPermissions(); 
 
     } catch (e) {

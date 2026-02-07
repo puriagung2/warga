@@ -2624,41 +2624,29 @@ function extractKtpData(rawText) {
 let ageChart = null; // Inisialisasi variabel global
 
 function updateAgeStatistics(data) {
-    // 1. Validasi: Jika data undefined atau bukan array, buat array kosong
-    const dataWarga = Array.isArray(data) ? data : [];
-    
+    const wargaArray = Array.isArray(data) ? data : [];
     let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0 };
     const today = new Date();
 
-    // 2. Hitung Distribusi Usia
-wargaArray.forEach(w => {
-        // DETEKSI OTOMATIS: Kita ambil nilai apapun yang mengandung unsur 'lahir'
-        let tglRaw = w.TanggalLahir || w.tanggal_lahir || w.TglLahir || w['Tanggal Lahir'];
+    wargaArray.forEach(w => {
+        // MEMBACA KOLOM "Tanggal Lahir" (DENGAN SPASI)
+        let tglRaw = w['Tanggal Lahir']; 
         if (!tglRaw) return;
 
         let tgl = String(tglRaw).trim();
         
-        // 1. Tangani format DD/MM/YYYY menjadi DD-MM-YYYY
+        // Konversi format DD-MM-YYYY atau DD/MM/YYYY ke format yang dipahami JS (YYYY-MM-DD)
         tgl = tgl.replace(/\//g, '-');
-
-        // 2. Tangani format DD-MM-YYYY menjadi YYYY-MM-DD (Standar KTP/OCR)
         if (tgl.includes('-')) {
             const parts = tgl.split('-');
             if (parts[0].length === 2 && parts[2].length === 4) {
-                // Jika formatnya 18-02-1986, kita balik jadi 1986-02-18
                 tgl = `${parts[2]}-${parts[1]}-${parts[0]}`;
             }
         }
 
         const birthDate = new Date(tgl);
-        
-        // Jika masih gagal (Invalid Date), coba paksa parse
-        if (isNaN(birthDate.getTime())) {
-            console.warn("Gagal memproses tanggal untuk:", w.Nama, "Nilai:", tglRaw);
-            return;
-        }
+        if (isNaN(birthDate.getTime())) return;
 
-        // HITUNG USIA
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
@@ -2671,23 +2659,23 @@ wargaArray.forEach(w => {
         else counts.lansia++;
     });
 
-    // 3. Update Angka di UI
-    document.getElementById('label-balita').innerText = counts.balita;
-    document.getElementById('label-anak').innerText = counts.anak;
-    document.getElementById('label-remaja').innerText = counts.remaja;
-    document.getElementById('label-dewasa').innerText = counts.dewasa;
-    document.getElementById('label-lansia').innerText = counts.lansia;
+    console.log("Statistik Berhasil Dihitung:", counts);
 
-    // 4. Gambar Pie Chart
-    const ctx = document.getElementById('chartAge').getContext('2d');
-    
-    // Hapus chart lama jika sudah ada agar tidak error
-    if (ageChart) {
-        ageChart.destroy();
-    }
+    // Update Angka Label di UI
+    const ids = ['balita', 'anak', 'remaja', 'dewasa', 'lansia'];
+    ids.forEach(id => {
+        const el = document.getElementById(`label-${id}`);
+        if(el) el.innerText = counts[id];
+    });
 
-    ageChart = new Chart(ctx, {
-        type: 'pie', // Pie Chart (Bukan Doughnut)
+    // RENDER CHART
+    const canvas = document.getElementById('chartAge');
+    if (!canvas) return;
+
+    if (window.ageChart) window.ageChart.destroy();
+
+    window.ageChart = new Chart(canvas.getContext('2d'), {
+        type: 'pie',
         data: {
             labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
             datasets: [{
@@ -2700,9 +2688,7 @@ wargaArray.forEach(w => {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false } // Legend mati karena kita pakai label manual
-            }
+            plugins: { legend: { display: false } }
         }
     });
 }

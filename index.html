@@ -2421,7 +2421,7 @@ async function handleOcrKtp(event) {
         formData.append("OCREngine", "3"); 
         formData.append("scale", "true");
 
-        statusText.innerText = "MENGIRIM KE CLOUD...";
+        statusText.innerText = "MOHON TUNGGU...";
 
         let response = await fetch("https://api.ocr.space/parse/image", {
             method: "POST",
@@ -2442,7 +2442,7 @@ async function handleOcrKtp(event) {
                 text: 'Data KTP telah otomatis masuk ke formulir.',
                 icon: 'success',
                 confirmButtonColor: '#3085d6',
-                timer: 3000 // Otomatis tutup dalam 3 detik
+                timer: 5000 // Otomatis tutup dalam 3 detik
             });
 
         } else {

@@ -905,7 +905,7 @@ body.dark span:not(.material-icons) {
         }
     });
 
-    function toggleLoading(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
+    function toggleLoading(s) { document.getElementById('loading-overlay-lama').style.display = s ? 'flex' : 'none'; }
 
     // permalink
 window.addEventListener('hashchange', () => {
@@ -2407,7 +2407,7 @@ async function handleOcrKtp(event) {
     if (!file) return;
 
     // Tampilkan Loading
-    const overlay = document.getElementById('loading-overlay');
+    const overlay = document.getElementById('loading-overlay-lama');
     const statusText = document.getElementById('status-text');
     overlay.style.display = 'flex';
     statusText.innerText = "MENGOMPRES GAMBAR...";

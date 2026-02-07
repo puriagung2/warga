@@ -1057,12 +1057,6 @@ async function refreshData() {
         if (currentPage === "dashboard") checkTodayBirthdayPopUp();
         switchStatTab(currentStatTab);
         updateTinggalChart();
-        // updateAgeStatistics(dataWarga);
-        // Panggil fungsi chart
-    updateAgeStatistics(dataUntukStatistik);
-    
-    // Panggil fungsi chart gender (jika ada)
-    updateGenderStatistics(dataUntukStatistik);
         applyPermissions(); 
 
     } catch (e) {

@@ -543,10 +543,11 @@ body.dark span:not(.material-icons) {
             </div>
         </div>
 
-        <div class="stat-card">
+<div class="stat-card">
     <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">Statistik Usia (Kemenkes)</p>
     <div class="flex items-center gap-4">
         <div class="w-24 h-24"><canvas id="chartAge"></canvas></div>
+        
         <div class="flex-1 space-y-1">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-cyan-400"></div><span class="text-[9px] font-bold text-slate-500">Balita (0-4)</span></div>
@@ -1054,6 +1055,7 @@ async function refreshData() {
 
         updateUI();
         updateBirthdayBadge();
+        updateAgeStatistics(allData);
         if (currentPage === "dashboard") checkTodayBirthdayPopUp();
         switchStatTab(currentStatTab);
         updateTinggalChart();
@@ -2619,40 +2621,30 @@ function extractKtpData(rawText) {
 }
 
     // chart usia
-    let ageChart; 
+let ageChart = null; // Inisialisasi variabel global
 
-function updateAgeStatistics(dataWarga) {
-    // PROTEKSI: Jika dataWarga tidak ada, null, atau bukan array, buat jadi array kosong
-    const wargaArray = dataWarga || []; 
+function updateAgeStatistics(data) {
+    // 1. Validasi: Jika data undefined atau bukan array, buat array kosong
+    const dataWarga = Array.isArray(data) ? data : [];
     
-    // Jika benar-benar kosong, nol-kan UI dan stop proses
-    if (wargaArray.length === 0) {
-        ['balita', 'anak', 'remaja', 'dewasa', 'lansia'].forEach(l => {
-            const el = document.getElementById(`label-${l}`);
-            if(el) el.innerText = "0";
-        });
-        if (ageChart) ageChart.destroy();
-        return; 
-    }
-
     let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0 };
     const today = new Date();
 
-    wargaArray.forEach(w => {
-        // Ambil tanggal lahir (coba beberapa kemungkinan nama properti)
-        let tgl = w.tanggal_lahir || w.TanggalLahir || w.tgl_lahir; 
+    // 2. Hitung Distribusi Usia
+    dataWarga.forEach(w => {
+        // Coba ambil tanggal lahir (antisipasi perbedaan penamaan field)
+        let tgl = w.tanggal_lahir || w.TanggalLahir || w.tgl_lahir;
         if (!tgl) return;
 
-        // ... kode konversi format DD-MM-YYYY ke YYYY-MM-DD ...
+        // Pastikan format ISO (YYYY-MM-DD)
         if (tgl.includes('-') && tgl.split('-')[0].length === 2) {
             const p = tgl.split('-');
             tgl = `${p[2]}-${p[1]}-${p[0]}`;
         }
 
         const birthDate = new Date(tgl);
-        if (isNaN(birthDate.getTime())) return; 
+        if (isNaN(birthDate.getTime())) return;
 
-        // Hitung Usia
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
@@ -2665,24 +2657,98 @@ function updateAgeStatistics(dataWarga) {
         else counts.lansia++;
     });
 
-    // --- Render Chart ---
-    renderAgeChart(counts);
+    // 3. Update Angka di UI
+    document.getElementById('label-balita').innerText = counts.balita;
+    document.getElementById('label-anak').innerText = counts.anak;
+    document.getElementById('label-remaja').innerText = counts.remaja;
+    document.getElementById('label-dewasa').innerText = counts.dewasa;
+    document.getElementById('label-lansia').innerText = counts.lansia;
+
+    // 4. Gambar Pie Chart
+    const ctx = document.getElementById('chartAge').getContext('2d');
+    
+    // Hapus chart lama jika sudah ada agar tidak error
+    if (ageChart) {
+        ageChart.destroy();
+    }
+
+    ageChart = new Chart(ctx, {
+        type: 'pie', // Pie Chart (Bukan Doughnut)
+        data: {
+            labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
+            datasets: [{
+                data: [counts.balita, counts.anak, counts.remaja, counts.dewasa, counts.lansia],
+                backgroundColor: ['#22d3ee', '#a3e635', '#10b981', '#2563eb', '#f97316'],
+                borderWidth: 1,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false } // Legend mati karena kita pakai label manual
+            }
+        }
+    });
 }
 
-function renderAgeChart(counts) {
-    const ctx = document.getElementById('chartAge');
-    if (!ctx) return;
+    let ageChart = null;
+
+function updateAgeStatistics(data) {
+    const wargaArray = Array.isArray(data) ? data : [];
+    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0 };
+    const today = new Date();
+
+    wargaArray.forEach(w => {
+        // Sesuaikan 'TanggalLahir' dengan key di database Anda (biasanya Kapital di depan)
+        let tgl = w.TanggalLahir || w.tanggal_lahir; 
+        if (!tgl) return;
+
+        // Ubah DD-MM-YYYY ke YYYY-MM-DD jika perlu
+        if (tgl.includes('-') && tgl.split('-')[0].length === 2) {
+            const p = tgl.split('-');
+            tgl = `${p[2]}-${p[1]}-${p[0]}`;
+        }
+
+        const birthDate = new Date(tgl);
+        if (isNaN(birthDate.getTime())) return;
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+        // KLASIFIKASI KEMENKES
+        if (age < 5) counts.balita++;
+        else if (age <= 11) counts.anak++;
+        else if (age <= 18) counts.remaja++;
+        else if (age <= 59) counts.dewasa++;
+        else counts.lansia++;
+    });
+
+    // Update Angka Label di HTML
+    if(document.getElementById('label-balita')) document.getElementById('label-balita').innerText = counts.balita;
+    if(document.getElementById('label-anak')) document.getElementById('label-anak').innerText = counts.anak;
+    if(document.getElementById('label-remaja')) document.getElementById('label-remaja').innerText = counts.remaja;
+    if(document.getElementById('label-dewasa')) document.getElementById('label-dewasa').innerText = counts.dewasa;
+    if(document.getElementById('label-lansia')) document.getElementById('label-lansia').innerText = counts.lansia;
+
+    // Render Pie Chart
+    const canvas = document.getElementById('chartAge');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
     if (ageChart) ageChart.destroy();
 
-    ageChart = new Chart(ctx.getContext('2d'), {
+    ageChart = new Chart(ctx, {
         type: 'pie',
         data: {
             labels: ['Balita', 'Anak', 'Remaja', 'Dewasa', 'Lansia'],
             datasets: [{
                 data: [counts.balita, counts.anak, counts.remaja, counts.dewasa, counts.lansia],
                 backgroundColor: ['#22d3ee', '#a3e635', '#10b981', '#2563eb', '#f97316'],
-                borderWidth: 1
+                borderWidth: 1,
+                borderColor: '#ffffff'
             }]
         },
         options: {
@@ -2691,13 +2757,6 @@ function renderAgeChart(counts) {
             plugins: { legend: { display: false } }
         }
     });
-    
-    // Update angka label
-    document.getElementById('label-balita').innerText = counts.balita;
-    document.getElementById('label-anak').innerText = counts.anak;
-    document.getElementById('label-remaja').innerText = counts.remaja;
-    document.getElementById('label-dewasa').innerText = counts.dewasa;
-    document.getElementById('label-lansia').innerText = counts.lansia;
 }
     
   </script>

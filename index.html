@@ -382,12 +382,7 @@ body.dark span:not(.material-icons) {
     }
     
     .tab-btn.active { 
-      background: var(--soft-indigo); 
-      /* color: white; */
-      border-color: var(--soft-indigo); 
-      box-shadow: 0 8px 15px rgba(99,102,241,0.2); 
-      transform: scale(1.05); /* Membesar sedikit */
-      color: #4f46e5; /* Indigo-600 */
+     @apply scale-105 shadow-sm;
     }
 
     /* Garis bawah tipis untuk yang aktif */
@@ -406,16 +401,17 @@ body.dark span:not(.material-icons) {
 
     /* Container Tab */
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;     /* Firefox */
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory; /* Efek magnet */
-    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
+}
+
+    /* Style Badge agar ringkas di HTML */
+.badge-stat {
+    @apply bg-indigo-600 text-white dark:bg-indigo-500 px-1.5 py-0.5 rounded-lg text-[8px] font-bold transition-all;
 }
 
     .required-icon {
@@ -2815,6 +2811,15 @@ function updateAgeStatistics(data) {
     });
 }
 
+// Memastikan tombol yang aktif bergeser ke tengah kontainer
+const activeTab = document.getElementById('tab-' + tab);
+if (activeTab) {
+    activeTab.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+    });
+}
     
   </script>
 

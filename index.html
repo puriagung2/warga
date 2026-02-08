@@ -2816,57 +2816,43 @@ function updateAgeStatistics(data) {
 // update profil
 // Fungsi untuk membuka Modal Profil
 function openProfileModal() {
-    console.log("Mencoba membuka profil...");
+    console.log("Membuka profil...");
     const rawData = localStorage.getItem('ewarga_user');
     
-    let userData;
-    try {
-        // Cek apakah data ada dan merupakan JSON valid
-        if (rawData && rawData.startsWith('{')) {
-            userData = JSON.parse(rawData);
-        } else {
-            // Jika data cuma tulisan "rt4", kita buat objek sementara agar tidak logout
-            console.warn("Data storage bukan JSON. Menggunakan data darurat.");
-            userData = { 
-                user: rawData || "Guest", 
-                nama: rawData || "User", 
-                role: "lihat", 
-                rt: "-" 
-            };
-        }
-    } catch (e) {
-        console.error("Error parsing data:", e);
-        return; // Berhenti di sini, jangan lanjut ke logout
+    // Jika data kosong atau bukan JSON, jangan logout, tapi tampilkan pesan
+    if (!rawData || !rawData.startsWith('{')) {
+        alert("Sesi bermasalah. Silakan Login ulang secara manual.");
+        return;
     }
 
-    // Mengisi Elemen UI
-    const elNama = document.getElementById('prof-display-name');
-    const elInputNama = document.getElementById('prof-nama');
-    const elInputUser = document.getElementById('prof-username');
-    const elRole = document.getElementById('prof-display-role');
+    const userData = JSON.parse(rawData);
 
-    if (elNama) elNama.innerText = userData.nama || userData.user;
-    if (elInputNama) elInputNama.value = userData.nama || "";
-    if (elInputUser) elInputUser.value = userData.user || "";
-    
-    // Logika Warna Badge Role (admin, petugas, lihat)
-    if (elRole) {
+    // 1. Tampilkan Nama Lengkap (dari kolom E)
+    const namaLengkap = userData.nama || userData.user || "User";
+    document.getElementById('prof-display-name').innerText = namaLengkap;
+    document.getElementById('prof-nama').value = namaLengkap;
+
+    // 2. Tampilkan Username (dari kolom A)
+    document.getElementById('prof-username').value = userData.user || "";
+
+    // 3. Logika Warna Role (admin, petugas, lihat)
+    const roleBadge = document.getElementById('prof-display-role');
+    if (roleBadge) {
         const role = (userData.role || "lihat").toLowerCase();
-        let bgClass = "bg-slate-500"; // default: lihat
+        const rt = userData.rt || "-";
         
-        if (role === "admin") bgClass = "bg-red-600";
-        else if (role === "petugas") bgClass = "bg-indigo-600";
+        let colorClass = "bg-slate-500"; // Warna untuk 'lihat'
+        if (role === "admin") colorClass = "bg-red-600";
+        if (role === "petugas") colorClass = "bg-indigo-600";
 
-        elRole.innerText = `${role.toUpperCase()} RT ${userData.rt || "-"}`;
-        elRole.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 shadow-lg ${bgClass}`;
+        roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
+        roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${colorClass}`;
     }
 
-    // Tampilkan Modal
+    // 4. Munculkan Modal
     const modal = document.getElementById('profile-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
-    }
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.classList.remove('hidden');
 }
 
 // Fungsi untuk menutup Modal

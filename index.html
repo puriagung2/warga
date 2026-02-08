@@ -377,65 +377,16 @@ body.dark span:not(.material-icons) {
       transition: all 0.2s;
       white-space: nowrap;
       cursor: pointer;
-      scroll-snap-align: start; /* Magnet berhenti di awal tombol */
-      flex-shrink: 0; /* Mencegah tombol gepeng */
     }
-    
-    .tab-btn.active {
-        background: #4f46e5 !important; /* Indigo 600 */
-        color: white !important;
-        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
-        transform: translateY(-2px);
+    .tab-btn.active { 
+      background: var(--soft-indigo); 
+      color: white; 
+      border-color: var(--soft-indigo); 
+      box-shadow: 0 8px 15px rgba(99,102,241,0.2); 
     }
-
-    /* Mode Dark - Perbaikan Kontras */
-    .dark .tab-btn {
-        background: #1e293b; /* Slate 800 */
-        color: #94a3b8; /* Slate 400 */
-    }
-
-    .dark .tab-btn.active {
-        background: #6366f1 !important; /* Indigo 500 */
-        color: white !important;
-        box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.5);
-    }
-
-    /* Badge Modern */
-    .badge-stat {
-        @apply px-1.5 py-0.5 rounded-md text-[9px] font-black transition-all;
-        background: rgba(255, 255, 255, 0.2);
-        color: inherit;
-    }
-
-    /* Garis bawah tipis untuk yang aktif */
-.tab-btn.active::after {
-    content: "";
-    position: absolute;
-    bottom: -4px;
-    left: 20%;
-    right: 20%;
-    height: 3px;
-    background: #4f46e5;
-    border-radius: 10px;
-}
     
     #detail-modal { position: fixed; inset: 0; background: white; z-index: 3000; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 110px; }
-
-    /* Container Tab */
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-}
-
-    /* Style Badge agar ringkas di HTML */
-.badge-stat {
-    @apply bg-indigo-600 text-white dark:bg-indigo-500 px-1.5 py-0.5 rounded-lg text-[8px] font-bold transition-all;
-}
-
+  
     .required-icon {
   color: #ef4444; /* Warna merah (Tailwind red-500) */
   margin-left: 2px;
@@ -650,34 +601,26 @@ body.dark span:not(.material-icons) {
         </button>
     </div>
     
-    <div class="relative mt-2">
-    <div class="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none bg-gradient-to-r from-white dark:from-slate-900 to-transparent"></div>
-    <div class="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none bg-gradient-to-l from-white dark:from-slate-900 to-transparent"></div>
-
-    <div id="tab-container" class="flex gap-3 overflow-x-auto pb-4 pt-2 no-scrollbar px-8 snap-x snap-mandatory scroll-smooth">
-        <button onclick="changeStatPage('balita')" id="tab-balita" class="tab-btn active">
-            Balita <span id="badge-balita" class="badge-stat">0</span>
+    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="changeStatPage('balita')" id="tab-balita" class="tab-btn active flex items-center gap-1 whitespace-nowrap">
+            Balita <span id="badge-balita" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
-        <button onclick="changeStatPage('anak')" id="tab-anak" class="tab-btn">
-            Anak <span id="badge-anak" class="badge-stat">0</span>
+        <button onclick="changeStatPage('anak')" id="tab-anak" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Anak <span id="badge-anak" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
-        <button onclick="changeStatPage('remaja')" id="tab-remaja" class="tab-btn">
-            Remaja <span id="badge-remaja" class="badge-stat">0</span>
+        <button onclick="changeStatPage('remaja')" id="tab-remaja" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Remaja <span id="badge-remaja" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
-        <button onclick="changeStatPage('dewasa')" id="tab-dewasa" class="tab-btn">
-            Dewasa <span id="badge-dewasa" class="badge-stat">0</span>
+        <button onclick="changeStatPage('dewasa')" id="tab-dewasa" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Dewasa <span id="badge-dewasa" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
-        <button onclick="changeStatPage('lansia')" id="tab-lansia" class="tab-btn">
-            Lansia <span id="badge-lansia" class="badge-stat">0</span>
+        <button onclick="changeStatPage('lansia')" id="tab-lansia" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Lansia <span id="badge-lansia" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
-        <button onclick="changeStatPage('ultah')" id="tab-ultah" class="tab-btn">
-            Ultah <span id="badge-ultah" class="badge-stat">0</span>
+        <button onclick="changeStatPage('ultah')" id="tab-ultah" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Ultah <span id="badge-ultah" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
         </button>
     </div>
-</div>
-
-    <div class="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none bg-gradient-to-l from-white dark:from-slate-900 to-transparent opacity-100"></div>
-</div>
 
     <div id="stat-list-container" class="space-y-3"></div>
 
@@ -1275,40 +1218,10 @@ function switchStatTab(tab) {
         tempFiltered.sort((a, b) => b._sortPriority - a._sortPriority);
     }
 
-    // --- LOGIKA AUTO-SCROLL KE TENGAH ---
-    const activeTab = document.getElementById('tab-' + tab);
-    const container = document.getElementById('tab-container');
-    
-    if (activeTab && container) {
-        const containerWidth = container.offsetWidth;
-        const tabOffset = activeTab.offsetLeft;
-        const tabWidth = activeTab.offsetWidth;
-        
-        // Menghitung posisi agar tombol berada tepat di tengah
-        const scrollPosition = tabOffset - (containerWidth / 2) + (tabWidth / 2);
-        
-        container.scrollTo({
-            left: scrollPosition,
-            behavior: 'smooth'
-        });
-    }
-  
     filteredStatData = tempFiltered;
     renderStatList();
 }
 
-    function scrollTabToCenter(tabId) {
-    const el = document.getElementById('tab-' + tabId);
-    if (el) {
-        el.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center', // Geser hingga tombol ke tengah
-            block: 'nearest'
-        });
-    }
-}
-
-    
 function renderStatList() {
     const listContainer = document.getElementById('stat-list-container');
     const totalItems = filteredStatData.length;
@@ -2853,15 +2766,6 @@ function updateAgeStatistics(data) {
     });
 }
 
-// Memastikan tombol yang aktif bergeser ke tengah kontainer
-const activeTab = document.getElementById('tab-' + tab);
-if (activeTab) {
-    activeTab.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest'
-    });
-}
     
   </script>
 

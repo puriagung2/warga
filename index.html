@@ -2824,27 +2824,36 @@ function openProfileModal() {
     const rawData = localStorage.getItem('ewarga_user');
     if (!rawData) return;
 
-    let user;
+    let userData;
     try {
-        // Cek apakah data adalah JSON valid
-        if (rawData.trim().startsWith('{')) {
-            user = JSON.parse(rawData);
-        } else {
-            // Jika data lama hanya string "admin", buat objek darurat
-            user = { username: rawData, nama: rawData, role: 'ADMIN', rt: '00' };
-        }
+        userData = JSON.parse(rawData);
     } catch (e) {
-        user = { username: rawData, nama: rawData, role: 'ADMIN', rt: '00' };
+        logout(); // Jika data corrupt, paksa keluar
+        return;
     }
 
-    // Mapping data ke Element HTML
-    // Pastikan ID ini sesuai dengan HTML modal profil yang saya berikan sebelumnya
-    document.getElementById('prof-display-name').innerText = user.nama || user.username || "User";
-    document.getElementById('prof-display-role').innerText = `${user.role} RT ${user.rt}`.toUpperCase();
+    // Mengambil data dengan key huruf kecil
+    const namaLengkap = userData.nama || userData.user || "User";
+    const username = userData.user || "";
+    const roleWarga = (userData.role || "lihat").toLowerCase();
+    const nomorRT = userData.rt || "00";
+
+    // Update Tampilan Header Modal
+    document.getElementById('prof-display-name').innerText = namaLengkap;
     
-    document.getElementById('prof-nama').value = user.nama || "";
-    document.getElementById('prof-username').value = user.username || "";
-    document.getElementById('prof-password').value = ""; // Kosongkan field ganti password
+    // Badge Role Dinamis
+    const roleEl = document.getElementById('prof-display-role');
+    let colorClass = "bg-slate-500";
+    if (roleWarga === "admin") colorClass = "bg-red-500";
+    else if (roleWarga === "petugas") colorClass = "bg-indigo-500";
+
+    roleEl.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${colorClass}`;
+    roleEl.innerText = `${roleWarga.toUpperCase()} RT ${nomorRT}`;
+
+    // Update Input Form
+    document.getElementById('prof-nama').value = namaLengkap;
+    document.getElementById('prof-username').value = username;
+    document.getElementById('prof-password').value = ""; // Tetap kosong kecuali mau ganti
 
     // Tampilkan Modal
     const modal = document.getElementById('profile-modal');
@@ -2872,14 +2881,11 @@ function logout() {
 // 3. Fungsi Update Profile (Sesuai doPost JSON Anda)
 async function updateProfile() {
     const btn = document.getElementById('btn-save-profile');
-    const nama = document.getElementById('prof-nama').value;
-    const username = document.getElementById('prof-username').value;
-    const password = document.getElementById('prof-password').value;
+    const inputNama = document.getElementById('prof-nama').value;
+    const inputUser = document.getElementById('prof-username').value;
+    const inputPass = document.getElementById('prof-password').value;
 
-    if (!nama) {
-        Swal.fire("Peringatan", "Nama tidak boleh kosong", "warning");
-        return;
-    }
+    if (!inputNama) return Swal.fire("Error", "Nama harus diisi", "error");
 
     btn.disabled = true;
     btn.innerHTML = `<span class="animate-spin material-icons text-sm">sync</span> MENYIMPAN...`;
@@ -2890,9 +2896,9 @@ async function updateProfile() {
             body: JSON.stringify({
                 action: 'updateUser',
                 args: {
-                    username: username,
-                    nama: nama,
-                    password: password
+                    user: inputUser,
+                    nama: inputNama,
+                    password: inputPass
                 }
             })
         });
@@ -2900,26 +2906,16 @@ async function updateProfile() {
         const result = await response.json();
 
         if (result.success) {
-            // Update Local Storage
-            const userData = JSON.parse(localStorage.getItem('ewarga_user'));
-            userData.nama = nama;
-            localStorage.setItem('ewarga_user', JSON.stringify(userData));
+            // Update data di LocalStorage agar tidak perlu login ulang
+            const localData = JSON.parse(localStorage.getItem('ewarga_user'));
+            localData.nama = inputNama;
+            localStorage.setItem('ewarga_user', JSON.stringify(localData));
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: 'Profil diperbarui!',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            throw new Error(result.error || "Gagal memperbarui");
+            Swal.fire({ icon: 'success', title: 'Berhasil diperbarui', timer: 1500, showConfirmButton: false })
+            .then(() => location.reload());
         }
-    } catch (error) {
-        console.error(error);
-        Swal.fire("Error", "Gagal: " + error.message, "error");
+    } catch (err) {
+        Swal.fire("Error", "Gagal menyimpan perubahan", "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN`;

@@ -1951,23 +1951,26 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
         const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
+try {
+        const params = encodeURIComponent(JSON.stringify([user, pass]));
+        const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
+        const result = await response.json();
+
         if (result.success) {
-            // Simpan data user lengkap (username, role, rt) ke localStorage
+            // PENTING: result harus berupa OBJEK yang mengandung key 'nama'
+            // Kita simpan SELURUH objek result ke localStorage
             localStorage.setItem('ewarga_user', JSON.stringify(result));
-            updateUserInfoDisplay();
-            // Sembunyikan login, tampilkan aplikasi
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
             
-            // Refresh data agar filter RT berjalan
-            refreshData(); 
+            // Console log untuk memastikan data yang masuk benar
+            console.log("Data Login Berhasil:", result);
+
+            // ... sisa kode pindah halaman ...
+            location.reload(); // Refresh untuk memastikan semua variabel terisi
         } else {
-            alert("Username atau Password salah!");
+            alert("Login Gagal");
         }
     } catch (err) {
-        console.error("Login Error:", err);
-    } finally {
-        showLoading(false);
+        console.error(err);
     }
 }
 

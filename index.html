@@ -2818,13 +2818,62 @@ function updateAgeStatistics(data) {
 }
 
 // update profil
-    async function updateProfile() {
+    // 1. Pastikan variabel ini ada di bagian paling atas script (global)
+// agar bisa diakses oleh semua fungsi
+function openProfileModal() {
+    console.log("Membuka modal profil...");
+    const rawUser = localStorage.getItem('ewarga_user');
+    if (!rawUser) return;
+    
+    let user;
+    try {
+        user = JSON.parse(rawUser);
+    } catch (e) {
+        console.error("Gagal parse data user");
+        return;
+    }
+
+    // Isi data ke form
+    document.getElementById('prof-display-name').innerText = user.nama || user.username;
+    document.getElementById('prof-display-role').innerText = (user.role || 'User').toUpperCase() + (user.rt ? " RT " + user.rt : "");
+    document.getElementById('prof-nama').value = user.nama || "";
+    document.getElementById('prof-username').value = user.username || "";
+    document.getElementById('prof-password').value = ""; 
+
+    // Tampilkan Modal
+    const modal = document.getElementById('profile-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+// 2. Fungsi Logout yang sudah Anda miliki (Pastikan tetap ada)
+function logout() {
+    if (confirm("Apakah Anda yakin ingin keluar?")) {
+        localStorage.removeItem('ewarga_user');
+        document.getElementById('main-app').style.setProperty('display', 'none', 'important');
+        document.getElementById('auth-container').style.setProperty('display', 'flex', 'important');
+        allData = []; 
+        location.reload(); 
+    }
+}
+
+// 3. Fungsi Update Profile (Sesuai doPost JSON Anda)
+async function updateProfile() {
     const btn = document.getElementById('btn-save-profile');
     const nama = document.getElementById('prof-nama').value;
     const username = document.getElementById('prof-username').value;
     const password = document.getElementById('prof-password').value;
 
-    if (!nama) return Swal.fire("Error", "Nama tidak boleh kosong", "error");
+    if (!nama) {
+        Swal.fire("Peringatan", "Nama tidak boleh kosong", "warning");
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = `<span class="animate-spin material-icons text-sm">sync</span> MENYIMPAN...`;
@@ -2845,10 +2894,10 @@ function updateAgeStatistics(data) {
         const result = await response.json();
 
         if (result.success) {
-            // Update Local Storage agar nama di header langsung berubah
-            const rawUser = JSON.parse(localStorage.getItem('ewarga_user'));
-            rawUser.nama = nama;
-            localStorage.setItem('ewarga_user', JSON.stringify(rawUser));
+            // Update Local Storage
+            const userData = JSON.parse(localStorage.getItem('ewarga_user'));
+            userData.nama = nama;
+            localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
             Swal.fire({
                 icon: 'success',
@@ -2857,15 +2906,14 @@ function updateAgeStatistics(data) {
                 timer: 1500,
                 showConfirmButton: false
             }).then(() => {
-                location.reload(); // Refresh untuk update semua komponen UI
+                location.reload();
             });
         } else {
-            throw new Error(result.error);
+            throw new Error(result.error || "Gagal memperbarui");
         }
-
     } catch (error) {
         console.error(error);
-        Swal.fire("Gagal", "Terjadi kesalahan: " + error.message, "error");
+        Swal.fire("Error", "Gagal: " + error.message, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN`;

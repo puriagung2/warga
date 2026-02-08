@@ -664,6 +664,8 @@ body.dark span:not(.material-icons) {
                     <select id="export-kategori" class="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-xs font-bold p-4 outline-none transition-all">
                         <option value="ALL" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Semua</option>
                         <option value="BALITA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Balita</option>
+                        <option value="ANAK" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Anak</option>
+                        <option value="REMAJA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Remaja</option>
                         <option value="LANSIA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Lansia</option>
                         <option value="KEPALA KELUARGA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">KK Saja</option>
 
@@ -2389,6 +2391,8 @@ function prosesExport(format) {
         
         let matchKategori = true;
         if (filterKategori === "BALITA") matchKategori = (umur <= 5);
+        if (filterKategori === "ANAK") matchKategori = (umur <= 11);
+        if (filterKategori === "REMAJA") matchKategori = (umur <= 18);
         else if (filterKategori === "LANSIA") matchKategori = (umur >= 60);
         else if (filterKategori === "KEPALA KELUARGA") matchKategori = (statusKel === "KEPALA KELUARGA");
 

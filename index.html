@@ -1941,39 +1941,48 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 }
 
     async function doLogin() {
-    const user = document.getElementById('username-input').value; // Sesuaikan ID input Anda
-    const pass = document.getElementById('password-input').value; // Sesuaikan ID input Anda
+    const userElement = document.getElementById('username-input');
+    const passElement = document.getElementById('password-input');
     
-    showLoading(true);
-    try {
-        // Memanggil fungsi checkLogin di kode .gs dengan parameter action dan args
-        const params = encodeURIComponent(JSON.stringify([user, pass]));
-        const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
-        const result = await response.json();
+    if (!userElement || !passElement) {
+        console.error("Elemen input tidak ditemukan!");
+        return;
+    }
 
-try {
+    const user = userElement.value;
+    const pass = passElement.value;
+    
+    // Tampilkan loading jika ada fungsi showLoading
+    if (typeof showLoading === "function") showLoading(true);
+
+    try {
         const params = encodeURIComponent(JSON.stringify([user, pass]));
         const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // PENTING: result harus berupa OBJEK yang mengandung key 'nama'
-            // Kita simpan SELURUH objek result ke localStorage
+            // --- KUNCI PERBAIKAN ---
+            // Simpan objek utuh (mengandung user, nama, role, rt)
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Console log untuk memastikan data yang masuk benar
-            console.log("Data Login Berhasil:", result);
+            console.log("Login sukses, data disimpan:", result);
 
-            // ... sisa kode pindah halaman ...
-            location.reload(); // Refresh untuk memastikan semua variabel terisi
+            // Sembunyikan panel login & tampilkan app
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            // Segarkan halaman agar state bersih dan data 'nama' terload
+            location.reload(); 
         } else {
-            alert("Login Gagal");
+            alert("Username atau Password salah!");
         }
     } catch (err) {
-        console.error(err);
+        console.error("Login Error:", err);
+        alert("Terjadi kesalahan koneksi ke server.");
+    } finally {
+        if (typeof showLoading === "function") showLoading(false);
     }
 }
-    }
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);

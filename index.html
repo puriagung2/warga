@@ -2823,27 +2823,44 @@ function updateAgeStatistics(data) {
 function openProfileModal() {
     console.log("Membuka modal profil...");
     const rawUser = localStorage.getItem('ewarga_user');
-    if (!rawUser) return;
+    
+    // Cek apakah data ada di localStorage
+    if (!rawUser || rawUser === "undefined") {
+        console.error("Data user tidak ditemukan di localStorage");
+        Swal.fire("Error", "Sesi login tidak valid. Silakan login kembali.", "error");
+        return;
+    }
     
     let user;
     try {
-        user = JSON.parse(rawUser);
+        // Cek apakah rawUser sudah berupa objek atau masih string JSON
+        user = typeof rawUser === 'string' ? JSON.parse(rawUser) : rawUser;
     } catch (e) {
-        console.error("Gagal parse data user");
+        console.error("Gagal parse data user:", e, "Isi rawUser:", rawUser);
+        Swal.fire("Error", "Format data user rusak. Silakan login ulang.", "error");
         return;
     }
 
-    // Isi data ke form
-    document.getElementById('prof-display-name').innerText = user.nama || user.username;
-    document.getElementById('prof-display-role').innerText = (user.role || 'User').toUpperCase() + (user.rt ? " RT " + user.rt : "");
-    document.getElementById('prof-nama').value = user.nama || "";
-    document.getElementById('prof-username').value = user.username || "";
-    document.getElementById('prof-password').value = ""; 
+    // Pastikan elemen ada sebelum diisi
+    const displayName = document.getElementById('prof-display-name');
+    const displayRole = document.getElementById('prof-display-role');
+    const inputNama = document.getElementById('prof-nama');
+    const inputUsername = document.getElementById('prof-username');
+
+    if (displayName) displayName.innerText = user.nama || user.username || "User";
+    if (displayRole) displayRole.innerText = (user.role || 'Warga').toUpperCase() + (user.rt ? " RT " + user.rt : "");
+    if (inputNama) inputNama.value = user.nama || "";
+    if (inputUsername) inputUsername.value = user.username || "";
+    
+    const inputPass = document.getElementById('prof-password');
+    if (inputPass) inputPass.value = ""; 
 
     // Tampilkan Modal
     const modal = document.getElementById('profile-modal');
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
 }
 
 function closeProfileModal() {

@@ -2391,8 +2391,8 @@ function prosesExport(format) {
         
         let matchKategori = true;
         if (filterKategori === "BALITA") matchKategori = (umur <= 5);
-        if (filterKategori === "ANAK") matchKategori = (umur <= 11);
-        if (filterKategori === "REMAJA") matchKategori = (umur <= 18);
+        if (filterKategori === "ANAK") matchKategori = (umur >= 5 && umur <= 11);        
+        if (filterKategori === "REMAJA") matchKategori = (umur >= 12 && umur <= 18);
         else if (filterKategori === "LANSIA") matchKategori = (umur >= 60);
         else if (filterKategori === "KEPALA KELUARGA") matchKategori = (statusKel === "KEPALA KELUARGA");
 

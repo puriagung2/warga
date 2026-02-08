@@ -2820,45 +2820,68 @@ function updateAgeStatistics(data) {
 // update profil
     // 1. Pastikan variabel ini ada di bagian paling atas script (global)
 // agar bisa diakses oleh semua fungsi
+// Fungsi untuk membuka Modal Profil
 function openProfileModal() {
+    // 1. Ambil data dari LocalStorage
     const rawData = localStorage.getItem('ewarga_user');
-    if (!rawData) return;
-
-    let userData;
-    try {
-        userData = JSON.parse(rawData);
-    } catch (e) {
-        logout(); // Jika data corrupt, paksa keluar
+    if (!rawData) {
+        console.error("Data user tidak ditemukan");
         return;
     }
 
-    // Mengambil data dengan key huruf kecil
-    const namaLengkap = userData.nama || userData.user || "User";
-    const username = userData.user || "";
-    const roleWarga = (userData.role || "lihat").toLowerCase();
-    const nomorRT = userData.rt || "00";
+    let userData;
+    try {
+        // Cek apakah formatnya JSON atau string biasa (antisipasi data lama)
+        userData = rawData.startsWith('{') ? JSON.parse(rawData) : null;
+        
+        if (!userData) {
+            // Jika data lama hanya berupa string "admin", buat objek dummy agar tidak error
+            userData = { user: rawData, nama: rawData, role: 'admin', rt: '00' };
+        }
+    } catch (e) {
+        console.error("Gagal parse data:", e);
+        return;
+    }
 
-    // Update Tampilan Header Modal
-    document.getElementById('prof-display-name').innerText = namaLengkap;
+    // 2. Mapping data ke elemen UI Modal
+    // Kita gunakan key huruf kecil sesuai spreadsheet (user, nama, role, rt)
+    const namaUser = userData.nama || userData.user || "Pengguna";
+    const roleUser = (userData.role || "lihat").toUpperCase();
+    const rtUser = userData.rt || "00";
+
+    document.getElementById('prof-display-name').innerText = namaUser;
     
-    // Badge Role Dinamis
-    const roleEl = document.getElementById('prof-display-role');
-    let colorClass = "bg-slate-500";
-    if (roleWarga === "admin") colorClass = "bg-red-500";
-    else if (roleWarga === "petugas") colorClass = "bg-indigo-500";
+    // Warna badge role
+    const roleBadge = document.getElementById('prof-display-role');
+    let bgClass = "bg-slate-500";
+    if (userData.role === "admin") bgClass = "bg-red-500";
+    if (userData.role === "petugas") bgClass = "bg-indigo-500";
+    
+    roleBadge.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
+    roleBadge.innerText = `${roleUser} RT ${rtUser}`;
 
-    roleEl.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${colorClass}`;
-    roleEl.innerText = `${roleWarga.toUpperCase()} RT ${nomorRT}`;
+    // Isi Form Input
+    document.getElementById('prof-nama').value = namaUser;
+    document.getElementById('prof-username').value = userData.user || "";
+    document.getElementById('prof-password').value = ""; // Password dikosongkan
 
-    // Update Input Form
-    document.getElementById('prof-nama').value = namaLengkap;
-    document.getElementById('prof-username').value = username;
-    document.getElementById('prof-password').value = ""; // Tetap kosong kecuali mau ganti
-
-    // Tampilkan Modal
+    // 3. Tampilkan Modal (Hapus class hidden dan set display flex)
     const modal = document.getElementById('profile-modal');
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    } else {
+        console.error("Elemen profile-modal tidak ditemukan di HTML");
+    }
+}
+
+// Fungsi untuk menutup Modal
+function closeProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 }
 
 function closeProfileModal() {

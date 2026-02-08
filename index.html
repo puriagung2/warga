@@ -1941,28 +1941,36 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 }
 
    async function doLogin() {
-    const user = document.getElementById('username-input').value;
-    const pass = document.getElementById('password-input').value;
-    
+    // Sesuaikan ID dengan yang ada di HTML Anda
+    const userVal = document.getElementById('username-input').value;
+    const passVal = document.getElementById('password-input').value;
+
     try {
-        const params = encodeURIComponent(JSON.stringify([user, pass]));
+        const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
+        // Ganti scriptUrl dengan URL Web App Google Apps Script Anda
         const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // WAJIB: Simpan sebagai JSON string agar bisa di-parse di fungsi profil
+            // SIMPAN DATA SEBAGAI OBJEK (Agar muncul nama "Joko S", bukan "rt4")
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Berikan jeda sedikit atau reload agar storage benar-benar terupdate
+            console.log("Login sukses, data tersimpan:", result);
+
+            // Sembunyikan login, tampilkan aplikasi
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            
+            // Refresh satu kali untuk memastikan modal profil siap
             location.reload(); 
         } else {
-            alert("Login Gagal");
+            alert("Username atau Password salah!");
         }
     } catch (err) {
-        console.error(err);
-    } catch (err) {
-        console.error(err);
+        console.error("Gagal Login:", err);
+        alert("Terjadi kesalahan koneksi.");
     }
+}
 
 
   // Jalankan saat halaman pertama kali dibuka

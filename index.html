@@ -593,7 +593,7 @@ body.dark span:not(.material-icons) {
         <div id="latest-list"></div>
       </section>
 
-     <section id="page-stats" class="page space-y-4">
+<section id="page-stats" class="page space-y-4">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-black text-slate-800">Demografi Warga</h2>
         <button onclick="openExportSheet()" class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center active:scale-90 transition-transform">
@@ -601,17 +601,30 @@ body.dark span:not(.material-icons) {
         </button>
     </div>
     
-<div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-    <button onclick="switchStatTab('balita')" id="tab-balita" class="tab-btn active">Balita</button>
-    <button onclick="switchStatTab('anak')" id="tab-anak" class="tab-btn">Anak</button>
-    <button onclick="switchStatTab('remaja')" id="tab-remaja" class="tab-btn">Remaja</button>
-    <button onclick="switchStatTab('dewasa')" id="tab-dewasa" class="tab-btn">Dewasa</button>
-    <button onclick="switchStatTab('lansia')" id="tab-lansia" class="tab-btn">Lansia</button>
-    <button onclick="switchStatTab('ultah')" id="tab-ultah" class="tab-btn">Ulang Tahun</button>
-</div>
+    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="changeStatPage('balita')" id="tab-balita" class="tab-btn active flex items-center gap-1 whitespace-nowrap">
+            Balita <span id="badge-balita" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+        <button onclick="changeStatPage('anak')" id="tab-anak" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Anak <span id="badge-anak" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+        <button onclick="changeStatPage('remaja')" id="tab-remaja" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Remaja <span id="badge-remaja" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+        <button onclick="changeStatPage('dewasa')" id="tab-dewasa" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Dewasa <span id="badge-dewasa" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+        <button onclick="changeStatPage('lansia')" id="tab-lansia" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Lansia <span id="badge-lansia" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+        <button onclick="changeStatPage('ultah')" id="tab-ultah" class="tab-btn flex items-center gap-1 whitespace-nowrap">
+            Ultah <span id="badge-ultah" class="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-lg text-[8px]">0</span>
+        </button>
+    </div>
 
-    <div id="stat-list-container" class="space-y-3">
-        </div>
+    <div id="stat-list-container" class="space-y-3"></div>
+
+    <div id="stat-pagination" class="pagination-controls mt-4"></div>
 </section>
 
 <div id="export-sheet" class="fixed inset-0 z-[10000] hidden items-end sm:items-center justify-center p-0 sm:p-6">
@@ -1110,25 +1123,42 @@ function applyPermissions() {
     }
 
     // --- Statistik Page Logic ---
+let statPage = 1;
+const STAT_PAGE_SIZE = 10;
+let filteredStatData = [];
+
+// Fungsi utama untuk pindah tab
+function changeStatPage(tab) {
+    statPage = 1; // Reset ke halaman 1 setiap ganti tab
+    switchStatTab(tab);
+}
+
+// Fungsi navigasi pagination
+function navigateStatPage(direction) {
+    statPage += direction;
+    renderStatList();
+}
+
 function switchStatTab(tab) {
     if (!allData || allData.length === 0) return;
     currentStatTab = tab;
     
+    // Update State Tab Active
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-'+tab));
-    const listContainer = document.getElementById('stat-list-container');
-    listContainer.innerHTML = "";
 
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const nextWeek = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    let filtered = [];
+    // Variabel penampung sementara untuk hitung badge
+    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0 };
+    let tempFiltered = [];
 
     allData.forEach(w => {
         if (!w['Tanggal Lahir']) return;
-        
-        // Memastikan format tanggal bisa dibaca (Handle DD-MM-YYYY)
         let tglStr = w['Tanggal Lahir'];
+        
+        // Handle format DD-MM-YYYY ke YYYY-MM-DD
         if (tglStr.includes('-') && tglStr.split('-')[0].length === 2) {
             const p = tglStr.split('-');
             tglStr = `${p[2]}-${p[1]}-${p[0]}`;
@@ -1137,54 +1167,75 @@ function switchStatTab(tab) {
         const bDate = new Date(tglStr);
         if (isNaN(bDate)) return;
 
-        // Hitung Umur
         let age = today.getFullYear() - bDate.getFullYear();
         const m = today.getMonth() - bDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) age--;
 
-        // LOGIKA FILTER KEMENKES
-        let isMatch = false;
-        if (tab === 'balita' && age < 5) isMatch = true;
-        else if (tab === 'anak' && age >= 5 && age <= 11) isMatch = true;
-        else if (tab === 'remaja' && age >= 12 && age <= 18) isMatch = true;
-        else if (tab === 'dewasa' && age >= 19 && age <= 59) isMatch = true;
-        else if (tab === 'lansia' && age >= 60) isMatch = true;
-        
-        if (isMatch) {
-            w._displayAge = age + " Thn";
-            w._sortPriority = age; // Urutkan berdasarkan umur
-            filtered.push(w);
-        } else if (tab === 'ultah') {
-            const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
-            const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+        // LOGIKA KLASIFIKASI (Untuk Hitung Semua Badge)
+        let cat = "";
+        if (age < 5) { cat = 'balita'; counts.balita++; }
+        else if (age <= 11) { cat = 'anak'; counts.anak++; }
+        else if (age <= 18) { cat = 'remaja'; counts.remaja++; }
+        else if (age <= 59) { cat = 'dewasa'; counts.dewasa++; }
+        else { cat = 'lansia'; counts.lansia++; }
 
-            if (bThisYear >= todayStart && bThisYear <= nextWeek) {
-                const ageTarget = today.getFullYear() - bDate.getFullYear();
-                if (isToday) {
-                    w._displayAge = `HARI INI 🎂 ke-${ageTarget}th`;
-                    w._sortPriority = 0;
-                } else {
-                    w._displayAge = `${bDate.getDate()} ${bDate.toLocaleDateString('id-ID', { month: 'short' })} (ke-${ageTarget}th)`;
-                    w._sortPriority = bThisYear.getTime();
-                }
-                filtered.push(w);
+        // Cek Ulang Tahun
+        const bThisYear = new Date(today.getFullYear(), bDate.getMonth(), bDate.getDate());
+        const isUltah = (bThisYear >= todayStart && bThisYear <= nextWeek);
+        if (isUltah) counts.ultah++;
+
+        // Masukkan ke filtered jika sesuai tab aktif
+        if (tab === cat) {
+            w._displayAge = age + " Thn";
+            w._sortPriority = age;
+            tempFiltered.push(w);
+        } else if (tab === 'ultah' && isUltah) {
+            const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+            const ageTarget = today.getFullYear() - bDate.getFullYear();
+            if (isToday) {
+                w._displayAge = `HARI INI 🎂 ke-${ageTarget}th`;
+                w._sortPriority = 0;
+            } else {
+                w._displayAge = `${bDate.getDate()} ${bDate.toLocaleDateString('id-ID', { month: 'short' })} (ke-${ageTarget}th)`;
+                w._sortPriority = bThisYear.getTime();
             }
+            tempFiltered.push(w);
         }
     });
 
-    // Urutan: Ulang tahun berdasarkan waktu, kategori usia berdasarkan umur tertua
+    // Update SEMUA Badge di UI
+    Object.keys(counts).forEach(k => {
+        const badge = document.getElementById(`badge-${k}`);
+        if (badge) badge.innerText = counts[k];
+    });
+
+    // Sorting
     if (tab === 'ultah') {
-        filtered.sort((a, b) => a._sortPriority - b._sortPriority);
+        tempFiltered.sort((a, b) => a._sortPriority - b._sortPriority);
     } else {
-        filtered.sort((a, b) => b._sortPriority - a._sortPriority);
+        tempFiltered.sort((a, b) => b._sortPriority - a._sortPriority);
     }
 
-    if (filtered.length === 0) {
+    filteredStatData = tempFiltered;
+    renderStatList();
+}
+
+function renderStatList() {
+    const listContainer = document.getElementById('stat-list-container');
+    const totalItems = filteredStatData.length;
+
+    if (totalItems === 0) {
         listContainer.innerHTML = `<div class="p-10 text-center text-slate-300 font-bold text-xs uppercase tracking-widest">Tidak ada data</div>`;
+        document.getElementById('stat-pagination').innerHTML = "";
         return;
     }
 
-    listContainer.innerHTML = filtered.map(w => `
+    // Pagination Logic
+    const start = (statPage - 1) * STAT_PAGE_SIZE;
+    const end = start + STAT_PAGE_SIZE;
+    const paginatedItems = filteredStatData.slice(start, end);
+
+    listContainer.innerHTML = paginatedItems.map(w => `
         <div class="warga-card animate__animated animate__fadeInUp" onclick="showDetail('${w.NIK}')" style="animation-duration: 0.3s">
             <div class="avatar ${w.Kelamin.startsWith('L') ? 'bg-indigo-400' : 'bg-pink-400'}">${w.Nama[0]}</div>
             <div class="flex-1">
@@ -1192,10 +1243,13 @@ function switchStatTab(tab) {
                 <p class="text-[9px] font-bold text-slate-400 uppercase">Blok ${w.Blok} No ${w.Nomer} • RT 0${w.RT}</p>
             </div>
             <div class="text-right">
-                <p class="text-[10px] font-black ${w._sortPriority === 0 && tab === 'ultah' ? 'text-pink-500' : 'text-indigo-500'}">${w._displayAge}</p>
+                <p class="text-[10px] font-black ${w._sortPriority === 0 && currentStatTab === 'ultah' ? 'text-pink-500' : 'text-indigo-500'}">${w._displayAge}</p>
             </div>
         </div>
     `).join('');
+
+    // Panggil fungsi renderPagination bawaan Anda
+    renderPagination(totalItems, statPage, 'stat-pagination', 'navigateStatPage');
 }
 
 function filterWargaList() {

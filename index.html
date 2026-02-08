@@ -1947,25 +1947,23 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
     try {
         const params = encodeURIComponent(JSON.stringify([user, pass]));
         const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
-        const result = await response.json(); // Ini akan menerima objek dari GAS
+        const result = await response.json();
 
         if (result.success) {
-            // SIMPAN SEBAGAI JSON STRING
+            // WAJIB: Simpan sebagai JSON string agar bisa di-parse di fungsi profil
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Pindah ke dashboard
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            
-            // REFRESH WAJIB agar data baru terload sempurna
+            // Berikan jeda sedikit atau reload agar storage benar-benar terupdate
             location.reload(); 
         } else {
-            alert("Login Gagal!");
+            alert("Login Gagal");
         }
     } catch (err) {
         console.error(err);
+    } catch (err) {
+        console.error(err);
     }
-}
+
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);
@@ -2816,43 +2814,47 @@ function updateAgeStatistics(data) {
 // update profil
 // Fungsi untuk membuka Modal Profil
 function openProfileModal() {
-    console.log("Membuka profil...");
     const rawData = localStorage.getItem('ewarga_user');
-    
-    // Jika data kosong atau bukan JSON, jangan logout, tapi tampilkan pesan
-    if (!rawData || !rawData.startsWith('{')) {
-        alert("Sesi bermasalah. Silakan Login ulang secara manual.");
+    let userData;
+
+    try {
+        if (!rawData) throw new Error("Kosong");
+
+        if (rawData.startsWith('{')) {
+            // Jika sudah benar format JSON
+            userData = JSON.parse(rawData);
+        } else {
+            // JIKA MASIH STRING (seperti "rt4"), kita buatkan objek buatan sementara
+            // agar modal tetap terbuka dan tidak muncul pesan error
+            userData = {
+                user: rawData,
+                nama: rawData, // Akan tertulis rt4 sementara sampai login ulang sukses
+                role: "lihat",
+                rt: "-"
+            };
+        }
+    } catch (e) {
+        alert("Sesi benar-benar kosong. Silakan login.");
         return;
     }
 
-    const userData = JSON.parse(rawData);
-
-    // 1. Tampilkan Nama Lengkap (dari kolom E)
-    const namaLengkap = userData.nama || userData.user || "User";
-    document.getElementById('prof-display-name').innerText = namaLengkap;
-    document.getElementById('prof-nama').value = namaLengkap;
-
-    // 2. Tampilkan Username (dari kolom A)
+    // Mengisi UI
+    document.getElementById('prof-display-name').innerText = userData.nama || userData.user;
+    document.getElementById('prof-nama').value = userData.nama || "";
     document.getElementById('prof-username').value = userData.user || "";
+    
+    // Warna Badge
+    const roleEl = document.getElementById('prof-display-role');
+    const roleVal = (userData.role || "lihat").toLowerCase();
+    let bg = "bg-slate-500";
+    if (roleVal === "admin") bg = "bg-red-600";
+    if (roleVal === "petugas") bg = "bg-indigo-600";
 
-    // 3. Logika Warna Role (admin, petugas, lihat)
-    const roleBadge = document.getElementById('prof-display-role');
-    if (roleBadge) {
-        const role = (userData.role || "lihat").toLowerCase();
-        const rt = userData.rt || "-";
-        
-        let colorClass = "bg-slate-500"; // Warna untuk 'lihat'
-        if (role === "admin") colorClass = "bg-red-600";
-        if (role === "petugas") colorClass = "bg-indigo-600";
+    roleEl.innerText = `${roleVal.toUpperCase()} RT ${userData.rt || "-"}`;
+    roleEl.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${bg}`;
 
-        roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
-        roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${colorClass}`;
-    }
-
-    // 4. Munculkan Modal
-    const modal = document.getElementById('profile-modal');
-    modal.style.setProperty('display', 'flex', 'important');
-    modal.classList.remove('hidden');
+    // Tampilkan Modal
+    document.getElementById('profile-modal').style.display = 'flex';
 }
 
 // Fungsi untuk menutup Modal

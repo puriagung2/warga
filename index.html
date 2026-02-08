@@ -2823,50 +2823,53 @@ function updateAgeStatistics(data) {
 // Fungsi untuk membuka Modal Profil
 function openProfileModal() {
     const rawData = localStorage.getItem('ewarga_user');
-    if (!rawData) return;
-
-    let userData;
-    try {
-        userData = JSON.parse(rawData);
-    } catch (e) {
-        console.error("Format storage tidak valid");
+    
+    // Jika kosong sama sekali
+    if (!rawData) {
+        Swal.fire("Info", "Silakan login kembali", "info");
         return;
     }
 
-    // DEBUG: Cek isi data di Console F12
-    console.log("Data dari Storage:", userData);
-
-    // KUNCI PERBAIKAN: Pastikan memanggil .nama sesuai return dari Apps Script
-    // Jika userData.nama ada, gunakan itu. Jangan pakai || userData.user dulu untuk tes.
-    const namaDariServer = userData.nama; 
-    const usernameDariServer = userData.user;
-
-    // 1. Update Header Nama (id="prof-display-name")
-    const headerName = document.getElementById('prof-display-name');
-    if (headerName) {
-        headerName.innerText = namaDariServer ? namaDariServer : "Nama Tidak Ditemukan";
+    let userData;
+    try {
+        // Cek apakah rawData adalah string JSON yang valid
+        if (rawData.trim().startsWith('{')) {
+            userData = JSON.parse(rawData);
+        } else {
+            // JIKA DATA RUSAK (Hanya tulisan "admin"), kita buatkan objek darurat
+            console.warn("Data bukan JSON, menggunakan fallback");
+            userData = { 
+                user: rawData, 
+                nama: rawData, // Sementara nama diisi username agar tidak kosong
+                role: 'lihat', 
+                rt: '-' 
+            };
+        }
+    } catch (e) {
+        console.error("Gagal parse:", e);
+        return;
     }
 
-    // 2. Update Input Nama Lengkap (id="prof-nama")
-    const inputNama = document.getElementById('prof-nama');
-    if (inputNama) {
-        inputNama.value = namaDariServer ? namaDariServer : "";
-    }
+    // ISI KE HTML (Gunakan ID yang tepat)
+    // 1. Header Nama
+    document.getElementById('prof-display-name').innerText = userData.nama || userData.user || "User";
+    
+    // 2. Input Nama Lengkap (Kunci utama Anda)
+    document.getElementById('prof-nama').value = userData.nama || "";
+    
+    // 3. Input Username (Readonly)
+    document.getElementById('prof-username').value = userData.user || "";
+    
+    // 4. Input Password (Kosongkan)
+    document.getElementById('prof-password').value = "";
 
-    // 3. Update Input Username (id="prof-username")
-    const inputUser = document.getElementById('prof-username');
-    if (inputUser) {
-        inputUser.value = usernameDariServer ? usernameDariServer : "";
-    }
-
-    // 4. Update Badge Role
+    // 5. Update Badge Role
     const roleBadge = document.getElementById('prof-display-role');
     if (roleBadge) {
         const role = (userData.role || 'lihat').toUpperCase();
         const rt = userData.rt || '-';
         roleBadge.innerText = `${role} RT ${rt}`;
         
-        // Warna badge berdasarkan role
         let bgClass = "bg-slate-500";
         if (userData.role === "admin") bgClass = "bg-red-500";
         else if (userData.role === "petugas") bgClass = "bg-indigo-500";
@@ -2875,10 +2878,8 @@ function openProfileModal() {
 
     // Tampilkan Modal
     const modal = document.getElementById('profile-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
-    }
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }
 
 // Fungsi untuk menutup Modal

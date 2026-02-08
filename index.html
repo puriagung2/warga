@@ -377,16 +377,47 @@ body.dark span:not(.material-icons) {
       transition: all 0.2s;
       white-space: nowrap;
       cursor: pointer;
-    }
-    .tab-btn.active { 
-      background: var(--soft-indigo); 
-      color: white; 
-      border-color: var(--soft-indigo); 
-      box-shadow: 0 8px 15px rgba(99,102,241,0.2); 
+      scroll-snap-align: start; /* Magnet berhenti di awal tombol */
+      flex-shrink: 0; /* Mencegah tombol gepeng */
     }
     
+    .tab-btn.active { 
+      background: var(--soft-indigo); 
+      /* color: white; */
+      border-color: var(--soft-indigo); 
+      box-shadow: 0 8px 15px rgba(99,102,241,0.2); 
+      transform: scale(1.05); /* Membesar sedikit */
+      color: #4f46e5; /* Indigo-600 */
+    }
+
+    /* Garis bawah tipis untuk yang aktif */
+.tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: #4f46e5;
+    border-radius: 10px;
+}
+    
     #detail-modal { position: fixed; inset: 0; background: white; z-index: 3000; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 110px; }
-  
+
+    /* Container Tab */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory; /* Efek magnet */
+    -webkit-overflow-scrolling: touch;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
     .required-icon {
   color: #ef4444; /* Warna merah (Tailwind red-500) */
   margin-left: 2px;
@@ -601,26 +632,32 @@ body.dark span:not(.material-icons) {
         </button>
     </div>
     
-    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-        <button onclick="changeStatPage('balita')" id="tab-balita" class="tab-btn active flex items-center gap-1 whitespace-nowrap">
-            Balita <span id="badge-balita" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+    <div class="relative group">
+    <div class="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none bg-gradient-to-r from-white dark:from-slate-900 to-transparent opacity-100"></div>
+
+    <div class="flex gap-2 overflow-x-auto pb-4 pt-1 no-scrollbar px-6 scroll-smooth snap-x snap-mandatory">
+        <button onclick="changeStatPage('balita')" id="tab-balita" class="tab-btn active flex items-center gap-1 whitespace-nowrap snap-start">
+            Balita <span id="badge-balita" class="badge-stat">0</span>
         </button>
-        <button onclick="changeStatPage('anak')" id="tab-anak" class="tab-btn flex items-center gap-1 whitespace-nowrap">
-            Anak <span id="badge-anak" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+        <button onclick="changeStatPage('anak')" id="tab-anak" class="tab-btn flex items-center gap-1 whitespace-nowrap snap-start">
+            Anak <span id="badge-anak" class="badge-stat">0</span>
         </button>
-        <button onclick="changeStatPage('remaja')" id="tab-remaja" class="tab-btn flex items-center gap-1 whitespace-nowrap">
-            Remaja <span id="badge-remaja" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+        <button onclick="changeStatPage('remaja')" id="tab-remaja" class="tab-btn flex items-center gap-1 whitespace-nowrap snap-start">
+            Remaja <span id="badge-remaja" class="badge-stat">0</span>
         </button>
-        <button onclick="changeStatPage('dewasa')" id="tab-dewasa" class="tab-btn flex items-center gap-1 whitespace-nowrap">
-            Dewasa <span id="badge-dewasa" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+        <button onclick="changeStatPage('dewasa')" id="tab-dewasa" class="tab-btn flex items-center gap-1 whitespace-nowrap snap-start">
+            Dewasa <span id="badge-dewasa" class="badge-stat">0</span>
         </button>
-        <button onclick="changeStatPage('lansia')" id="tab-lansia" class="tab-btn flex items-center gap-1 whitespace-nowrap">
-            Lansia <span id="badge-lansia" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+        <button onclick="changeStatPage('lansia')" id="tab-lansia" class="tab-btn flex items-center gap-1 whitespace-nowrap snap-start">
+            Lansia <span id="badge-lansia" class="badge-stat">0</span>
         </button>
-        <button onclick="changeStatPage('ultah')" id="tab-ultah" class="tab-btn flex items-center gap-1 whitespace-nowrap">
-            Ultah <span id="badge-ultah" class="bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white px-1.5 py-0.5 rounded-lg text-[8px] font-bold">0</span>
+        <button onclick="changeStatPage('ultah')" id="tab-ultah" class="tab-btn flex items-center gap-1 whitespace-nowrap snap-start">
+            Ultah <span id="badge-ultah" class="badge-stat">0</span>
         </button>
     </div>
+
+    <div class="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none bg-gradient-to-l from-white dark:from-slate-900 to-transparent opacity-100"></div>
+</div>
 
     <div id="stat-list-container" class="space-y-3"></div>
 
@@ -1222,6 +1259,20 @@ function switchStatTab(tab) {
     renderStatList();
 }
 
+    function scrollTabToCenter(tabId) {
+    const el = document.getElementById('tab-' + tabId);
+    if (el) {
+        el.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center', // Geser hingga tombol ke tengah
+            block: 'nearest'
+        });
+    }
+}
+
+// Panggil di akhir fungsi switchStatTab
+scrollTabToCenter(tab);
+    
 function renderStatList() {
     const listContainer = document.getElementById('stat-list-container');
     const totalItems = filteredStatData.length;

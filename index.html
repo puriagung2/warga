@@ -499,102 +499,9 @@ body.dark span:not(.material-icons) {
             <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
-<button onclick="openProfileModal()" 
-    class="text-slate-300 hover:text-indigo-500 transition-colors">
-    <span class="material-icons">account_circle</span>
-</button>
-<!-- ==========================
-     MODAL PROFIL - TAILWIND
-========================== -->
-<div id="modal-profile"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-[9999]">
-
-    <div class="bg-white w-[92%] max-w-md rounded-3xl p-8 shadow-xl border border-slate-200
-                animate-[fadeIn_.25s_ease-out]">
-
-        <!-- Avatar -->
-        <div class="flex justify-center mb-5">
-            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500
-                        flex items-center justify-center shadow-md">
-                <span class="material-icons text-white text-5xl">account_circle</span>
-            </div>
-        </div>
-
-        <h2 class="text-xl font-extrabold text-slate-800 text-center mb-6">
-            Profil Pengguna
-        </h2>
-
-        <!-- Form Input -->
-        <div class="space-y-4">
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Nama</label>
-                <input id="profile-nama"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold
-                           focus:ring-2 focus:ring-indigo-400 outline-none"
-                    type="text">
-            </div>
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Username</label>
-                <input id="profile-username"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
-                    type="text" disabled>
-            </div>
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Password Baru</label>
-                <input id="profile-password"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold
-                           focus:ring-2 focus:ring-indigo-400 outline-none"
-                    type="password"
-                    placeholder="Kosongkan jika tidak diganti">
-            </div>
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Role</label>
-                <input id="profile-role"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
-                    type="text" disabled>
-            </div>
-
-            <div>
-                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">RT</label>
-                <input id="profile-rt"
-                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
-                    type="text" disabled>
-            </div>
-
-        </div>
-
-        <!-- Buttons -->
-        <div class="mt-7 flex justify-between">
-
-            <button onclick="closeProfileModal()"
-                class="px-5 py-2.5 rounded-xl bg-slate-200 text-slate-700 font-semibold
-                       hover:bg-slate-300 transition">
-                Tutup
+            <button onclick="logout()" class="text-slate-300 hover:text-red-500 transition-colors">
+                <span class="material-icons">logout</span>
             </button>
-
-            <button onclick="saveProfile()"
-                class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md
-                       hover:bg-indigo-700 transition">
-                Simpan
-            </button>
-
-        </div>
-
-    </div>
-</div>
-
-<!-- Toast -->
-<div id="toast"
-    class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-indigo-600 text-white
-           text-sm font-semibold shadow-lg z-[99999] transition-opacity duration-300">
-    Disimpan!
-</div>
-
-          
         </div>
     </header>
 
@@ -1109,55 +1016,23 @@ window.addEventListener('hashchange', () => {
         }
     }
 
-async function handleLogin(e) {
-    e.preventDefault();
-    toggleLoading(true);
-
-    const username = document.getElementById('login-user').value;
-    const password = document.getElementById('login-pass').value;
-
-    try {
-        const res = await fetch(
-            `${API_URL}?action=checkLogin&args=${JSON.stringify([username, password])}`
-        );
+    async function handleLogin(e) {
+      e.preventDefault(); toggleLoading(true);
+      const u = document.getElementById('login-user').value;
+      const p = document.getElementById('login-pass').value;
+      try {
+        const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
         const result = await res.json();
-
-        if (result.success) {
-
-            // PAKSA nama ada (minimal string kosong)
-            const safeNama = result.nama ? result.nama.toString() : "";
-
-            localStorage.setItem(
-                "ewarga_user",
-                JSON.stringify({
-                    username: username,
-                    role: result.role,
-                    rt: result.rt,
-                    nama: safeNama
-                })
-            );
-
+        if(result.success) {
+           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
+            localStorage.setItem('ewarga_user', u);
             updateUserInfoDisplay();
-
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
-
             refreshData();
-
-        } else {
-            alert("Login gagal!");
-        }
-
-    } catch (err) {
-        alert("Terjadi kesalahan server.");
-        console.error(err);
-    } finally {
-        toggleLoading(false);
+        } else { alert("Login Gagal"); }
+      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
     }
-}
-
-
-
 
 function logout() {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
@@ -2039,12 +1914,7 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 
         if (result.success) {
             // Simpan data user lengkap (username, role, rt) ke localStorage
-            localStorage.setItem("ewarga_user", JSON.stringify({
-    username: user,
-    nama: loginResult.nama,   // Ambil dari sheet kolom Nama
-    role: loginResult.role,
-    rt: loginResult.rt
-}));
+            localStorage.setItem('ewarga_user', JSON.stringify(result));
             updateUserInfoDisplay();
             // Sembunyikan login, tampilkan aplikasi
             document.getElementById('auth-container').style.display = 'none';
@@ -2360,25 +2230,32 @@ function closePhotoViewer() {
     }
 }
 
-function updateUserInfoDisplay() {
-    const raw = localStorage.getItem("ewarga_user");
-    if (!raw) return;
-
-    let user = {};
-
-    try {
-        user = JSON.parse(raw);
-    } catch (err) {
-        console.error("LocalStorage user corrupt:", raw);
+   function updateUserInfoDisplay() {
+    const rawUser = localStorage.getItem('ewarga_user');
+    const banner = document.getElementById('user-info-banner');
+    const textElement = document.getElementById('user-display-text');
+    
+    if (!rawUser) {
+        banner.style.display = 'none';
         return;
     }
 
-    const nama = user.nama ? user.nama : "Pengguna";
+    let userData;
+    try {
+        userData = JSON.parse(rawUser);
+    } catch (e) {
+        // Handle jika data masih format teks lama
+        userData = { role: rawUser, rt: "" };
+    }
 
-    document.getElementById("user-nama-display").innerText = nama;
-    document.getElementById("user-avatar-display").innerText = nama.charAt(0).toUpperCase();
+    banner.style.display = 'block';
+
+    // Format Teks: ADMIN atau PETUGAS RT 01
+    const roleName = userData.role.toUpperCase();
+    const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
+    
+    textElement.innerHTML = `HALO: <span class="text-indigo-500">${roleName}</span> • ${rtInfo}`;
 }
-
 
     function updateTinggalChart() {
     const ctx = document.getElementById('chartTinggal').getContext('2d');
@@ -2932,15 +2809,7 @@ function updateAgeStatistics(data) {
             // Update Local Storage agar nama di header langsung berubah
             const rawUser = JSON.parse(localStorage.getItem('ewarga_user'));
             rawUser.nama = nama;
-localStorage.setItem(
-    "ewarga_user",
-    JSON.stringify({
-        username: user,
-        role: result.role,
-        rt: result.rt,
-        nama: result.nama || ""
-    })
-);
+            localStorage.setItem('ewarga_user', JSON.stringify(rawUser));
 
             Swal.fire({
                 icon: 'success',
@@ -2963,92 +2832,7 @@ localStorage.setItem(
         btn.innerHTML = `<span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN`;
     }
 }
-
-    // profil user
-function openProfileModal() {
-    const raw = localStorage.getItem("ewarga_user");
-    if (!raw) return alert("Silakan login ulang.");
-
-    let user = null;
-
-    try {
-        user = JSON.parse(raw); 
-    } catch (e) {
-        console.error("LocalStorage rusak:", raw);
-        return alert("Data login bermasalah. Silakan login ulang.");
-    }
-
-    document.getElementById("profile-nama").value = user.nama || "";
-    document.getElementById("profile-username").value = user.username || "";
-    document.getElementById("profile-role").value = user.role || "";
-    document.getElementById("profile-rt").value = user.rt || "";
-
-    document.getElementById("modal-profile").classList.remove("hidden");
-    document.getElementById("modal-profile").classList.add("flex");
-}
-
-
-
-
-    function closeProfileModal() {
-    document.getElementById("modal-profile").classList.add("hidden");
-}
-
-    async function saveProfile() {
-    toggleLoading(true);
-
-    const user = JSON.parse(localStorage.getItem("ewarga_user"));
-
-    const newName = document.getElementById("profile-nama").value.trim();
-    const newPassword = document.getElementById("profile-password").value.trim();
-
-    const payload = {
-        username: user.username,
-        nama: newName !== "" ? newName : user.nama,
-        password: newPassword !== "" ? newPassword : user.password,
-        role: user.role,
-        rt: user.rt
-    };
-
-    try {
-        const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                action: "updateUser",
-                args: [payload]
-            })
-        });
-
-        const result = await res.json();
-
-        if (!result.success) {
-            showSavedToast("Gagal menyimpan profil!");
-        } else {
-            localStorage.setItem("ewarga_user", JSON.stringify(payload));
-            showSavedToast("Profil berhasil diperbarui!");
-            closeProfileModal();
-        }
-
-    } catch (err) {
-        console.error("SAVE PROFILE ERROR:", err);
-        showSavedToast("Terjadi kesalahan.");
-    }
-
-    toggleLoading(false);
-}
-
-    function showSavedToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.remove("hidden");
-    t.style.opacity = "1";
-
-    setTimeout(() => {
-        t.style.opacity = "0";
-        setTimeout(() => t.classList.add("hidden"), 300);
-    }, 2000);
-}
-
+    
   </script>
 
   <div id="photo-viewer"

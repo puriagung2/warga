@@ -156,7 +156,20 @@ body.dark span:not(.material-icons) {
     letter-spacing: 1px;
 }
 
-    #auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+#auth-container {
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+}
+
+#auth-container input::placeholder {
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+#auth-container input:focus {
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1);
+}
     #main-app { display: none; flex-direction: column; justify-content: flex-start; gap: 0; }
     #user-info-banner {
     padding-top: 0 !important;
@@ -470,17 +483,44 @@ body.dark span:not(.material-icons) {
     </div>
   </div>
 
-  <div id="auth-container">
-    <div class="login-card">
-        <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" alt="Logo" class="w-20 h-20 mx-auto mb-4 object-contain">
-        <h1 class="text-xl font-extrabold text-slate-800 mb-8">E-Warga RW6</h1>
-        <form onsubmit="handleLogin(event)">
-            <div class="input-group"><input type="text" id="login-user" placeholder="Username" class="modern-input" required><span class="material-icons">person</span></div>
-            <div class="input-group"><input type="password" id="login-pass" placeholder="Password" class="modern-input" required><span class="material-icons">lock</span></div>
-            <button type="submit" class="btn-submit !mt-4">Masuk</button>
+<div id="auth-container" class="fixed inset-0 z-[10002] bg-slate-50 flex items-center justify-center p-6">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-10">
+            <div class="inline-block p-4 bg-white rounded-[2rem] shadow-xl shadow-indigo-100 mb-6">
+                <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" 
+                     alt="Logo" class="w-16 h-16 object-contain">
+            </div>
+            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Digital Platform</p>
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">E-WARGA <span class="text-indigo-600">RW6</span></h1>
+            <p class="text-sm font-medium text-slate-400 mt-2">Silakan masuk untuk melanjutkan</p>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+            <div class="relative group">
+                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors text-xl">person</span>
+                <input type="text" id="login-user" placeholder="Username" 
+                       class="w-full bg-white border-2 border-slate-100 focus:border-indigo-500 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all shadow-sm shadow-slate-100/50" required>
+            </div>
+
+            <div class="relative group">
+                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors text-xl">lock</span>
+                <input type="password" id="login-pass" placeholder="Password" 
+                       class="w-full bg-white border-2 border-slate-100 focus:border-indigo-500 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all shadow-sm shadow-slate-100/50" required>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-[0.98] mt-4 uppercase tracking-widest">
+                Masuk Sekarang
+            </button>
         </form>
+
+        <div class="mt-12 text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Puri Agung 2 Digital • 2026
+            </p>
+        </div>
     </div>
-  </div>
+</div>
 
   <div id="main-app">
     <header class="p-6 pb-2 flex justify-between items-center">

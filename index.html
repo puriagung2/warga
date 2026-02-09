@@ -500,7 +500,7 @@ body.dark span:not(.material-icons) {
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
 <!-- update profil -->
-          <button onclick="openProfileModal()" class="text-slate-400 hover:text-indigo-600 transition-colors">
+          <button onclick="openProfileModal(event)" class="text-slate-400 hover:text-indigo-600 transition-colors">
     <span class="material-icons">account_circle</span>
 </button>
 
@@ -1946,79 +1946,71 @@ async function doLogin() {
     const passVal = document.getElementById('password-input').value;
 
     try {
-        // Menggunakan API_URL yang sudah Anda definisikan di atas script
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
         const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // --- BAGIAN KRUSIAL ---
-            // Kita harus menyimpan SELURUH result (user, nama, role, rt)
-            // dalam bentuk String JSON agar bisa dibaca fungsi profil.
+            // SIMPAN SEBAGAI JSON STRING (Agar data nama, role, rt tidak hilang)
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Masuk ke dashboard
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            // Refresh agar memori browser bersih dan siap membaca data baru
+            // WAJIB RELOAD agar data terbaru masuk ke sistem
             location.reload(); 
         } else {
             alert("Username atau Password salah!");
         }
     } catch (err) {
-        console.error("Login Error:", err);
+        console.error(err);
     }
 }
 
 // 2. PERBAIKAN FUNGSI MODAL PROFIL (Mencegah Logout Otomatis)
-function openProfileModal() {
-    const rawData = localStorage.getItem('ewarga_user');
+function openProfileModal(event) {
+    if (event) event.stopPropagation(); // Mencegah logout otomatis
     
-    // Jika data kosong, arahkan login tanpa error
-    if (!rawData) {
-        document.getElementById('auth-container').classList.remove('hidden');
-        document.getElementById('main-app').classList.add('hidden');
-        return;
-    }
+    const rawData = localStorage.getItem('ewarga_user');
+    if (!rawData) return;
 
     let userData;
     try {
-        // Cek apakah data adalah format JSON { "nama": "..." }
+        // Jika data formatnya benar (JSON)
         if (rawData.startsWith('{')) {
             userData = JSON.parse(rawData);
         } else {
-            // Jika data masih teks lama "rt4", buat objek darurat agar TIDAK LOGOUT
+            // Jika data masih teks "rt4", buatkan objek sementara agar tidak error
             userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
         }
     } catch (e) {
-        console.error("Gagal membaca profil");
-        return; 
+        console.error("Error profil:", e);
+        return;
     }
 
-    // 1. Isi Nama Lengkap (Dari Kolom E Spreadsheet)
-    const namaLengkap = userData.nama || userData.user;
-    document.getElementById('prof-display-name').innerText = namaLengkap;
-    document.getElementById('prof-nama').value = namaLengkap;
+    // 1. Nama Lengkap (Dari Kolom E)
+    document.getElementById('prof-display-name').innerText = userData.nama || userData.user;
+    document.getElementById('prof-nama').value = userData.nama || "";
 
-    // 2. Isi Username (Dari Kolom A Spreadsheet)
+    // 2. Username (Dari Kolom A)
     document.getElementById('prof-username').value = userData.user || "";
 
-    // 3. Logika Warna & Teks Role (Dari Kolom C & D)
+    // 3. Role & Warna Badge (Dari Kolom C & D)
     const roleBadge = document.getElementById('prof-display-role');
-    const roleStr = (userData.role || "lihat").toLowerCase();
-    const rtStr = userData.rt || "-";
+    const role = (userData.role || "lihat").toLowerCase();
+    const rt = userData.rt || "-";
+    
+    let bgClass = "bg-slate-500";
+    if (role === "admin") bgClass = "bg-red-600";
+    if (role === "petugas") bgClass = "bg-indigo-600";
 
-    let bgClass = "bg-slate-500"; // Warna default (Lihat)
-    if (roleStr === "admin") bgClass = "bg-red-600";
-    if (roleStr === "petugas") bgClass = "bg-indigo-600";
-
-    roleBadge.innerText = `${roleStr.toUpperCase()} RT ${rtStr}`;
+    roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
     roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
 
-    // 4. Tampilkan Modal
-    document.getElementById('profile-modal').style.display = 'flex';
-    document.getElementById('profile-modal').classList.remove('hidden');
+    // Tampilkan Modal
+    const modal = document.getElementById('profile-modal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 

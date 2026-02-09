@@ -483,42 +483,60 @@ body.dark span:not(.material-icons) {
     </div>
   </div>
 
-<div id="auth-container" class="fixed inset-0 z-[10002] bg-slate-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-sm">
-        <div class="text-center mb-10">
-            <div class="inline-block p-4 bg-white rounded-[2rem] shadow-xl shadow-indigo-100 mb-6">
-                <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" 
-                     alt="Logo" class="w-16 h-16 object-contain">
-            </div>
-            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-1">Digital Platform</p>
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight">E-WARGA <span class="text-indigo-600">RW6</span></h1>
-            <p class="text-sm font-medium text-slate-400 mt-2">Silakan masuk untuk melanjutkan</p>
-        </div>
+<div id="auth-container" class="fixed inset-0 z-[10002] bg-indigo-600 flex items-center justify-center overflow-hidden">
+    
+    <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
 
-        <form onsubmit="handleLogin(event)" class="space-y-4">
-            <div class="relative group">
-                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors text-xl">person</span>
-                <input type="text" id="login-user" placeholder="Username" 
-                       class="w-full bg-white border-2 border-slate-100 focus:border-indigo-500 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all shadow-sm shadow-slate-100/50" required>
-            </div>
+    <div class="absolute top-0 left-0 w-full rotate-180 leading-[0]">
+        <svg viewBox="0 0 500 150" preserveAspectRatio="none" class="h-32 w-full fill-indigo-500/50">
+            <path d="M0.00,49.98 C150.00,150.00 349.20,-50.00 500.00,49.98 L500.00,150.00 L0.00,150.00 Z"></path>
+        </svg>
+    </div>
 
-            <div class="relative group">
-                <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors text-xl">lock</span>
-                <input type="password" id="login-pass" placeholder="Password" 
-                       class="w-full bg-white border-2 border-slate-100 focus:border-indigo-500 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all shadow-sm shadow-slate-100/50" required>
+    <div class="relative w-full max-w-sm px-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div class="bg-white/95 backdrop-blur-md rounded-[40px] p-8 shadow-2xl shadow-indigo-900/40 border border-white/20">
+            
+            <div class="flex justify-center -mt-16 mb-6">
+                <div class="bg-white p-4 rounded-[2rem] shadow-lg">
+                    <img src="https://raw.githubusercontent.com/masjokos/puriagung2/refs/heads/main/logopuriagung2.png" 
+                         alt="Logo" class="w-16 h-16 object-contain">
+                </div>
             </div>
 
-            <button type="submit" 
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-[0.98] mt-4 uppercase tracking-widest">
-                Masuk Sekarang
-            </button>
-        </form>
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-black text-slate-800 tracking-tight">E-WARGA <span class="text-indigo-600">RW6</span></h1>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Puri Agung 2 Digital</p>
+            </div>
 
-        <div class="mt-12 text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Puri Agung 2 Digital • 2026
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="relative group">
+                    <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">person</span>
+                    <input type="text" id="login-user" placeholder="Username" 
+                           class="w-full bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all" required>
+                </div>
+
+                <div class="relative group">
+                    <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">lock</span>
+                    <input type="password" id="login-pass" placeholder="Password" 
+                           class="w-full bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-700 outline-none transition-all" required>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-indigo-200 transition-all active:scale-[0.98] mt-2 uppercase tracking-widest">
+                    Masuk Sekarang
+                </button>
+            </form>
+
+            <p class="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter mt-8">
+                &copy; 2026 Management System
             </p>
         </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 w-full leading-[0]">
+        <svg viewBox="0 0 500 150" preserveAspectRatio="none" class="h-32 w-full fill-indigo-700/30">
+            <path d="M0.00,49.98 C150.00,150.00 271.49,-25.66 500.00,49.98 L500.00,150.00 L0.00,150.00 Z"></path>
+        </svg>
     </div>
 </div>
 

@@ -531,7 +531,7 @@ body.dark span:not(.material-icons) {
                 <input type="password" id="prof-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none text-sm font-bold focus:ring-2 focus:ring-indigo-500">
             </div>
 
-            <button onclick="updateProfile()" id="btn-save-profile" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2">
+            <button onclick="saveProfile()" id="btn-save-profile" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2">
                 <span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN
             </button>
 
@@ -2033,28 +2033,30 @@ function openProfileModal(event) {
     document.getElementById('profile-modal').style.display = 'flex';
 }
 
-    async function saveProfile() {
+   async function saveProfile() {
     const rawData = localStorage.getItem('ewarga_user');
     if (!rawData) return;
+    
+    // Ambil data user saat ini dari localStorage
     const userData = JSON.parse(rawData);
+    const username = userData.user; // Ambil username (rt4)
+    const namaBaru = document.getElementById('prof-nama').value;
+    const passBaru = document.getElementById('prof-password').value;
 
-    const newNama = document.getElementById('prof-nama').value;
-    const newPass = document.getElementById('prof-password').value; // Pastikan ID ini ada di input password
-
-    if (!newNama) return alert("Nama tidak boleh kosong!");
+    if (!namaBaru) return alert("Nama tidak boleh kosong!");
 
     toggleLoading(true);
 
     try {
-        // Karena di code.gs menggunakan doPost, kita gunakan method POST
+        // Karena di code.gs Anda menggunakan doPost, kita gunakan method POST
         const response = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({
                 action: "updateUser",
                 args: {
-                    username: userData.user,
-                    nama: newNama,
-                    password: newPass
+                    username: username,
+                    nama: namaBaru,
+                    password: passBaru
                 }
             })
         });
@@ -2062,18 +2064,18 @@ function openProfileModal(event) {
         const result = await response.json();
 
         if (result.success) {
-            // Update data di localStorage agar tampilan langsung berubah
-            userData.nama = newNama;
+            // Update data di localStorage agar tampilan nama langsung berubah
+            userData.nama = namaBaru;
             localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
             alert("Profil berhasil diperbarui!");
-            location.reload(); // Refresh untuk memperbarui semua tampilan nama
+            location.reload(); // Segarkan halaman untuk melihat perubahan nama di header
         } else {
-            alert("Gagal: " + result.error);
+            alert("Gagal update: " + result.error);
         }
     } catch (err) {
         console.error(err);
-        alert("Terjadi kesalahan saat menyimpan data.");
+        alert("Terjadi kesalahan koneksi.");
     } finally {
         toggleLoading(false);
     }

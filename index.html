@@ -2033,6 +2033,51 @@ function openProfileModal(event) {
     document.getElementById('profile-modal').style.display = 'flex';
 }
 
+    async function saveProfile() {
+    const rawData = localStorage.getItem('ewarga_user');
+    if (!rawData) return;
+    const userData = JSON.parse(rawData);
+
+    const newNama = document.getElementById('prof-nama').value;
+    const newPass = document.getElementById('prof-password').value; // Pastikan ID ini ada di input password
+
+    if (!newNama) return alert("Nama tidak boleh kosong!");
+
+    toggleLoading(true);
+
+    try {
+        // Karena di code.gs menggunakan doPost, kita gunakan method POST
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "updateUser",
+                args: {
+                    username: userData.user,
+                    nama: newNama,
+                    password: newPass
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update data di localStorage agar tampilan langsung berubah
+            userData.nama = newNama;
+            localStorage.setItem('ewarga_user', JSON.stringify(userData));
+
+            alert("Profil berhasil diperbarui!");
+            location.reload(); // Refresh untuk memperbarui semua tampilan nama
+        } else {
+            alert("Gagal: " + result.error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan saat menyimpan data.");
+    } finally {
+        toggleLoading(false);
+    }
+}
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);

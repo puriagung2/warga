@@ -1941,34 +1941,39 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 }
 
    async function doLogin() {
-    // Sesuaikan ID dengan yang ada di HTML Anda
     const userVal = document.getElementById('username-input').value;
     const passVal = document.getElementById('password-input').value;
 
+    if (!userVal || !passVal) {
+        alert("Username dan Password harus diisi!");
+        return;
+    }
+
     try {
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
-        // Ganti scriptUrl dengan URL Web App Google Apps Script Anda
-        const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
+        // MENGGUNAKAN API_URL yang sudah Anda definisikan di atas
+        const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // SIMPAN DATA SEBAGAI OBJEK (Agar muncul nama "Joko S", bukan "rt4")
+            // 1. Simpan objek lengkap ke localStorage (PENTING!)
+            // Ini agar data 'nama', 'role', dan 'rt' dari spreadsheet tersimpan
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            console.log("Login sukses, data tersimpan:", result);
+            console.log("Login Berhasil, Data disimpan:", result);
 
-            // Sembunyikan login, tampilkan aplikasi
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
+            // 2. Langsung arahkan ke dashboard
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
             
-            // Refresh satu kali untuk memastikan modal profil siap
+            // 3. Refresh halaman agar semua fungsi (termasuk Profil) membaca data terbaru
             location.reload(); 
         } else {
             alert("Username atau Password salah!");
         }
     } catch (err) {
-        console.error("Gagal Login:", err);
-        alert("Terjadi kesalahan koneksi.");
+        console.error("Error Login:", err);
+        alert("Gagal terhubung ke server. Pastikan API_URL benar dan sudah di-Deploy.");
     }
 }
 
@@ -2823,46 +2828,46 @@ function updateAgeStatistics(data) {
 // Fungsi untuk membuka Modal Profil
 function openProfileModal() {
     const rawData = localStorage.getItem('ewarga_user');
+    if (!rawData) return;
+
     let userData;
-
     try {
-        if (!rawData) throw new Error("Kosong");
-
-        if (rawData.startsWith('{')) {
-            // Jika sudah benar format JSON
-            userData = JSON.parse(rawData);
-        } else {
-            // JIKA MASIH STRING (seperti "rt4"), kita buatkan objek buatan sementara
-            // agar modal tetap terbuka dan tidak muncul pesan error
-            userData = {
-                user: rawData,
-                nama: rawData, // Akan tertulis rt4 sementara sampai login ulang sukses
-                role: "lihat",
-                rt: "-"
-            };
+        // Cek apakah data formatnya JSON
+        userData = rawData.startsWith('{') ? JSON.parse(rawData) : null;
+        
+        // Fallback jika data lama masih tersisa string biasa
+        if (!userData) {
+            userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
         }
     } catch (e) {
-        alert("Sesi benar-benar kosong. Silakan login.");
+        console.error("Gagal parse data profil");
         return;
     }
 
-    // Mengisi UI
-    document.getElementById('prof-display-name').innerText = userData.nama || userData.user;
-    document.getElementById('prof-nama').value = userData.nama || "";
+    // 1. Update Header & Nama Lengkap (Data dari Kolom E)
+    const namaTampil = userData.nama || userData.user;
+    document.getElementById('prof-display-name').innerText = namaTampil;
+    document.getElementById('prof-nama').value = namaTampil;
+
+    // 2. Update Username (Data dari Kolom A)
     document.getElementById('prof-username').value = userData.user || "";
-    
-    // Warna Badge
-    const roleEl = document.getElementById('prof-display-role');
-    const roleVal = (userData.role || "lihat").toLowerCase();
-    let bg = "bg-slate-500";
-    if (roleVal === "admin") bg = "bg-red-600";
-    if (roleVal === "petugas") bg = "bg-indigo-600";
 
-    roleEl.innerText = `${roleVal.toUpperCase()} RT ${userData.rt || "-"}`;
-    roleEl.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${bg}`;
+    // 3. Update Badge Role & RT
+    const roleBadge = document.getElementById('prof-display-role');
+    const role = (userData.role || "lihat").toLowerCase();
+    const rt = userData.rt || "-";
 
-    // Tampilkan Modal
+    // Set Warna Badge berdasarkan data Kolom C
+    let bgClass = "bg-slate-500"; // Warna default untuk 'lihat'
+    if (role === "admin") bgClass = "bg-red-600";
+    if (role === "petugas") bgClass = "bg-indigo-600";
+
+    roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
+    roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
+
+    // 4. Tampilkan Modal
     document.getElementById('profile-modal').style.display = 'flex';
+    document.getElementById('profile-modal').classList.remove('hidden');
 }
 
 // Fungsi untuk menutup Modal

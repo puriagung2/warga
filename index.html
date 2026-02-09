@@ -1055,23 +1055,42 @@ window.addEventListener('hashchange', () => {
         }
     }
 
-    async function handleLogin(e) {
-      e.preventDefault(); toggleLoading(true);
-      const u = document.getElementById('login-user').value;
-      const p = document.getElementById('login-pass').value;
-      try {
-        const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
+async function handleLogin(e) {
+    e.preventDefault(); 
+    toggleLoading(true);
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
+
+    try {
+        // Mengirim request ke API_URL
+        const res = await fetch(`${API_URL}?action=checkLogin&args=${encodeURIComponent(JSON.stringify([u, p]))}`);
         const result = await res.json();
+
         if(result.success) {
-           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
-            localStorage.setItem('ewarga_user', u);
-            updateUserInfoDisplay();
+            // PERBAIKAN UTAMA: Simpan seluruh OBJEK hasil return dari GAS (nama, role, rt, user)
+            // Kita gunakan JSON.stringify agar datanya utuh tersimpan di browser
+            localStorage.setItem('ewarga_user', JSON.stringify(result));
+            
+            // Sembunyikan login & tampilkan aplikasi
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
+            
+            // Jalankan update tampilan dan refresh data
+            updateUserInfoDisplay();
             refreshData();
-        } else { alert("Login Gagal"); }
-      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
+            
+            // RELOAD agar state aplikasi benar-benar bersih dan mengenali data baru
+            location.reload(); 
+        } else { 
+            alert("Login Gagal: Username atau Password salah"); 
+        }
+    } catch (err) { 
+        console.error(err);
+        alert("Error: Terjadi gangguan koneksi"); 
+    } finally { 
+        toggleLoading(false); 
     }
+}
 
 function logout() {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
@@ -1945,72 +1964,73 @@ async function doLogin() {
     const userVal = document.getElementById('username-input').value;
     const passVal = document.getElementById('password-input').value;
 
+    if (!userVal || !passVal) return alert("Username & Password wajib diisi");
+
     try {
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
         const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // SIMPAN SEBAGAI JSON STRING (Agar data nama, role, rt tidak hilang)
+            // PERBAIKAN: Simpan sebagai OBJEK LENGKAP, bukan cuma string username
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
+            // Langsung masuk ke app
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            // WAJIB RELOAD agar data terbaru masuk ke sistem
-            location.reload(); 
+            // Refresh WAJIB untuk memastikan semua variabel membaca data baru
+            location.reload();
         } else {
-            alert("Username atau Password salah!");
+            alert("Login Gagal: Username atau Password salah");
         }
     } catch (err) {
-        console.error(err);
+        console.error("Error:", err);
+        alert("Gagal terhubung ke server");
     }
 }
 
 // 2. PERBAIKAN FUNGSI MODAL PROFIL (Mencegah Logout Otomatis)
 function openProfileModal(event) {
-    if (event) event.stopPropagation(); // Mencegah logout otomatis
-    
     const rawData = localStorage.getItem('ewarga_user');
     if (!rawData) return;
 
     let userData;
     try {
-        // Jika data formatnya benar (JSON)
+        // Cek apakah data formatnya JSON objek {nama: "...", role: "..."}
         if (rawData.startsWith('{')) {
             userData = JSON.parse(rawData);
         } else {
-            // Jika data masih teks "rt4", buatkan objek sementara agar tidak error
+            // Jika data masih teks "rt4", kita buatkan objek darurat
             userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
         }
     } catch (e) {
-        console.error("Error profil:", e);
+        console.error("Gagal membaca profil");
         return;
     }
 
-    // 1. Nama Lengkap (Dari Kolom E)
-    document.getElementById('prof-display-name').innerText = userData.nama || userData.user;
-    document.getElementById('prof-nama').value = userData.nama || "";
+    // Tampilkan Nama Lengkap (Kolom E)
+    const namaTampil = userData.nama || userData.user;
+    document.getElementById('prof-display-name').innerText = namaTampil;
+    document.getElementById('prof-nama').value = namaTampil;
 
-    // 2. Username (Dari Kolom A)
+    // Tampilkan Username (Kolom A)
     document.getElementById('prof-username').value = userData.user || "";
 
-    // 3. Role & Warna Badge (Dari Kolom C & D)
+    // Update Badge Role & Warna (Kolom C & D)
     const roleBadge = document.getElementById('prof-display-role');
     const role = (userData.role || "lihat").toLowerCase();
     const rt = userData.rt || "-";
-    
-    let bgClass = "bg-slate-500";
+
+    let bgClass = "bg-slate-500"; 
     if (role === "admin") bgClass = "bg-red-600";
     if (role === "petugas") bgClass = "bg-indigo-600";
 
     roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
     roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
 
-    // Tampilkan Modal
-    const modal = document.getElementById('profile-modal');
-    modal.style.display = 'flex';
-    modal.classList.remove('hidden');
+    // Tampilkan modal
+    document.getElementById('profile-modal').style.display = 'flex';
 }
 
 

@@ -1946,22 +1946,22 @@ async function doLogin() {
 
     try {
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
-        // Menggunakan API_URL yang sudah Anda definisikan di atas
+        // Gunakan API_URL yang sudah Anda definisikan di bagian atas script
         const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // PENTING: Simpan sebagai JSON String agar semua properti (nama, role, rt) tersimpan
+            // SIMPAN SELURUH OBJEK (Termasuk nama, role, rt)
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Sembunyikan login, tampilkan main app
+            // Sembunyikan form login dan tampilkan app
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            // Refresh agar data baru terbaca oleh semua fungsi
+            // Reload agar data baru terbaca oleh fungsi openProfileModal
             location.reload(); 
         } else {
-            Swal.fire("Gagal", "Username atau Password salah!", "error");
+            alert("Username atau Password salah!");
         }
     } catch (err) {
         console.error("Login Error:", err);
@@ -2823,36 +2823,41 @@ function openProfileModal() {
 
     let userData;
     try {
-        // Pastikan data diproses sebagai objek, bukan string tunggal
+        // Cek apakah data adalah JSON valid
         userData = JSON.parse(rawData);
     } catch (e) {
-        // Jika data lama masih format string (misal: "rt4"), buat objek darurat
-        userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
+        // Jika data lama masih tersangkut (berupa string), paksa logout/clear
+        localStorage.clear();
+        location.reload();
+        return;
     }
 
-    // A. Mengisi Nama (ID: prof-display-name dan prof-nama) -> Dari Kolom E
+    // A. Mengisi Nama Lengkap (Kolom E)
     const namaLengkap = userData.nama || userData.user;
     document.getElementById('prof-display-name').innerText = namaLengkap;
     document.getElementById('prof-nama').value = namaLengkap;
 
-    // B. Mengisi Username (ID: prof-username) -> Dari Kolom A
+    // B. Mengisi Username (Kolom A)
     document.getElementById('prof-username').value = userData.user || "";
 
-    // C. Mengisi Role & RT (ID: prof-display-role) -> Dari Kolom C & D
+    // C. Mengisi Role dan Warna Badge (Kolom C & D)
     const roleBadge = document.getElementById('prof-display-role');
-    const roleVal = (userData.role || "lihat").toLowerCase();
-    const rtVal = userData.rt || "-";
+    if (roleBadge) {
+        const role = (userData.role || "lihat").toLowerCase();
+        const rt = userData.rt || "-";
+        
+        let colorClass = "bg-slate-500"; // Default 'lihat'
+        if (role === "admin") colorClass = "bg-red-600";
+        if (role === "petugas") colorClass = "bg-indigo-600";
 
-    // Set warna badge berdasarkan role data spreadsheet
-    let bgClass = "bg-slate-500"; // default: lihat
-    if (roleVal === "admin") bgClass = "bg-red-600";
-    else if (roleVal === "petugas") bgClass = "bg-indigo-600";
+        roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
+        roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${colorClass}`;
+    }
 
-    roleBadge.innerText = `${roleVal.toUpperCase()} RT ${rtVal}`;
-    roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
-
-    // Tampilkan modal
-    document.getElementById('profile-modal').style.display = 'flex';
+    // Tampilkan Modal
+    const modal = document.getElementById('profile-modal');
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 // Fungsi untuk menutup Modal

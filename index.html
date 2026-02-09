@@ -1940,40 +1940,31 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
   });
 }
 
-   async function doLogin() {
+async function doLogin() {
     const userVal = document.getElementById('username-input').value;
     const passVal = document.getElementById('password-input').value;
 
-    if (!userVal || !passVal) {
-        alert("Username dan Password harus diisi!");
-        return;
-    }
-
     try {
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
-        // MENGGUNAKAN API_URL yang sudah Anda definisikan di atas
+        // Menggunakan API_URL yang sudah Anda definisikan di atas
         const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // 1. Simpan objek lengkap ke localStorage (PENTING!)
-            // Ini agar data 'nama', 'role', dan 'rt' dari spreadsheet tersimpan
+            // PENTING: Simpan sebagai JSON String agar semua properti (nama, role, rt) tersimpan
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            console.log("Login Berhasil, Data disimpan:", result);
-
-            // 2. Langsung arahkan ke dashboard
+            // Sembunyikan login, tampilkan main app
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            // 3. Refresh halaman agar semua fungsi (termasuk Profil) membaca data terbaru
+            // Refresh agar data baru terbaca oleh semua fungsi
             location.reload(); 
         } else {
-            alert("Username atau Password salah!");
+            Swal.fire("Gagal", "Username atau Password salah!", "error");
         }
     } catch (err) {
-        console.error("Error Login:", err);
-        alert("Gagal terhubung ke server. Pastikan API_URL benar dan sudah di-Deploy.");
+        console.error("Login Error:", err);
     }
 }
 
@@ -2832,42 +2823,36 @@ function openProfileModal() {
 
     let userData;
     try {
-        // Cek apakah data formatnya JSON
-        userData = rawData.startsWith('{') ? JSON.parse(rawData) : null;
-        
-        // Fallback jika data lama masih tersisa string biasa
-        if (!userData) {
-            userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
-        }
+        // Pastikan data diproses sebagai objek, bukan string tunggal
+        userData = JSON.parse(rawData);
     } catch (e) {
-        console.error("Gagal parse data profil");
-        return;
+        // Jika data lama masih format string (misal: "rt4"), buat objek darurat
+        userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
     }
 
-    // 1. Update Header & Nama Lengkap (Data dari Kolom E)
-    const namaTampil = userData.nama || userData.user;
-    document.getElementById('prof-display-name').innerText = namaTampil;
-    document.getElementById('prof-nama').value = namaTampil;
+    // A. Mengisi Nama (ID: prof-display-name dan prof-nama) -> Dari Kolom E
+    const namaLengkap = userData.nama || userData.user;
+    document.getElementById('prof-display-name').innerText = namaLengkap;
+    document.getElementById('prof-nama').value = namaLengkap;
 
-    // 2. Update Username (Data dari Kolom A)
+    // B. Mengisi Username (ID: prof-username) -> Dari Kolom A
     document.getElementById('prof-username').value = userData.user || "";
 
-    // 3. Update Badge Role & RT
+    // C. Mengisi Role & RT (ID: prof-display-role) -> Dari Kolom C & D
     const roleBadge = document.getElementById('prof-display-role');
-    const role = (userData.role || "lihat").toLowerCase();
-    const rt = userData.rt || "-";
+    const roleVal = (userData.role || "lihat").toLowerCase();
+    const rtVal = userData.rt || "-";
 
-    // Set Warna Badge berdasarkan data Kolom C
-    let bgClass = "bg-slate-500"; // Warna default untuk 'lihat'
-    if (role === "admin") bgClass = "bg-red-600";
-    if (role === "petugas") bgClass = "bg-indigo-600";
+    // Set warna badge berdasarkan role data spreadsheet
+    let bgClass = "bg-slate-500"; // default: lihat
+    if (roleVal === "admin") bgClass = "bg-red-600";
+    else if (roleVal === "petugas") bgClass = "bg-indigo-600";
 
+    roleBadge.innerText = `${roleVal.toUpperCase()} RT ${rtVal}`;
     roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
-    roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
 
-    // 4. Tampilkan Modal
+    // Tampilkan modal
     document.getElementById('profile-modal').style.display = 'flex';
-    document.getElementById('profile-modal').classList.remove('hidden');
 }
 
 // Fungsi untuk menutup Modal

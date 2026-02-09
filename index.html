@@ -2033,13 +2033,12 @@ function openProfileModal(event) {
     document.getElementById('profile-modal').style.display = 'flex';
 }
 
-   async function saveProfile() {
+async function saveProfile() {
     const rawData = localStorage.getItem('ewarga_user');
     if (!rawData) return;
     
-    // Ambil data user saat ini dari localStorage
     const userData = JSON.parse(rawData);
-    const username = userData.user; // Ambil username (rt4)
+    const username = userData.user;
     const namaBaru = document.getElementById('prof-nama').value;
     const passBaru = document.getElementById('prof-password').value;
 
@@ -2048,7 +2047,6 @@ function openProfileModal(event) {
     toggleLoading(true);
 
     try {
-        // Karena di code.gs Anda menggunakan doPost, kita gunakan method POST
         const response = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({
@@ -2064,12 +2062,23 @@ function openProfileModal(event) {
         const result = await response.json();
 
         if (result.success) {
-            // Update data di localStorage agar tampilan nama langsung berubah
+            // 1. Update data di memori lokal (localStorage)
             userData.nama = namaBaru;
             localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
+            // 2. Update tampilan nama di Header/Dashboard secara instan tanpa reload
+            const welcomeText = document.getElementById('welcome-text');
+            if (welcomeText) welcomeText.innerText = `Halo ${namaBaru}! 👋`;
+            
+            // 3. Update nama di teks profil yang sedang terbuka
+            document.getElementById('prof-display-name').innerText = namaBaru;
+            
+            // 4. Kosongkan input password kembali
+            document.getElementById('prof-password').value = "";
+
             alert("Profil berhasil diperbarui!");
-            location.reload(); // Segarkan halaman untuk melihat perubahan nama di header
+            // location.reload(); <-- BARIS INI DIHAPUS agar tidak kembali ke dashboard
+            
         } else {
             alert("Gagal update: " + result.error);
         }

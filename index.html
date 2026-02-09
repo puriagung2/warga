@@ -2099,13 +2099,15 @@ async function saveProfile() {
 
         const result = await response.json();
 
-        if (result.success) {
+if (result.success) {
+            // 1. Update data di localStorage
             userData.nama = namaBaru;
             localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
-            // Update UI instant
-            const welcomeText = document.getElementById('welcome-text');
-            if (welcomeText) welcomeText.innerText = `Halo ${namaBaru}! 👋`;
+            // 2. REFRESH TAMPILAN HEADER (Panggil fungsi yang baru kita buat)
+            updateUserInfoDisplay(); 
+            
+            // 3. Update nama di teks modal profil yang sedang terbuka
             document.getElementById('prof-display-name').innerText = namaBaru;
             document.getElementById('prof-password').value = "";
 
@@ -2425,29 +2427,32 @@ function closePhotoViewer() {
 
    function updateUserInfoDisplay() {
     const rawUser = localStorage.getItem('ewarga_user');
-    const banner = document.getElementById('user-info-banner');
-    const textElement = document.getElementById('user-display-text');
+    const welcomeElement = document.getElementById('welcome-text'); // Pastikan ID ini ada di header HTML Anda
     
-    if (!rawUser) {
-        banner.style.display = 'none';
-        return;
-    }
+    if (!rawUser) return;
 
     let userData;
     try {
         userData = JSON.parse(rawUser);
     } catch (e) {
-        // Handle jika data masih format teks lama
-        userData = { role: rawUser, rt: "" };
+        userData = { user: rawUser, nama: rawUser, role: 'lihat', rt: "" };
     }
 
-    banner.style.display = 'block';
-
-    // Format Teks: ADMIN atau PETUGAS RT 01
+    const nama = userData.nama || userData.user;
     const roleName = userData.role.toUpperCase();
     const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
     
-    textElement.innerHTML = `HALO: <span class="text-indigo-500">${roleName}</span> • ${rtInfo}`;
+    // Tampilan Header: Nama di atas, Role & RT di bawahnya dengan ukuran kecil
+    if (welcomeElement) {
+        welcomeElement.innerHTML = `
+            <div class="flex flex-col">
+                <span class="text-lg font-black text-slate-800">Halo, ${nama}! 👋</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <span class="text-indigo-600">${roleName}</span> • ${rtInfo}
+                </span>
+            </div>
+        `;
+    }
 }
 
     function updateTinggalChart() {

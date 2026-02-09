@@ -2007,11 +2007,13 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 
         if (result.success) {
             // Simpan data user lengkap (username, role, rt) ke localStorage
-            localStorage.setItem('ewarga_user', JSON.stringify({
+          console.log("Raw localStorage:", localStorage.getItem("ewarga_user"));
+
+            localStorage.setItem("ewarga_user", JSON.stringify({
     username: user,
-    nama: namaUserDariSheet,
-    role: role,
-    rt: rt
+    nama: loginResult.nama,   // Ambil dari sheet kolom Nama
+    role: loginResult.role,
+    rt: loginResult.rt
 }));
             updateUserInfoDisplay();
             // Sembunyikan login, tampilkan aplikasi
@@ -2933,24 +2935,42 @@ function updateAgeStatistics(data) {
 
     // profil user
 function openProfileModal() {
-    let userData = localStorage.getItem("ewarga_user");
-    
+    let userDataRaw = localStorage.getItem("ewarga_user");
+
+    console.log("Raw localStorage:", userDataRaw);
+
+    // Jika kosong → paksa logout
+    if (!userDataRaw) {
+        alert("Session habis, silakan login ulang.");
+        logout();
+        return;
+    }
+
+    let userData;
+
     try {
-        userData = JSON.parse(userData);
-    } catch(e) {
-        console.error("Data user bukan JSON valid:", userData);
+        userData = JSON.parse(userDataRaw);
+
+        // Jika data bukan object / rusak → logout
+        if (typeof userData !== "object" || !userData.username) {
+            throw "Invalid Structure";
+        }
+
+    } catch (e) {
+        console.error("Data user bukan JSON valid:", userDataRaw);
         alert("Terjadi kesalahan pada data profil. Silakan login ulang.");
         logout();
         return;
     }
 
-    // kalau sudah aman baru digunakan
+    // Jika lolos → tampilkan modal
     document.getElementById("p-username").value = userData.username;
-    document.getElementById("p-nama").value = userData.nama;
+    document.getElementById("p-nama").value = userData.nama || "";
     document.getElementById("p-password").value = "";
-    
+
     document.getElementById("profile-modal").classList.remove("hidden");
 }
+
 
 
     function closeProfileModal() {

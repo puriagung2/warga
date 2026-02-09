@@ -1109,23 +1109,40 @@ window.addEventListener('hashchange', () => {
         }
     }
 
-    async function handleLogin(e) {
-      e.preventDefault(); toggleLoading(true);
-      const u = document.getElementById('login-user').value;
-      const p = document.getElementById('login-pass').value;
-      try {
+async function handleLogin(e) {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
+
+    try {
         const res = await fetch(`${API_URL}?action=checkLogin&args=${JSON.stringify([u, p])}`);
         const result = await res.json();
-        if(result.success) {
-           <!-- document.getElementById('welcome-text').innerText = `Halo ${u}! 👋`; -->
-            localStorage.setItem('ewarga_user', u);
+
+        if (result.success) {
+
+            // SIMPAN DATA USER SEBAGAI JSON
+            localStorage.setItem("ewarga_user", JSON.stringify(result.user));
+
             updateUserInfoDisplay();
+
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
+
             refreshData();
-        } else { alert("Login Gagal"); }
-      } catch (err) { alert("Error"); } finally { toggleLoading(false); }
+        } else {
+            alert("Login Gagal");
+        }
+
+    } catch (err) {
+        alert("Terjadi kesalahan");
+        console.error(err);
+    } finally {
+        toggleLoading(false);
     }
+}
+
 
 function logout() {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
@@ -2933,40 +2950,27 @@ function updateAgeStatistics(data) {
 
     // profil user
 function openProfileModal() {
-    let userDataRaw = localStorage.getItem("ewarga_user");
-    console.log("Raw localStorage:", localStorage.getItem("ewarga_user"));
+    const raw = localStorage.getItem("ewarga_user");
+    if (!raw) return alert("Silakan login ulang.");
 
-    // Jika kosong → paksa logout
-    if (!userDataRaw) {
-        alert("Session habis, silakan login ulang.");
-        logout();
-        return;
-    }
-
-    let userData;
+    let user = null;
 
     try {
-        userData = JSON.parse(userDataRaw);
-
-        // Jika data bukan object / rusak → logout
-        if (typeof userData !== "object" || !userData.username) {
-            throw "Invalid Structure";
-        }
-
+        user = JSON.parse(raw); 
     } catch (e) {
-        console.error("Data user bukan JSON valid:", userDataRaw);
-        alert("Terjadi kesalahan pada data profil. Silakan login ulang.");
-        logout();
-        return;
+        console.error("LocalStorage rusak:", raw);
+        return alert("Data login bermasalah. Silakan login ulang.");
     }
 
-    // Jika lolos → tampilkan modal
-    document.getElementById("p-username").value = userData.username;
-    document.getElementById("p-nama").value = userData.nama || "";
-    document.getElementById("p-password").value = "";
+    document.getElementById("profile-nama").value = user.nama || "";
+    document.getElementById("profile-username").value = user.username || "";
+    document.getElementById("profile-role").value = user.role || "";
+    document.getElementById("profile-rt").value = user.rt || "";
 
-    document.getElementById("profile-modal").classList.remove("hidden");
+    document.getElementById("modal-profile").classList.remove("hidden");
+    document.getElementById("modal-profile").classList.add("flex");
 }
+
 
 
 

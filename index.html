@@ -499,48 +499,102 @@ body.dark span:not(.material-icons) {
             <button onclick="refreshData()" class="text-slate-300 hover:text-indigo-500 transition-colors">
                 <span class="material-icons" id="refresh-icon">refresh</span>
             </button>
-<!-- update profil -->
-          <button onclick="openProfileModal()" class="text-slate-400 hover:text-indigo-600 transition-colors">
+<button onclick="openProfileModal()" 
+    class="text-slate-300 hover:text-indigo-500 transition-colors">
     <span class="material-icons">account_circle</span>
 </button>
+<!-- ==========================
+     MODAL PROFIL - TAILWIND
+========================== -->
+<div id="modal-profile"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-[9999]">
 
-<div id="profile-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate__animated animate__zoomIn animate__faster">
-        <div class="bg-indigo-600 p-8 text-center relative">
-            <button onclick="closeProfileModal()" class="absolute right-4 top-4 text-white/50 hover:text-white">
-                <span class="material-icons">close</span>
-            </button>
-            <div class="w-20 h-20 bg-white/20 rounded-full mx-auto flex items-center justify-center border-4 border-white/30 mb-3">
-                <span class="material-icons text-white text-4xl">person</span>
+    <div class="bg-white w-[92%] max-w-md rounded-3xl p-8 shadow-xl border border-slate-200
+                animate-[fadeIn_.25s_ease-out]">
+
+        <!-- Avatar -->
+        <div class="flex justify-center mb-5">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500
+                        flex items-center justify-center shadow-md">
+                <span class="material-icons text-white text-5xl">account_circle</span>
             </div>
-            <h3 id="prof-display-name" class="text-white font-black text-lg">Nama Pengguna</h3>
-            <p id="prof-display-role" class="text-indigo-100 text-[10px] uppercase tracking-widest font-bold">Role</p>
         </div>
 
-        <div class="p-6 space-y-4">
-            <div class="space-y-1">
-                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Nama Lengkap</label>
-                <input type="text" id="prof-nama" class="w-full px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none text-sm font-bold focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Username</label>
-                <input type="text" id="prof-username" readonly class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none text-sm font-bold text-slate-400 cursor-not-allowed">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Ganti Password (Isi jika ingin ubah)</label>
-                <input type="password" id="prof-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border-none text-sm font-bold focus:ring-2 focus:ring-indigo-500">
+        <h2 class="text-xl font-extrabold text-slate-800 text-center mb-6">
+            Profil Pengguna
+        </h2>
+
+        <!-- Form Input -->
+        <div class="space-y-4">
+
+            <div>
+                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Nama</label>
+                <input id="profile-nama"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold
+                           focus:ring-2 focus:ring-indigo-400 outline-none"
+                    type="text">
             </div>
 
-            <button onclick="updateProfile()" id="btn-save-profile" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95 transition-all flex items-center justify-center gap-2">
-                <span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN
-            </button>
+            <div>
+                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Username</label>
+                <input id="profile-username"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
+                    type="text" disabled>
+            </div>
 
-            <button onclick="logout()" class="w-full py-3 text-red-500 font-bold text-xs flex items-center justify-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
-                <span class="material-icons text-sm">logout</span> KELUAR DARI APLIKASI
-            </button>
+            <div>
+                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Password Baru</label>
+                <input id="profile-password"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold
+                           focus:ring-2 focus:ring-indigo-400 outline-none"
+                    type="password"
+                    placeholder="Kosongkan jika tidak diganti">
+            </div>
+
+            <div>
+                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">Role</label>
+                <input id="profile-role"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
+                    type="text" disabled>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-semibold text-slate-500 mb-1 block">RT</label>
+                <input id="profile-rt"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-sm font-semibold"
+                    type="text" disabled>
+            </div>
+
         </div>
+
+        <!-- Buttons -->
+        <div class="mt-7 flex justify-between">
+
+            <button onclick="closeProfileModal()"
+                class="px-5 py-2.5 rounded-xl bg-slate-200 text-slate-700 font-semibold
+                       hover:bg-slate-300 transition">
+                Tutup
+            </button>
+
+            <button onclick="saveProfile()"
+                class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-md
+                       hover:bg-indigo-700 transition">
+                Simpan
+            </button>
+
+        </div>
+
     </div>
 </div>
+
+<!-- Toast -->
+<div id="toast"
+    class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-indigo-600 text-white
+           text-sm font-semibold shadow-lg z-[99999] transition-opacity duration-300">
+    Disimpan!
+</div>
+
+          
         </div>
     </header>
 
@@ -1940,38 +1994,36 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
   });
 }
 
-   async function doLogin() {
-    // Sesuaikan ID dengan yang ada di HTML Anda
-    const userVal = document.getElementById('username-input').value;
-    const passVal = document.getElementById('password-input').value;
-
+    async function doLogin() {
+    const user = document.getElementById('username-input').value; // Sesuaikan ID input Anda
+    const pass = document.getElementById('password-input').value; // Sesuaikan ID input Anda
+    
+    showLoading(true);
     try {
-        const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
-        // Ganti scriptUrl dengan URL Web App Google Apps Script Anda
+        // Memanggil fungsi checkLogin di kode .gs dengan parameter action dan args
+        const params = encodeURIComponent(JSON.stringify([user, pass]));
         const response = await fetch(`${scriptUrl}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // SIMPAN DATA SEBAGAI OBJEK (Agar muncul nama "Joko S", bukan "rt4")
+            // Simpan data user lengkap (username, role, rt) ke localStorage
             localStorage.setItem('ewarga_user', JSON.stringify(result));
-            
-            console.log("Login sukses, data tersimpan:", result);
-
+            updateUserInfoDisplay();
             // Sembunyikan login, tampilkan aplikasi
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
             
-            // Refresh satu kali untuk memastikan modal profil siap
-            location.reload(); 
+            // Refresh data agar filter RT berjalan
+            refreshData(); 
         } else {
             alert("Username atau Password salah!");
         }
     } catch (err) {
-        console.error("Gagal Login:", err);
-        alert("Terjadi kesalahan koneksi.");
+        console.error("Login Error:", err);
+    } finally {
+        showLoading(false);
     }
 }
-
 
   // Jalankan saat halaman pertama kali dibuka
   document.addEventListener('DOMContentLoaded', checkLoginState);
@@ -2820,85 +2872,13 @@ function updateAgeStatistics(data) {
 }
 
 // update profil
-// Fungsi untuk membuka Modal Profil
-function openProfileModal() {
-    const rawData = localStorage.getItem('ewarga_user');
-    let userData;
-
-    try {
-        if (!rawData) throw new Error("Kosong");
-
-        if (rawData.startsWith('{')) {
-            // Jika sudah benar format JSON
-            userData = JSON.parse(rawData);
-        } else {
-            // JIKA MASIH STRING (seperti "rt4"), kita buatkan objek buatan sementara
-            // agar modal tetap terbuka dan tidak muncul pesan error
-            userData = {
-                user: rawData,
-                nama: rawData, // Akan tertulis rt4 sementara sampai login ulang sukses
-                role: "lihat",
-                rt: "-"
-            };
-        }
-    } catch (e) {
-        alert("Sesi benar-benar kosong. Silakan login.");
-        return;
-    }
-
-    // Mengisi UI
-    document.getElementById('prof-display-name').innerText = userData.nama || userData.user;
-    document.getElementById('prof-nama').value = userData.nama || "";
-    document.getElementById('prof-username').value = userData.user || "";
-    
-    // Warna Badge
-    const roleEl = document.getElementById('prof-display-role');
-    const roleVal = (userData.role || "lihat").toLowerCase();
-    let bg = "bg-slate-500";
-    if (roleVal === "admin") bg = "bg-red-600";
-    if (roleVal === "petugas") bg = "bg-indigo-600";
-
-    roleEl.innerText = `${roleVal.toUpperCase()} RT ${userData.rt || "-"}`;
-    roleEl.className = `inline-block px-3 py-1 rounded-full text-[10px] font-black text-white mt-2 ${bg}`;
-
-    // Tampilkan Modal
-    document.getElementById('profile-modal').style.display = 'flex';
-}
-
-// Fungsi untuk menutup Modal
-function closeProfileModal() {
-    const modal = document.getElementById('profile-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-    }
-}
-
-function closeProfileModal() {
-    const modal = document.getElementById('profile-modal');
-    modal.classList.add('hidden');
-    modal.style.display = 'none';
-}
-
-// 2. Fungsi Logout yang sudah Anda miliki (Pastikan tetap ada)
-function logout() {
-    if (confirm("Apakah Anda yakin ingin keluar?")) {
-        localStorage.removeItem('ewarga_user');
-        document.getElementById('main-app').style.setProperty('display', 'none', 'important');
-        document.getElementById('auth-container').style.setProperty('display', 'flex', 'important');
-        allData = []; 
-        location.reload(); 
-    }
-}
-
-// 3. Fungsi Update Profile (Sesuai doPost JSON Anda)
-async function updateProfile() {
+    async function updateProfile() {
     const btn = document.getElementById('btn-save-profile');
-    const inputNama = document.getElementById('prof-nama').value;
-    const inputUser = document.getElementById('prof-username').value;
-    const inputPass = document.getElementById('prof-password').value;
+    const nama = document.getElementById('prof-nama').value;
+    const username = document.getElementById('prof-username').value;
+    const password = document.getElementById('prof-password').value;
 
-    if (!inputNama) return Swal.fire("Error", "Nama harus diisi", "error");
+    if (!nama) return Swal.fire("Error", "Nama tidak boleh kosong", "error");
 
     btn.disabled = true;
     btn.innerHTML = `<span class="animate-spin material-icons text-sm">sync</span> MENYIMPAN...`;
@@ -2909,9 +2889,9 @@ async function updateProfile() {
             body: JSON.stringify({
                 action: 'updateUser',
                 args: {
-                    user: inputUser,
-                    nama: inputNama,
-                    password: inputPass
+                    username: username,
+                    nama: nama,
+                    password: password
                 }
             })
         });
@@ -2919,22 +2899,106 @@ async function updateProfile() {
         const result = await response.json();
 
         if (result.success) {
-            // Update data di LocalStorage agar tidak perlu login ulang
-            const localData = JSON.parse(localStorage.getItem('ewarga_user'));
-            localData.nama = inputNama;
-            localStorage.setItem('ewarga_user', JSON.stringify(localData));
+            // Update Local Storage agar nama di header langsung berubah
+            const rawUser = JSON.parse(localStorage.getItem('ewarga_user'));
+            rawUser.nama = nama;
+            localStorage.setItem('ewarga_user', JSON.stringify(rawUser));
 
-            Swal.fire({ icon: 'success', title: 'Berhasil diperbarui', timer: 1500, showConfirmButton: false })
-            .then(() => location.reload());
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Profil diperbarui!',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload(); // Refresh untuk update semua komponen UI
+            });
+        } else {
+            throw new Error(result.error);
         }
-    } catch (err) {
-        Swal.fire("Error", "Gagal menyimpan perubahan", "error");
+
+    } catch (error) {
+        console.error(error);
+        Swal.fire("Gagal", "Terjadi kesalahan: " + error.message, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<span class="material-icons text-sm">save</span> SIMPAN PERUBAHAN`;
     }
 }
-    
+
+    // profil user
+    function openProfileModal() {
+    const user = JSON.parse(localStorage.getItem('ewarga_user'));
+    if (!user) return;
+
+    document.getElementById("profile-nama").value = user.nama;
+    document.getElementById("profile-username").value = user.username;
+    document.getElementById("profile-role").value = user.role;
+    document.getElementById("profile-rt").value = user.rt;
+    document.getElementById("profile-password").value = "";
+
+    document.getElementById("modal-profile").classList.remove("hidden");
+}
+
+    function closeProfileModal() {
+    document.getElementById("modal-profile").classList.add("hidden");
+}
+
+    async function saveProfile() {
+    toggleLoading(true);
+
+    const user = JSON.parse(localStorage.getItem("ewarga_user"));
+
+    const newName = document.getElementById("profile-nama").value.trim();
+    const newPassword = document.getElementById("profile-password").value.trim();
+
+    const payload = {
+        username: user.username,
+        nama: newName !== "" ? newName : user.nama,
+        password: newPassword !== "" ? newPassword : user.password,
+        role: user.role,
+        rt: user.rt
+    };
+
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "updateUser",
+                args: [payload]
+            })
+        });
+
+        const result = await res.json();
+
+        if (!result.success) {
+            showSavedToast("Gagal menyimpan profil!");
+        } else {
+            localStorage.setItem("ewarga_user", JSON.stringify(payload));
+            showSavedToast("Profil berhasil diperbarui!");
+            closeProfileModal();
+        }
+
+    } catch (err) {
+        console.error("SAVE PROFILE ERROR:", err);
+        showSavedToast("Terjadi kesalahan.");
+    }
+
+    toggleLoading(false);
+}
+
+    function showSavedToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    t.style.opacity = "1";
+
+    setTimeout(() => {
+        t.style.opacity = "0";
+        setTimeout(() => t.classList.add("hidden"), 300);
+    }, 2000);
+}
+
   </script>
 
   <div id="photo-viewer"

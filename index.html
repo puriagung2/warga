@@ -2446,11 +2446,17 @@ function updateUserInfoDisplay() {
 
     const nama = userData.nama || userData.user;
     const roleName = userData.role.toUpperCase();
-    const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
     
-    // Tampilan: HALO JOKO S • PETUGAS RT 04
+    // LOGIKA BARU: Jika RT ada isinya, tampilkan "RT 0X". Jika kosong, jangan tampilkan apa-apa.
+    let rtInfo = "";
+    if (userData.rt && userData.rt.toString().trim() !== "") {
+        rtInfo = ` • RT 0${userData.rt}`;
+    }
+    
     if (textElement) {
-        textElement.innerHTML = `Hai Pak ${rtInfo} <span class="text-indigo-600 font-black">${nama.toUpperCase()}</span> `;
+        // Tampilan akan jadi: HALO: JOKO S • PETUGAS RT 04 
+        // Atau jika RT kosong: HALO: TES • LIHAT
+        textElement.innerHTML = `Hai Pak ${rtInfo} <span class="text-indigo-600 font-black">${nama.toUpperCase()}</span>`;
     }
 }
 

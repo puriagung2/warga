@@ -2007,8 +2007,6 @@ window.addEventListener('DOMContentLoaded', checkLoginState);
 
         if (result.success) {
             // Simpan data user lengkap (username, role, rt) ke localStorage
-          console.log("Raw localStorage:", localStorage.getItem("ewarga_user"));
-
             localStorage.setItem("ewarga_user", JSON.stringify({
     username: user,
     nama: loginResult.nama,   // Ambil dari sheet kolom Nama
@@ -2936,8 +2934,7 @@ function updateAgeStatistics(data) {
     // profil user
 function openProfileModal() {
     let userDataRaw = localStorage.getItem("ewarga_user");
-
-    console.log("Raw localStorage:", userDataRaw);
+    console.log("Raw localStorage:", localStorage.getItem("ewarga_user"));
 
     // Jika kosong → paksa logout
     if (!userDataRaw) {

@@ -549,7 +549,7 @@ body.dark span:not(.material-icons) {
                     <button onclick="logout()" class="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs text-red-500 bg-red-50 hover:bg-red-100 transition-colors">
                         <span class="material-icons text-sm">logout</span> KELUAR
                     </button>
-                    <button onclick="saveProfile()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-indigo-100 transition-all">
+                    <button onclick="saveProfile(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-indigo-100 transition-all">
                         SIMPAN
                     </button>
                 </div>
@@ -2066,7 +2066,23 @@ async function saveProfile() {
 
     if (!namaBaru) return alert("Nama tidak boleh kosong!");
 
-    toggleLoading(true);
+    // --- MULAI LOADING ---
+    const btnSimpan = event.target; // Mengambil tombol yang diklik
+    const originalText = btnSimpan.innerHTML;
+    
+    // Tampilkan overlay loading global (jika ada)
+    toggleLoading(true); 
+    
+    // Ubah tampilan tombol agar user tahu proses sedang berjalan
+    btnSimpan.disabled = true;
+    btnSimpan.innerHTML = `<div class="flex items-center justify-center gap-2">
+        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        MEMPROSES...
+    </div>`;
+    btnSimpan.classList.add('opacity-70', 'cursor-not-allowed');
 
     try {
         const response = await fetch(API_URL, {
@@ -2084,31 +2100,28 @@ async function saveProfile() {
         const result = await response.json();
 
         if (result.success) {
-            // 1. Update data di memori lokal (localStorage)
             userData.nama = namaBaru;
             localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
-            // 2. Update tampilan nama di Header/Dashboard secara instan tanpa reload
+            // Update UI instant
             const welcomeText = document.getElementById('welcome-text');
             if (welcomeText) welcomeText.innerText = `Halo ${namaBaru}! 👋`;
-            
-            // 3. Update nama di teks profil yang sedang terbuka
             document.getElementById('prof-display-name').innerText = namaBaru;
-            
-            // 4. Kosongkan input password kembali
             document.getElementById('prof-password').value = "";
 
-            alert("Profil berhasil diperbarui!");
-            // location.reload(); <-- BARIS INI DIHAPUS agar tidak kembali ke dashboard
-            
+            alert("✅ Profil berhasil diperbarui!");
         } else {
-            alert("Gagal update: " + result.error);
+            alert("❌ Gagal update: " + result.error);
         }
     } catch (err) {
         console.error(err);
-        alert("Terjadi kesalahan koneksi.");
+        alert("⚠️ Terjadi kesalahan koneksi.");
     } finally {
+        // --- SELESAI LOADING ---
         toggleLoading(false);
+        btnSimpan.disabled = false;
+        btnSimpan.innerHTML = originalText;
+        btnSimpan.classList.remove('opacity-70', 'cursor-not-allowed');
     }
 }
 

@@ -1124,20 +1124,18 @@ async function handleLogin(e) {
 
         if (result.success) {
 
-            // ==============================================
-            //  SIMPAN DATA USER DALAM BENTUK JSON VALID
-            // ==============================================
+            // PAKSA nama ada (minimal string kosong)
+            const safeNama = result.nama ? result.nama.toString() : "";
+
             localStorage.setItem(
                 "ewarga_user",
                 JSON.stringify({
                     username: username,
                     role: result.role,
                     rt: result.rt,
-                    nama: result.nama || ""   // jika tersedia
+                    nama: safeNama
                 })
             );
-
-            console.log("Login Saved:", localStorage.getItem("ewarga_user"));
 
             updateUserInfoDisplay();
 
@@ -1147,17 +1145,17 @@ async function handleLogin(e) {
             refreshData();
 
         } else {
-            alert("Login Gagal, periksa username / password.");
+            alert("Login gagal!");
         }
 
     } catch (err) {
         alert("Terjadi kesalahan server.");
         console.error(err);
-
     } finally {
         toggleLoading(false);
     }
 }
+
 
 
 
@@ -2362,32 +2360,25 @@ function closePhotoViewer() {
     }
 }
 
-   function updateUserInfoDisplay() {
-    const rawUser = localStorage.getItem('ewarga_user');
-    const banner = document.getElementById('user-info-banner');
-    const textElement = document.getElementById('user-display-text');
-    
-    if (!rawUser) {
-        banner.style.display = 'none';
+function updateUserInfoDisplay() {
+    const raw = localStorage.getItem("ewarga_user");
+    if (!raw) return;
+
+    let user = {};
+
+    try {
+        user = JSON.parse(raw);
+    } catch (err) {
+        console.error("LocalStorage user corrupt:", raw);
         return;
     }
 
-    let userData;
-    try {
-        userData = JSON.parse(rawUser);
-    } catch (e) {
-        // Handle jika data masih format teks lama
-        userData = { role: rawUser, rt: "" };
-    }
+    const nama = user.nama ? user.nama : "Pengguna";
 
-    banner.style.display = 'block';
-
-    // Format Teks: ADMIN atau PETUGAS RT 01
-    const roleName = userData.role.toUpperCase();
-    const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
-    
-    textElement.innerHTML = `HALO: <span class="text-indigo-500">${roleName}</span> • ${rtInfo}`;
+    document.getElementById("user-nama-display").innerText = nama;
+    document.getElementById("user-avatar-display").innerText = nama.charAt(0).toUpperCase();
 }
+
 
     function updateTinggalChart() {
     const ctx = document.getElementById('chartTinggal').getContext('2d');

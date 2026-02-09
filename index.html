@@ -1946,20 +1946,22 @@ async function doLogin() {
     const passVal = document.getElementById('password-input').value;
 
     try {
+        // Menggunakan API_URL yang sudah Anda definisikan di atas script
         const params = encodeURIComponent(JSON.stringify([userVal, passVal]));
-        // Menggunakan API_URL yang sudah Anda definisikan di atas
         const response = await fetch(`${API_URL}?action=checkLogin&args=${params}`);
         const result = await response.json();
 
         if (result.success) {
-            // WAJIB: Simpan sebagai JSON string agar nama, role, dan rt tersimpan
+            // --- BAGIAN KRUSIAL ---
+            // Kita harus menyimpan SELURUH result (user, nama, role, rt)
+            // dalam bentuk String JSON agar bisa dibaca fungsi profil.
             localStorage.setItem('ewarga_user', JSON.stringify(result));
             
-            // Masuk ke aplikasi
+            // Masuk ke dashboard
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            // Refresh agar data baru terbaca sempurna
+            // Refresh agar memori browser bersih dan siap membaca data baru
             location.reload(); 
         } else {
             alert("Username atau Password salah!");
@@ -1972,44 +1974,51 @@ async function doLogin() {
 // 2. PERBAIKAN FUNGSI MODAL PROFIL (Mencegah Logout Otomatis)
 function openProfileModal() {
     const rawData = localStorage.getItem('ewarga_user');
-    if (!rawData) return;
-
-    let userData;
-    try {
-        // Jika data formatnya JSON benar
-        if (rawData.startsWith('{')) {
-            userData = JSON.parse(rawData);
-        } else {
-            // Jika data masih teks lama "rt4", buat objek darurat agar tidak error/logout
-            userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
-        }
-    } catch (e) {
-        console.error("Gagal membaca sesi profil");
+    
+    // Jika data kosong, arahkan login tanpa error
+    if (!rawData) {
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
         return;
     }
 
-    // Tampilkan Nama Lengkap (Kolom E)
+    let userData;
+    try {
+        // Cek apakah data adalah format JSON { "nama": "..." }
+        if (rawData.startsWith('{')) {
+            userData = JSON.parse(rawData);
+        } else {
+            // Jika data masih teks lama "rt4", buat objek darurat agar TIDAK LOGOUT
+            userData = { user: rawData, nama: rawData, role: 'lihat', rt: '-' };
+        }
+    } catch (e) {
+        console.error("Gagal membaca profil");
+        return; 
+    }
+
+    // 1. Isi Nama Lengkap (Dari Kolom E Spreadsheet)
     const namaLengkap = userData.nama || userData.user;
     document.getElementById('prof-display-name').innerText = namaLengkap;
     document.getElementById('prof-nama').value = namaLengkap;
 
-    // Tampilkan Username (Kolom A)
+    // 2. Isi Username (Dari Kolom A Spreadsheet)
     document.getElementById('prof-username').value = userData.user || "";
 
-    // Logika Warna Badge Role (Kolom C & D)
+    // 3. Logika Warna & Teks Role (Dari Kolom C & D)
     const roleBadge = document.getElementById('prof-display-role');
-    const role = (userData.role || "lihat").toLowerCase();
-    const rt = userData.rt || "-";
+    const roleStr = (userData.role || "lihat").toLowerCase();
+    const rtStr = userData.rt || "-";
 
-    let bgClass = "bg-slate-500"; // Warna default 'lihat'
-    if (role === "admin") bgClass = "bg-red-600";
-    else if (role === "petugas") bgClass = "bg-indigo-600";
+    let bgClass = "bg-slate-500"; // Warna default (Lihat)
+    if (roleStr === "admin") bgClass = "bg-red-600";
+    if (roleStr === "petugas") bgClass = "bg-indigo-600";
 
-    roleBadge.innerText = `${role.toUpperCase()} RT ${rt}`;
+    roleBadge.innerText = `${roleStr.toUpperCase()} RT ${rtStr}`;
     roleBadge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-black text-white mt-2 ${bgClass}`;
 
-    // Munculkan Modal
+    // 4. Tampilkan Modal
     document.getElementById('profile-modal').style.display = 'flex';
+    document.getElementById('profile-modal').classList.remove('hidden');
 }
 
 

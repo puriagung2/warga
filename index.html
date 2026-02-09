@@ -566,14 +566,14 @@ body.dark span:not(.material-icons) {
         </div>
     </header>
 
-    <div id="user-info-banner" class="px-7 py-1 mb-2 transition-all duration-300" style="display: none;">
-        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 py-1.5 px-3 rounded-full w-fit border border-slate-100 dark:border-slate-700">
-            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-            <p class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide" id="user-display-text">
-                Memuat informasi user...
-            </p>
-        </div>
-    </div> 
+<div id="user-info-banner" class="px-7 py-1 mb-2 transition-all duration-300" style="display: none;">
+    <div class="flex items-center gap-2 bg-slate-50 py-1.5 px-3 rounded-full w-fit border border-slate-100">
+        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+        <p class="text-[10px] font-semibold text-slate-500 tracking-wide" id="user-display-text">
+            Memuat informasi user...
+        </p>
+    </div>
+</div> 
 
 
     <main class="flex-1 p-6 pb-32">
@@ -2104,10 +2104,10 @@ if (result.success) {
             userData.nama = namaBaru;
             localStorage.setItem('ewarga_user', JSON.stringify(userData));
 
-            // 2. REFRESH TAMPILAN HEADER (Panggil fungsi yang baru kita buat)
+            // 2. Refresh Banner Info (Bukan Welcome Text)
             updateUserInfoDisplay(); 
             
-            // 3. Update nama di teks modal profil yang sedang terbuka
+            // 3. Update nama di modal profil yang sedang terbuka
             document.getElementById('prof-display-name').innerText = namaBaru;
             document.getElementById('prof-password').value = "";
 
@@ -2425,11 +2425,15 @@ function closePhotoViewer() {
     }
 }
 
-   function updateUserInfoDisplay() {
+function updateUserInfoDisplay() {
     const rawUser = localStorage.getItem('ewarga_user');
-    const welcomeElement = document.getElementById('welcome-text'); // Pastikan ID ini ada di header HTML Anda
+    const banner = document.getElementById('user-info-banner');
+    const textElement = document.getElementById('user-display-text');
     
-    if (!rawUser) return;
+    if (!rawUser) {
+        if (banner) banner.style.display = 'none';
+        return;
+    }
 
     let userData;
     try {
@@ -2438,20 +2442,15 @@ function closePhotoViewer() {
         userData = { user: rawUser, nama: rawUser, role: 'lihat', rt: "" };
     }
 
+    if (banner) banner.style.display = 'block';
+
     const nama = userData.nama || userData.user;
     const roleName = userData.role.toUpperCase();
     const rtInfo = userData.rt ? `RT 0${userData.rt}` : "RW 06";
     
-    // Tampilan Header: Nama di atas, Role & RT di bawahnya dengan ukuran kecil
-    if (welcomeElement) {
-        welcomeElement.innerHTML = `
-            <div class="flex flex-col">
-                <span class="text-lg font-black text-slate-800">Halo, ${nama}! 👋</span>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    <span class="text-indigo-600">${roleName}</span> • ${rtInfo}
-                </span>
-            </div>
-        `;
+    // Tampilan: HALO JOKO S • PETUGAS RT 04
+    if (textElement) {
+        textElement.innerHTML = `HALO: <span class="text-indigo-600 font-black">${nama.toUpperCase()}</span> • ${roleName} ${rtInfo}`;
     }
 }
 

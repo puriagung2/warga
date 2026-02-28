@@ -1024,27 +1024,73 @@ body.dark span:not(.material-icons) {
             <div><label class="form-label" style="color: var(--text-muted)">No HP / WA<span class="required-icon">*</span></label><input type="number" id="f-hp" class="modern-input"></div>
         </div>
 
-        <div class="space-y-2">
-            <label class="text-[10px] font-black uppercase tracking-widest px-1" style="color: var(--text-muted)">Foto Warga</label>
-            <div class="relative">
-                <input type="file" id="f-foto" accept="image/*" class="hidden" onchange="previewFoto()">
-                <label for="f-foto" class="flex flex-col items-center justify-center w-full min-h-[120px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group" 
-                       style="background-color: var(--input-bg); border-color: var(--border-color);">
-                    
-                    <div id="container-preview" class="hidden mb-3 relative">
-                        <img id="preview-foto" src="" class="w-24 h-24 object-cover rounded-2xl shadow-md border-2 border-white">
-                    </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="space-y-2">
+        <label class="text-[10px] font-black uppercase tracking-widest px-1" style="color: var(--text-muted)">Foto Warga</label>
+        <div class="relative">
+            <input type="file" id="f-foto" accept="image/*" class="hidden" onchange="previewFile('f-foto', 'preview-foto', 'container-preview', 'placeholder-upload')">
+            <label for="f-foto" class="flex flex-col items-center justify-center w-full min-h-[140px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group hover:bg-teal-50/50" 
+                   style="background-color: var(--input-bg); border-color: var(--border-color);">
+                
+                <div id="container-preview" class="hidden mb-3 relative">
+                    <img id="preview-foto" src="" class="w-24 h-24 object-cover rounded-2xl shadow-md border-2 border-white">
+                </div>
 
-                    <div id="placeholder-upload" class="flex flex-col items-center">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform" style="background-color: var(--card-bg)">
-                            <span class="material-icons" style="color: var(--soft-indigo)">add_a_photo</span>
-                        </div>
-                        <p class="text-[11px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Ambil Foto atau Upload</p>
-                        <p class="text-[9px]" style="color: var(--text-muted)">PNG, JPG up to 5MB</p>
+                <div id="placeholder-upload" class="flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform" style="background-color: var(--card-bg)">
+                        <span class="material-icons text-teal-500">face</span>
                     </div>
-                </label>
-            </div>
+                    <p class="text-[10px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Foto Profil</p>
+                    <p class="text-[8px]" style="color: var(--text-muted)">Ambil Foto Warga</p>
+                </div>
+            </label>
         </div>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-[10px] font-black uppercase tracking-widest px-1" style="color: var(--text-muted)">Foto KTP</label>
+        <div class="relative">
+            <input type="file" id="f-foto-ktp" accept="image/*" class="hidden" onchange="previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp')">
+            <label for="f-foto-ktp" class="flex flex-col items-center justify-center w-full min-h-[140px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group hover:bg-teal-50/50" 
+                   style="background-color: var(--input-bg); border-color: var(--border-color);">
+                
+                <div id="container-preview-ktp" class="hidden mb-3 relative">
+                    <img id="preview-ktp" src="" class="w-full h-24 object-cover rounded-2xl shadow-md border-2 border-white">
+                </div>
+
+                <div id="placeholder-ktp" class="flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform" style="background-color: var(--card-bg)">
+                        <span class="material-icons text-indigo-500">badge</span>
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Upload KTP</p>
+                    <p class="text-[8px]" style="color: var(--text-muted)">Scan/Foto E-KTP</p>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-[10px] font-black uppercase tracking-widest px-1" style="color: var(--text-muted)">Foto Kartu Keluarga</label>
+        <div class="relative">
+            <input type="file" id="f-foto-kk" accept="image/*" class="hidden" onchange="previewFile('f-foto-kk', 'preview-kk', 'container-preview-kk', 'placeholder-kk')">
+            <label for="f-foto-kk" class="flex flex-col items-center justify-center w-full min-h-[140px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group hover:bg-teal-50/50" 
+                   style="background-color: var(--input-bg); border-color: var(--border-color);">
+                
+                <div id="container-preview-kk" class="hidden mb-3 relative">
+                    <img id="preview-kk" src="" class="w-full h-24 object-cover rounded-2xl shadow-md border-2 border-white">
+                </div>
+
+                <div id="placeholder-kk" class="flex flex-col items-center text-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform" style="background-color: var(--card-bg)">
+                        <span class="material-icons text-rose-500">receipt_long</span>
+                    </div>
+                    <p class="text-[10px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Upload KK</p>
+                    <p class="text-[8px]" style="color: var(--text-muted)">Foto Kartu Keluarga</p>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
 
         <button type="submit" class="btn-submit">Simpan Data Warga</button>
     </form>
@@ -1876,10 +1922,11 @@ function calculateAge(birthDate) {
 
 async function handleSaveWarga(e) {
     e.preventDefault();
- // --- 1. AMBIL NILAI NIK ---
+    
+    // --- 1. AMBIL NILAI NIK ---
     const nikInput = document.getElementById("f-nik").value;
     const originalNik = document.getElementById("f-original-nik").value;
-    const elErrorNik = document.getElementById("error-nik"); // Ambil elemen pesan teks
+    const elErrorNik = document.getElementById("error-nik");
 
     // --- 2. VALIDASI DUPLIKAT NIK ---
     const isDuplicate = allData.some(warga => 
@@ -1889,68 +1936,56 @@ async function handleSaveWarga(e) {
 
     if (isDuplicate) {
         showToast("Gagal! NIK sudah terdaftar", "error");
-        
         const elNik = document.getElementById("f-nik");
         elNik.focus();
-        
-        // --- TAMBAHKAN BARIS INI ---
-        if (elErrorNik) elErrorNik.classList.remove('hidden'); // Menghilangkan class hidden agar teks muncul
-        
-        // Tambahkan kelas error dan animasi getar
+        if (elErrorNik) elErrorNik.classList.remove('hidden');
         elNik.classList.add('border-red-500', 'bg-red-50', 'animate-shake');
-        
-        setTimeout(() => {
-            elNik.classList.remove('animate-shake');
-        }, 500);
-
+        setTimeout(() => { elNik.classList.remove('animate-shake'); }, 500);
         return; 
     } else {
-        // Jika tidak duplikat, sembunyikan kembali teks dan hapus warna merah
         if (elErrorNik) elErrorNik.classList.add('hidden'); 
         document.getElementById("f-nik").classList.remove('border-red-500', 'bg-red-50');
     }
+
     toggleLoading(true);
 
-    // const originalNik = document.getElementById("f-original-nik").value;
-
-    // Ambil foto lama
-    let existingFoto = "";
-    if (originalNik) {
-        const f = allData.find(x => x.NIK == originalNik);
-        if (f) existingFoto = f.Foto || "";
-    }
-
-    // Proses foto baru
-    let fotoBase64 = "";
-    const fotoFile = document.getElementById("f-foto").files[0];
-    if (fotoFile) {
-        fotoBase64 = await new Promise(resolve => {
+    // --- 3. FUNGSI PEMBANTU KONVERSI BASE64 ---
+    const getBase64 = (file) => {
+        return new Promise(resolve => {
+            if (!file) return resolve("");
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(fotoFile);
+            reader.readAsDataURL(file);
         });
-    }
+    };
 
-    // Baca field form
+    // --- 4. PROSES SEMUA FOTO (Warga, KTP, KK) ---
+    const fotoFile = document.getElementById("f-foto").files[0];
+    const ktpFile = document.getElementById("f-foto-ktp").files[0];
+    const kkFile = document.getElementById("f-foto-kk").files[0];
+
+    const fotoBase64 = await getBase64(fotoFile);
+    const ktpBase64 = await getBase64(ktpFile);
+    const kkBase64 = await getBase64(kkFile);
+
+    // Baca field form alamat
     const fBlok  = document.getElementById("f-blok").value;
     const fNomer = document.getElementById("f-nomer").value;
     const fRT    = document.getElementById("f-rt").value;
     const alamatTinggal = `Blok ${fBlok} No ${fNomer} RT 0${fRT}`;
 
-    // --- TAMBAHKAN INI SEBELUM PAYLOAD ---
+    // Identitas User
     const rawUser = localStorage.getItem('ewarga_user');
     let currentUserData = { role: 'Guest', rt: '' };
     if (rawUser) {
-        try {
-            currentUserData = JSON.parse(rawUser);
-        } catch (e) {
-            currentUserData = { role: rawUser, rt: '' };
-        }
+        try { currentUserData = JSON.parse(rawUser); } 
+        catch (e) { currentUserData = { role: rawUser, rt: '' }; }
     }
     
+    // --- 5. SUSUN PAYLOAD ---
     const payload = {
         originalNik: originalNik,
-        nik: document.getElementById("f-nik").value,
+        nik: nikInput,
         kk: document.getElementById("f-kk").value,
         nama: document.getElementById("f-nama").value,
         kelamin: document.getElementById("f-kelamin").value,
@@ -1962,14 +1997,18 @@ async function handleSaveWarga(e) {
         blok: fBlok,
         nomer: fNomer,
         rt: fRT,
-        currentUser: currentUserData, // Tambahkan ini agar divalidasi oleh code.gs
+        currentUser: currentUserData,
         alamatKTP: document.getElementById("f-alamat-ktp").value,
         alamatTinggal: alamatTinggal,
         statusKel: document.getElementById("f-status-kel").value,
         hp: document.getElementById("f-hp").value,
         pekerjaan: document.getElementById("f-pekerjaan").value,
-        fotoData: fotoBase64 || "",   // jika kosong → pakai foto lama di server
-        // --- TAMBAHKAN DUA BARIS INI KE PAYLOAD ---
+        
+        // Data Foto
+        fotoData: fotoBase64,
+        fotoKtpData: ktpBase64, // Data baru
+        fotoKkData: kkBase64,   // Data baru
+
         updatedBy: currentUserData.role + (currentUserData.rt ? ` RT${currentUserData.rt}` : ""),
         lastUpdate: new Date().toLocaleString('id-ID')
     };
@@ -1984,26 +2023,17 @@ async function handleSaveWarga(e) {
             })
         });
 
-        // Refresh data global
         await refreshData();
 
-        // Tutup modal edit
-const addWrap = document.getElementById("add-wrapper");
-if (addWrap) addWrap.style.display = "none";
+        const addWrap = document.getElementById("add-wrapper");
+        if (addWrap) addWrap.style.display = "none";
 
-// Buka halaman detail warga
-showDetail(payload.nik);
-
-        // Tampilkan halaman detail warga yang baru disimpan
         showDetail(payload.nik);
-
-
-showToast("Data berhasil disimpan!");
+        showToast("Data berhasil disimpan!");
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
-        alert("Gagal menyimpan data!");
-
+        showToast("Gagal menyimpan data!", "error");
     } finally {
         toggleLoading(false);
     }
@@ -2375,6 +2405,35 @@ function previewFoto() {
     reader.readAsDataURL(fileInput.files[0]);
 }
 
+function previewFile(inputId, imgPreviewId, containerId, placeholderId) {
+    const fileInput = document.getElementById(inputId);
+    const img = document.getElementById(imgPreviewId);
+    const container = document.getElementById(containerId);
+    const placeholder = document.getElementById(placeholderId);
+
+    // Jika tidak ada file yang dipilih (batal)
+    if (!fileInput.files || fileInput.files.length === 0) {
+        img.src = "";
+        container.classList.add("hidden");
+        placeholder.classList.remove("hidden");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        img.src = e.target.result;
+        
+        // Tampilkan foto, sembunyikan icon/teks "Upload"
+        container.classList.remove("hidden");
+        placeholder.classList.add("hidden");
+        
+        // Feedback getar ringan untuk HP
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+    };
+    
+    reader.readAsDataURL(fileInput.files[0]);
+}
+    
 // Tambahkan fungsi ini jika ingin ada tombol hapus manual
 function resetFoto() {
     const fileInput = document.getElementById("f-foto");

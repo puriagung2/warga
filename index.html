@@ -1763,12 +1763,17 @@ document.getElementById('detail-content').innerHTML = `
         <div class="my-3 border-t" style="border-color: var(--border-color);"></div>
 
         <div class="space-y-[6px]"> 
-            ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
-            ${renderDetailItem('Agama', w.Agama)}
-            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-            ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
-            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+                ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
+                ${renderDetailItem('Agama', w.Agama)}
+                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
+                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
+                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
+                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
+                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
+                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
         </div>
 
         <div class="my-4 border-t border-dashed" style="border-color: var(--border-color);"></div>

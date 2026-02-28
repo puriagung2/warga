@@ -1738,43 +1738,70 @@ function showDetail(nik) {
     (w.Kelamin || '').toLowerCase().startsWith('p') ? "ring-pink-400" :
     "ring-slate-300";
 
-  document.getElementById('detail-content').innerHTML = `
-        <div class="p-5 rounded-3xl shadow-lg border transition-colors duration-300" style="background-color: var(--card-bg); border-color: var(--border-color);">
-            <div class="flex flex-col items-center">
-                <div class="relative">
-                    <img 
-                        src="${fotoUrl}"
-                        onclick="openPhotoViewer('${fotoUrl}')"
-                        class="w-28 h-28 object-cover rounded-2xl border shadow ring-4 ${genderClass} cursor-pointer transition-transform duration-200 hover:scale-105"
-                    >
-                    <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-md shadow">
-                        ${w['Status Keluarga'] || 'Warga'}
+ // Ambil URL foto KTP dan KK dari data (pastikan nama properti sesuai dengan header di Google Sheet)
+const fotoKtpUrl = w['Foto KTP'] || ''; 
+const fotoKkUrl = w['Foto KK'] || '';
+const placeholderDoc = 'https://placehold.co/400x250/f1f5f9/cbd5e1?text=Tidak+Ada+Dokumen';
+
+document.getElementById('detail-content').innerHTML = `
+    <div class="p-5 rounded-3xl shadow-lg border transition-colors duration-300" style="background-color: var(--card-bg); border-color: var(--border-color);">
+        <div class="flex flex-col items-center">
+            <div class="relative">
+                <img 
+                    src="${fotoUrl}"
+                    onclick="openPhotoViewer('${fotoUrl}')"
+                    class="w-28 h-28 object-cover rounded-2xl border shadow ring-4 ${genderClass} cursor-pointer transition-transform duration-200 hover:scale-105"
+                >
+                <div class="absolute -bottom-2 right-1 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded-md shadow">
+                    ${w['Status Keluarga'] || 'Warga'}
+                </div>
+            </div>
+            <h2 class="text-[17px] font-black mt-3 text-center" style="color: var(--text-main);">${w.Nama}</h2>
+            <p class="text-[11px] tracking-wide" style="color: var(--text-muted);">${w.NIK}</p>
+        </div>
+
+        <div class="my-3 border-t" style="border-color: var(--border-color);"></div>
+
+        <div class="space-y-[6px]"> 
+            ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
+            ${renderDetailItem('Agama', w.Agama)}
+            ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
+            ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
+            ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
+            ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
+        </div>
+
+        <div class="my-4 border-t border-dashed" style="border-color: var(--border-color);"></div>
+
+        <div class="space-y-3">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Dokumen Lampiran</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="group relative">
+                    <p class="text-[9px] font-bold mb-1 text-slate-500 uppercase">Foto KTP</p>
+                    <div class="aspect-[3/2] rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 cursor-pointer" 
+                         onclick="openPhotoViewer('${fotoKtpUrl || placeholderDoc}')">
+                        <img src="${fotoKtpUrl || placeholderDoc}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                        ${!fotoKtpUrl ? '<div class="absolute inset-0 flex items-center justify-center"><span class="material-icons text-slate-300">no_photography</span></div>' : ''}
                     </div>
                 </div>
-                <h2 class="text-[17px] font-black mt-3 text-center" style="color: var(--text-main);">${w.Nama}</h2>
-                <p class="text-[11px] tracking-wide" style="color: var(--text-muted);">${w.NIK}</p>
-            </div>
-            <div class="my-3 border-t" style="border-color: var(--border-color);"></div>
-            <div class="space-y-[6px]"> 
-                ${renderDetailItem('NO KK', w['No KK'] || w['NO KK'])}
-                ${renderDetailItem('Agama', w.Agama)}
-                ${renderDetailItem('Jenis Kelamin', w.Kelamin)}
-                ${renderDetailItem('Tempat Lahir', w['Tempat Lahir'])}
-                ${renderDetailItem('Tanggal Lahir', w['Tanggal Lahir'])}
-                ${renderDetailItem('Status Kawin', w['Status Perkawinan'])}
-                ${renderDetailItem('Status Tinggal', w['Status Tinggal'])}
-                ${renderDetailItem('Pekerjaan', w.Pekerjaan)}
-                ${renderDetailItem('No HP', rawHp ? `<a href="${waLink}" target="_blank" class="text-green-600 font-semibold flex items-center gap-1"><span>${rawHp}</span><span class="material-icons text-[14px]">open_in_new</span></a>` : '-')}
-                ${renderDetailItem('Alamat Tinggal', w['Alamat Tinggal'] || `Blok ${w.Blok} No ${w.Nomer} RT 0${w.RT}`)}
-                ${renderDetailItem('Alamat KTP', w['Alamat KTP'])}
-                ${renderDetailItem('Terakhir Update', w['Tanggal Update'] || '-')}
-                ${renderDetailItem('Oleh', w['Updated By'] || '-')}
+
+                <div class="group relative">
+                    <p class="text-[9px] font-bold mb-1 text-slate-500 uppercase">Foto KK</p>
+                    <div class="aspect-[3/2] rounded-xl overflow-hidden border-2 border-slate-100 bg-slate-50 cursor-pointer"
+                         onclick="openPhotoViewer('${fotoKkUrl || placeholderDoc}')">
+                        <img src="${fotoKkUrl || placeholderDoc}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                        ${!fotoKkUrl ? '<div class="absolute inset-0 flex items-center justify-center"><span class="material-icons text-slate-300">no_photography</span></div>' : ''}
+                    </div>
+                </div>
             </div>
         </div>
-    `;
-
-  document.getElementById('detail-modal').style.display = 'flex';
-}
+        
+        <div class="mt-4 pt-3 border-t text-[9px] flex justify-between" style="color: var(--text-muted); border-color: var(--border-color);">
+            <span>Update: ${w['Tanggal Update'] || '-'}</span>
+            <span>Oleh: ${w['Updated By'] || '-'}</span>
+        </div>
+    </div>
+`;
 
 function renderDetailItem(label, value) {
     return `

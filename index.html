@@ -1355,15 +1355,29 @@ function switchStatTab(tab) {
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const nextWeek = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Variabel penampung sementara untuk hitung badge
-    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0 };
+    // 1. Tambahkan 'pernah_kawin' ke objek counts
+    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0, pernah_kawin: 0 };
     let tempFiltered = [];
 
     allData.forEach(w => {
-        if (!w['Tanggal Lahir']) return;
-        let tglStr = w['Tanggal Lahir'];
+        // --- LOGIKA FILTER PERNAH KAWIN (Cerai Hidup/Mati) ---
+        const statusKawin = (w['Status Perkawinan'] || "").toLowerCase();
+        const isPernahKawin = statusKawin.includes("cerai hidup") || statusKawin.includes("cerai mati");
         
-        // Handle format DD-MM-YYYY ke YYYY-MM-DD
+        if (isPernahKawin) counts.pernah_kawin++;
+
+        // --- LOGIKA FILTER UMUR & ULTAH ---
+        if (!w['Tanggal Lahir']) {
+            // Jika tab yang dipilih adalah 'pernah_kawin', masukkan warga tanpa tgl lahir tapi status cerai
+            if (tab === 'pernah_kawin' && isPernahKawin) {
+                w._displayAge = "Status: " + (w['Status Perkawinan'] || "Cerai");
+                w._sortPriority = 0;
+                tempFiltered.push(w);
+            }
+            return;
+        };
+
+        let tglStr = w['Tanggal Lahir'];
         if (tglStr.includes('-') && tglStr.split('-')[0].length === 2) {
             const p = tglStr.split('-');
             tglStr = `${p[2]}-${p[1]}-${p[0]}`;
@@ -1376,7 +1390,7 @@ function switchStatTab(tab) {
         const m = today.getMonth() - bDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) age--;
 
-        // LOGIKA KLASIFIKASI (Untuk Hitung Semua Badge)
+        // Klasifikasi Umur
         let cat = "";
         if (age < 5) { cat = 'balita'; counts.balita++; }
         else if (age <= 11) { cat = 'anak'; counts.anak++; }
@@ -1389,8 +1403,12 @@ function switchStatTab(tab) {
         const isUltah = (bThisYear >= todayStart && bThisYear <= nextWeek);
         if (isUltah) counts.ultah++;
 
-        // Masukkan ke filtered jika sesuai tab aktif
-        if (tab === cat) {
+        // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF ---
+        if (tab === 'pernah_kawin' && isPernahKawin) {
+            w._displayAge = "Umur: " + age + " Thn";
+            w._sortPriority = age;
+            tempFiltered.push(w);
+        } else if (tab === cat) {
             w._displayAge = age + " Thn";
             w._sortPriority = age;
             tempFiltered.push(w);
@@ -1423,15 +1441,16 @@ function switchStatTab(tab) {
 
     filteredStatData = tempFiltered;
     renderStatList();
-  // Memastikan tombol yang aktif bergeser ke tengah kontainer
-const activeTab = document.getElementById('tab-' + tab);
-if (activeTab) {
-    activeTab.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest'
-    });
-}
+
+    // Scroll tab ke tengah
+    const activeTab = document.getElementById('tab-' + tab);
+    if (activeTab) {
+        activeTab.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'center',
+            block: 'nearest'
+        });
+    }
 }
 
 function renderStatList() {

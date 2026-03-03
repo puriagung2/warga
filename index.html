@@ -1363,46 +1363,41 @@ function switchStatTab(tab) {
     let tempFiltered = [];
 
     // --- LOGIKA KHUSUS YATIM ---
-    // Cari No KK yang Kepala Keluarganya "Cerai Mati"
     const kkYatim = allData
         .filter(w => (w['Status Keluarga'] === 'Kepala Keluarga' || w['Status Keluarga'] === 'KEPALA KELUARGA') 
                   && (w['Status Perkawinan'] || "").toLowerCase().includes("cerai mati"))
         .map(w => w.KK || w['NO KK']);
 
     allData.forEach(w => {
-        // --- LOGIKA FILTER PERNAH KAWIN ---
+        // --- LOGIKA FILTER DASAR ---
         const statusKawin = (w['Status Perkawinan'] || "").toLowerCase();
         const isPernahKawin = statusKawin.includes("cerai hidup") || statusKawin.includes("cerai mati");
         if (isPernahKawin) counts.pernah_kawin++;
 
-      // Hitung Yatim (Dia adalah 'Anak' di dalam KK yang ayahnya sudah tidak ada/Cerai Mati)
         const isAnakYatim = (w['Status Keluarga'] === 'Anak' || w['Status Keluarga'] === 'ANAK') 
                           && kkYatim.includes(w.KK || w['NO KK']);
         if (isAnakYatim) counts.yatim++;
 
-        // Reset display status agar tidak nyangkut di tab lain
+        // Reset display status
         w._displayStatus = null;
 
-        // --- MASUKKAN KE LIST BERDASARKAN TAB ---
-        if (tab === 'yatim' && isAnakYatim) {
-            // Ganti "Anak Yatim" menjadi perhitungan umur asli
-            w._displayAge = age + " Thn"; 
-            w._displayStatus = "Anak Yatim"; // Kita pindahkan keterangan "Anak Yatim" ke bawah
-            w._sortPriority = age;
-            tempFiltered.push(w);
-        }
-
-        // --- LOGIKA FILTER UMUR & ULTAH ---
+        // --- PENANGANAN JIKA TIDAK ADA TANGGAL LAHIR ---
         if (!w['Tanggal Lahir']) {
-            if (tab === 'pernah_kawin' && isPernahKawin) {
-                w._displayAge = "Status: " + (w['Status Perkawinan'] || "Cerai");
+            if (tab === 'yatim' && isAnakYatim) {
+                w._displayAge = "Tgl Lahir ?";
+                w._displayStatus = "Anak Yatim";
+                w._sortPriority = 0;
+                tempFiltered.push(w);
+            } else if (tab === 'pernah_kawin' && isPernahKawin) {
+                w._displayAge = "Tgl Lahir ?";
                 w._displayStatus = w['Status Perkawinan'];
                 w._sortPriority = 0;
                 tempFiltered.push(w);
             }
-            return;
+            return; // Skip ke warga berikutnya
         };
 
+        // --- PROSES TANGGAL LAHIR & HITUNG UMUR ---
         let tglStr = w['Tanggal Lahir'];
         if (tglStr.includes('-') && tglStr.split('-')[0].length === 2) {
             const p = tglStr.split('-');
@@ -1416,7 +1411,7 @@ function switchStatTab(tab) {
         const m = today.getMonth() - bDate.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) age--;
 
-        // Klasifikasi Umur
+        // Klasifikasi Umur Badge
         let cat = "";
         if (age < 5) { cat = 'balita'; counts.balita++; }
         else if (age <= 11) { cat = 'anak'; counts.anak++; }
@@ -1429,8 +1424,14 @@ function switchStatTab(tab) {
         const isUltah = (bThisYear >= todayStart && bThisYear <= nextWeek);
         if (isUltah) counts.ultah++;
 
-        // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF (STRUKTUR IF-ELSE YANG BENAR) ---
-        if (tab === 'pernah_kawin' && isPernahKawin) {
+        // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF (SEKARANG 'age' SUDAH TERDEFINISI) ---
+        if (tab === 'yatim' && isAnakYatim) {
+            w._displayAge = age + " Thn";
+            w._displayStatus = "Anak Yatim";
+            w._sortPriority = age;
+            tempFiltered.push(w);
+        } 
+        else if (tab === 'pernah_kawin' && isPernahKawin) {
             w._displayAge = age + " Thn";
             w._displayStatus = w['Status Perkawinan']; 
             w._sortPriority = age;
@@ -1474,11 +1475,7 @@ function switchStatTab(tab) {
     // Scroll tab ke tengah
     const activeTab = document.getElementById('tab-' + tab);
     if (activeTab) {
-        activeTab.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest'
-        });
+        activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
 }
 

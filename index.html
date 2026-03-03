@@ -809,7 +809,7 @@ body.dark span:not(.material-icons) {
                         <option value="REMAJA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Remaja</option>
                         <option value="LANSIA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Lansia</option>
                         <option value="KEPALA KELUARGA" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">KK Saja</option>
-
+                        <option value="YATIM" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Yatim</option>
                     </select>
                 </div>
             </div>
@@ -2803,38 +2803,57 @@ function prosesExport(format) {
 
     // 2. Buat Judul Dinamis
     let judulDinamis = "DATA ";
-    
-    // Tambahkan Kategori ke Judul
     if (filterKategori === "ALL") judulDinamis += "WARGA ";
     else if (filterKategori === "KEPALA KELUARGA") judulDinamis += "KEPALA KELUARGA ";
     else judulDinamis += filterKategori + " ";
 
-    // Tambahkan Status Tinggal ke Judul
     if (filterTinggal !== "ALL") judulDinamis += filterTinggal + " ";
 
-    // Tambahkan RT ke Judul
     if (filterRT === "ALL") {
         judulDinamis += "RW 06";
     } else {
         judulDinamis += "RT " + filterRT + " RW 06";
     }
 
-    // 3. Proses Filtering (Sama seperti sebelumnya)
+    // --- LOGIKA TAMBAHAN UNTUK YATIM ---
+    let kkYatim = [];
+    if (filterKategori === "YATIM") {
+        kkYatim = allData
+            .filter(w => (w['Status Keluarga'] === 'Kepala Keluarga' || w['Status Keluarga'] === 'KEPALA KELUARGA') 
+                      && (w['Status Perkawinan'] || "").toLowerCase().includes("cerai mati"))
+            .map(w => w.KK || w['No KK'] || w['NO KK']);
+    }
+
+    // 3. Proses Filtering
     let filtered = allData.filter(w => {
+        // Filter RT & Status Tinggal
         const matchRT = (filterRT === "ALL") || (String(w.RT || w.rt) === filterRT);
         const statusTinggalRaw = (w['Status Tinggal'] || w['TINGGAL'] || "").toUpperCase();
         const matchTinggal = (filterTinggal === "ALL") || (statusTinggalRaw === filterTinggal);
         
+        // Hitung Umur
         const tglLahir = w['Tanggal Lahir'] || w['TANGGAL LAHIR'];
         const umur = tglLahir ? calculateAge(tglLahir) : 0;
         const statusKel = (w['Status Keluarga'] || "").toUpperCase();
         
-        let matchKategori = true;
-        if (filterKategori === "BALITA") matchKategori = (umur <= 5);
-        if (filterKategori === "ANAK") matchKategori = (umur >= 5 && umur <= 11);        
-        if (filterKategori === "REMAJA") matchKategori = (umur >= 12 && umur <= 18);
-        else if (filterKategori === "LANSIA") matchKategori = (umur >= 60);
-        else if (filterKategori === "KEPALA KELUARGA") matchKategori = (statusKel === "KEPALA KELUARGA");
+        // Logika Kategori
+        let matchKategori = false;
+        if (filterKategori === "ALL") {
+            matchKategori = true;
+        } else if (filterKategori === "BALITA") {
+            matchKategori = (umur <= 5);
+        } else if (filterKategori === "ANAK") {
+            matchKategori = (umur >= 6 && umur <= 11);        
+        } else if (filterKategori === "REMAJA") {
+            matchKategori = (umur >= 12 && umur <= 18);
+        } else if (filterKategori === "LANSIA") {
+            matchKategori = (umur >= 60);
+        } else if (filterKategori === "KEPALA KELUARGA") {
+            matchKategori = (statusKel === "KEPALA KELUARGA");
+        } else if (filterKategori === "YATIM") {
+            // Syarat Yatim: Status Keluarga adalah 'Anak' dan No KK ada di daftar kkYatim
+            matchKategori = (statusKel === "ANAK") && kkYatim.includes(w.KK || w['No KK'] || w['NO KK']);
+        }
 
         return matchRT && matchTinggal && matchKategori;
     });
@@ -2844,53 +2863,46 @@ function prosesExport(format) {
         return;
     }
 
-const dataExport = filtered.map((w, index) => {
-        // 1. Ambil data tempat dan tanggal
+    // 4. Mapping Data untuk Kolom Excel
+    const dataExport = filtered.map((w, index) => {
         const tempat = w['Tempat Lahir'] || w['TEMPAT LAHIR'] || "";
         const tglRaw = w['Tanggal Lahir'] || w['TANGGAL LAHIR'] || "";
         
-        // 2. Format tanggal agar rapi (dd/mm/yyyy)
         let tglFormatted = "";
         if (tglRaw) {
             const d = new Date(tglRaw);
-            // Cek apakah tanggal valid
             if (!isNaN(d.getTime())) {
                 const day = String(d.getDate()).padStart(2, '0');
                 const month = String(d.getMonth() + 1).padStart(2, '0');
                 const year = d.getFullYear();
                 tglFormatted = `${day}/${month}/${year}`;
             } else {
-                tglFormatted = tglRaw; // Gunakan teks asli jika bukan format Date
+                tglFormatted = tglRaw;
             }
         }
 
-        // 3. Gabungkan Tempat dan Tanggal
-        const tempatTglLahir = (tempat && tglFormatted) 
-            ? `${tempat}, ${tglFormatted}` 
-            : (tempat || tglFormatted);
+        const tempatTglLahir = (tempat && tglFormatted) ? `${tempat}, ${tglFormatted}` : (tempat || tglFormatted);
 
         return {
             "No": index + 1,
             "Nama Lengkap": w.Nama,
             "NIK": `'${w.NIK}`,
             "No KK": `'${w['No KK'] || w['NO KK']}`,
-            "Tempat/Tgl Lahir": tempatTglLahir, // Kolom Baru hasil penggabungan
+            "Tempat/Tgl Lahir": tempatTglLahir,
             "Status Tinggal": w['Status Tinggal'] || w['TINGGAL'],
             "Alamat Tinggal": w['Alamat Tinggal'] || w['ALAMAT TINGGAL'] || "",
             "No HP": w.HP || w['NO HP'] || ""
         };
     });
 
-    // 4. Eksekusi Export dengan Judul Baru
+    // 5. Eksekusi Export
     if (format === 'xlsx') {
         const worksheet = XLSX.utils.json_to_sheet(dataExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-        // Nama file dinamis (spasi diganti underscore agar aman)
         const fileName = judulDinamis.replace(/\s+/g, '_') + ".xlsx";
         XLSX.writeFile(workbook, fileName);
     } else if (format === 'pdf') {
-        // Kirim judulDinamis sebagai parameter tambahan
         exportToPDF(dataExport, judulDinamis); 
     }
 }

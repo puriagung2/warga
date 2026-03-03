@@ -1404,11 +1404,16 @@ function switchStatTab(tab) {
         if (isUltah) counts.ultah++;
 
         // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF ---
-        if (tab === 'pernah_kawin' && isPernahKawin) {
-            w._displayAge = "Umur: " + age + " Thn";
-            w._sortPriority = age;
-            tempFiltered.push(w);
-        } else if (tab === cat) {
+// Di dalam switchStatTab, pada bagian logika pernah_kawin:
+if (tab === 'pernah_kawin' && isPernahKawin) {
+    w._displayAge = age + " Thn";
+    w._displayStatus = w['Status Perkawinan']; // <--- Ini kuncinya
+    w._sortPriority = age;
+    tempFiltered.push(w);
+} else {
+    // Untuk tab lain, pastikan _displayStatus dikosongkan agar tidak muncul
+    w._displayStatus = null; 
+} else if (tab === cat) {
             w._displayAge = age + " Thn";
             w._sortPriority = age;
             tempFiltered.push(w);
@@ -1468,18 +1473,29 @@ function renderStatList() {
     const end = start + STAT_PAGE_SIZE;
     const paginatedItems = filteredStatData.slice(start, end);
 
-    listContainer.innerHTML = paginatedItems.map(w => `
-        <div class="warga-card animate__animated animate__fadeInUp" onclick="showDetail('${w.NIK}')" style="animation-duration: 0.3s">
-            <div class="avatar ${w.Kelamin.startsWith('L') ? 'bg-indigo-400' : 'bg-pink-400'}">${w.Nama[0]}</div>
-            <div class="flex-1">
-                <h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4>
-                <p class="text-[9px] font-bold text-slate-400 uppercase">Blok ${w.Blok} No ${w.Nomer} • RT 0${w.RT}</p>
+    listContainer.innerHTML = paginatedItems.map(w => {
+        // --- LOGIKA KONDISIONAL STATUS ---
+        // Hanya buat elemen status jika tab saat ini adalah 'pernah_kawin'
+        const statusHtml = (currentStatTab === 'pernah_kawin' && w._displayStatus) 
+            ? `<p class="text-[8px] font-bold text-rose-500 uppercase mt-0.5 animate-pulse">${w._displayStatus}</p>` 
+            : '';
+
+        return `
+            <div class="warga-card animate__animated animate__fadeInUp" onclick="showDetail('${w.NIK}')" style="animation-duration: 0.3s">
+                <div class="avatar ${w.Kelamin && w.Kelamin.startsWith('L') ? 'bg-indigo-400' : 'bg-pink-400'}">${w.Nama[0]}</div>
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold text-slate-800">${w.Nama}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Blok ${w.Blok} No ${w.Nomer} • RT 0${w.RT}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-black ${w._sortPriority === 0 && currentStatTab === 'ultah' ? 'text-pink-500' : 'text-indigo-500'}">
+                        ${w._displayAge}
+                    </p>
+                    ${statusHtml} 
+                </div>
             </div>
-            <div class="text-right">
-                <p class="text-[10px] font-black ${w._sortPriority === 0 && currentStatTab === 'ultah' ? 'text-pink-500' : 'text-indigo-500'}">${w._displayAge}</p>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     // Panggil fungsi renderPagination bawaan Anda
     renderPagination(totalItems, statPage, 'stat-pagination', 'navigateStatPage');

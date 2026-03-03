@@ -1359,18 +1359,37 @@ function switchStatTab(tab) {
     const nextWeek = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     // 1. Inisialisasi counts
-    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0, pernah_kawin: 0 };
+    let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0, pernah_kawin: 0, yatim: 0 };
     let tempFiltered = [];
+
+    // --- LOGIKA KHUSUS YATIM ---
+    // Cari No KK yang Kepala Keluarganya "Cerai Mati"
+    const kkYatim = allData
+        .filter(w => (w['Status Keluarga'] === 'Kepala Keluarga' || w['Status Keluarga'] === 'KEPALA KELUARGA') 
+                  && (w['Status Perkawinan'] || "").toLowerCase().includes("cerai mati"))
+        .map(w => w.KK || w['NO KK']);
 
     allData.forEach(w => {
         // --- LOGIKA FILTER PERNAH KAWIN ---
         const statusKawin = (w['Status Perkawinan'] || "").toLowerCase();
         const isPernahKawin = statusKawin.includes("cerai hidup") || statusKawin.includes("cerai mati");
-        
         if (isPernahKawin) counts.pernah_kawin++;
+
+      // Hitung Yatim (Dia adalah 'Anak' di dalam KK yang ayahnya sudah tidak ada/Cerai Mati)
+        const isAnakYatim = (w['Status Keluarga'] === 'Anak' || w['Status Keluarga'] === 'ANAK') 
+                          && kkYatim.includes(w.KK || w['NO KK']);
+        if (isAnakYatim) counts.yatim++;
 
         // Reset display status agar tidak nyangkut di tab lain
         w._displayStatus = null;
+
+        // --- MASUKKAN KE LIST BERDASARKAN TAB ---
+        if (tab === 'yatim' && isAnakYatim) {
+            w._displayAge = "Anak Yatim";
+            w._displayStatus = "Keluarga Cerai Mati";
+            w._sortPriority = 1;
+            tempFiltered.push(w);
+        }
 
         // --- LOGIKA FILTER UMUR & ULTAH ---
         if (!w['Tanggal Lahir']) {
@@ -1476,14 +1495,17 @@ function renderStatList() {
     const start = (statPage - 1) * STAT_PAGE_SIZE;
     const end = start + STAT_PAGE_SIZE;
     const paginatedItems = filteredStatData.slice(start, end);
-
+    
+  
     listContainer.innerHTML = paginatedItems.map(w => {
         // --- LOGIKA KONDISIONAL STATUS ---
         // Hanya buat elemen status jika tab saat ini adalah 'pernah_kawin'
-        const statusHtml = (currentStatTab === 'pernah_kawin' && w._displayStatus) 
-            ? `<p class="text-[8px] font-bold text-rose-500 uppercase mt-0.5">${w._displayStatus}</p>` 
-            : '';
+      const statusColor = currentStatTab === 'yatim' ? 'text-indigo-500' : 'text-rose-500';
+const statusHtml = ( (currentStatTab === 'pernah_kawin' || currentStatTab === 'yatim') && w._displayStatus) 
+    ? `<p class="text-[8px] font-bold ${statusColor} uppercase mt-0.5 animate-pulse">${w._displayStatus}</p>` 
+    : '';
 
+      
         return `
             <div class="warga-card animate__animated animate__fadeInUp" onclick="showDetail('${w.NIK}')" style="animation-duration: 0.3s">
                 <div class="avatar ${w.Kelamin && w.Kelamin.startsWith('L') ? 'bg-indigo-400' : 'bg-pink-400'}">${w.Nama[0]}</div>

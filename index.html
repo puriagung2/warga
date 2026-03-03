@@ -1355,22 +1355,25 @@ function switchStatTab(tab) {
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const nextWeek = new Date(todayStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // 1. Tambahkan 'pernah_kawin' ke objek counts
+    // 1. Inisialisasi counts
     let counts = { balita: 0, anak: 0, remaja: 0, dewasa: 0, lansia: 0, ultah: 0, pernah_kawin: 0 };
     let tempFiltered = [];
 
     allData.forEach(w => {
-        // --- LOGIKA FILTER PERNAH KAWIN (Cerai Hidup/Mati) ---
+        // --- LOGIKA FILTER PERNAH KAWIN ---
         const statusKawin = (w['Status Perkawinan'] || "").toLowerCase();
         const isPernahKawin = statusKawin.includes("cerai hidup") || statusKawin.includes("cerai mati");
         
         if (isPernahKawin) counts.pernah_kawin++;
 
+        // Reset display status agar tidak nyangkut di tab lain
+        w._displayStatus = null;
+
         // --- LOGIKA FILTER UMUR & ULTAH ---
         if (!w['Tanggal Lahir']) {
-            // Jika tab yang dipilih adalah 'pernah_kawin', masukkan warga tanpa tgl lahir tapi status cerai
             if (tab === 'pernah_kawin' && isPernahKawin) {
                 w._displayAge = "Status: " + (w['Status Perkawinan'] || "Cerai");
+                w._displayStatus = w['Status Perkawinan'];
                 w._sortPriority = 0;
                 tempFiltered.push(w);
             }
@@ -1403,21 +1406,19 @@ function switchStatTab(tab) {
         const isUltah = (bThisYear >= todayStart && bThisYear <= nextWeek);
         if (isUltah) counts.ultah++;
 
-        // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF ---
-// Di dalam switchStatTab, pada bagian logika pernah_kawin:
-if (tab === 'pernah_kawin' && isPernahKawin) {
-    w._displayAge = age + " Thn";
-    w._displayStatus = w['Status Perkawinan']; // <--- Ini kuncinya
-    w._sortPriority = age;
-    tempFiltered.push(w);
-} else {
-    // Untuk tab lain, pastikan _displayStatus dikosongkan agar tidak muncul
-    w._displayStatus = null; 
-} else if (tab === cat) {
+        // --- MASUKKAN KE LIST BERDASARKAN TAB AKTIF (STRUKTUR IF-ELSE YANG BENAR) ---
+        if (tab === 'pernah_kawin' && isPernahKawin) {
+            w._displayAge = age + " Thn";
+            w._displayStatus = w['Status Perkawinan']; 
+            w._sortPriority = age;
+            tempFiltered.push(w);
+        } 
+        else if (tab === cat) {
             w._displayAge = age + " Thn";
             w._sortPriority = age;
             tempFiltered.push(w);
-        } else if (tab === 'ultah' && isUltah) {
+        } 
+        else if (tab === 'ultah' && isUltah) {
             const isToday = bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
             const ageTarget = today.getFullYear() - bDate.getFullYear();
             if (isToday) {

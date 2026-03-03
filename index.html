@@ -1385,9 +1385,10 @@ function switchStatTab(tab) {
 
         // --- MASUKKAN KE LIST BERDASARKAN TAB ---
         if (tab === 'yatim' && isAnakYatim) {
-            w._displayAge = "Anak Yatim";
-            w._displayStatus = "Keluarga Cerai Mati";
-            w._sortPriority = 1;
+            // Ganti "Anak Yatim" menjadi perhitungan umur asli
+            w._displayAge = age + " Thn"; 
+            w._displayStatus = "Anak Yatim"; // Kita pindahkan keterangan "Anak Yatim" ke bawah
+            w._sortPriority = age;
             tempFiltered.push(w);
         }
 

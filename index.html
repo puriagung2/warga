@@ -1478,7 +1478,7 @@ function renderStatList() {
         // --- LOGIKA KONDISIONAL STATUS ---
         // Hanya buat elemen status jika tab saat ini adalah 'pernah_kawin'
         const statusHtml = (currentStatTab === 'pernah_kawin' && w._displayStatus) 
-            ? `<p class="text-[8px] font-bold text-rose-500 uppercase mt-0.5 animate-pulse">${w._displayStatus}</p>` 
+            ? `<p class="text-[8px] font-bold text-rose-500 uppercase mt-0.5">${w._displayStatus}</p>` 
             : '';
 
         return `

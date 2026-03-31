@@ -345,8 +345,37 @@ body.dark span:not(.material-icons) {
       color: var(--pastel-active);
     }
 
-  
-    
+    /* nav untuk dekstop */
+  @media (min-width: 1024px) {
+    .bottom-nav {
+        /* Membatasi lebar sama dengan main-app */
+        max-width: 896px; /* Ini adalah nilai dari max-w-4xl */
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        
+        /* Memberikan sedikit jarak dari bawah agar terlihat lebih melayang (floating) */
+        bottom: 20px !important;
+        border-radius: 20px !important;
+        width: 95%; /* Sedikit lebih kecil dari container agar manis */
+        
+        /* Shadow lebih tegas agar terpisah dari background */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        border: 1px solid var(--border-color);
+    }
+}
+
+    /* modal/detail untuk dekstop */
+    @media (min-width: 1024px) {
+    #detail-modal {
+        max-width: 896px; /* Sama dengan main-app */
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+        height: 100vh; /* Tetap full height tapi lebarnya terbatas */
+        box-shadow: -10px 0 30px rgba(0,0,0,0.05), 10px 0 30px rgba(0,0,0,0.05);
+    }
+}
 
     /* Tambahkan sedikit cahaya (glow) pada background saat aktif di Dark Mode */
     body.dark .nav-item.active {

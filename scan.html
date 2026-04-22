@@ -19,7 +19,16 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymE6TezVMwgH9hDTyMqCWt7RX6d5dx2kE9gb-9uzfazsxQZnMRzy3Lp1hC6Ixyyzjj/exec"; // Masukkan URL deployment Google Apps Script Anda
+
+        // Tambahkan prefix proxy ini di depan URL Anda
+const PROXY_URL = "https://cors-anywhere.herokuapp.com/"; 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymE6TezVMwgH9hDTyMqCWt7RX6d5dx2kE9gb-9uzfazsxQZnMRzy3Lp1hC6Ixyyzjj/exec";
+
+// Di dalam fungsi uploadKeGoogle():
+const response = await fetch(PROXY_URL + WEB_APP_URL, {
+    method: "POST",
+    body: JSON.stringify({ ... })
+});
 
         async function startProcess() {
             const file = document.getElementById('fileInput').files[0];

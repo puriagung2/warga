@@ -151,71 +151,54 @@
         function zoomImage(ratio) { if (cropper) cropper.zoom(ratio); }
 
  // MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
-         function applyCrop() {
+ function applyCrop() {
             if (!cropper) return;
             
-            // 1. Ambil hasil crop dalam bentuk canvas
+            // Ambil hasil crop dengan ukuran terkunci (lebar 1200px agar aman dari limit 1MB)
             const croppedCanvas = cropper.getCroppedCanvas({
+                width: 1200, 
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high',
             });
             
-            // 2. Siapkan canvas final
             const finalCanvas = document.getElementById('canvas');
             const ctx = finalCanvas.getContext('2d');
+            
             finalCanvas.width = croppedCanvas.width;
             finalCanvas.height = croppedCanvas.height;
             
-            // 3. Gambar hasil crop ke canvas final
+            // Gambar hasil crop ke canvas final
             ctx.drawImage(croppedCanvas, 0, 0);
-
-const croppedCanvas = cropper.getCroppedCanvas({
-    // Tambahkan ini agar hasil crop tetap tajam
-    width: 1200, 
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high',
-});
-             
-            // --- MULAI LOGIKA WATERMARK HIJAU STABILO ---
             
+            // --- LOGIKA WATERMARK HIJAU STABILO ---
             const text = "PURI AGUNG 2 RW 06";
+            const fontSize = Math.max(finalCanvas.width * 0.03, 16); 
+            ctx.font = `bold ${fontSize}px Arial`;
             
-            // Dinamiskan ukuran font berdasarkan lebar gambar (misal 5% dari lebar)
-            const fontSize = Math.max(finalCanvas.width * 0.05, 20); 
-            ctx.font = `bold ${fontSize}px Arial`; // Tulisan Tebal
+            ctx.fillStyle = "rgba(57, 255, 20, 0.4)"; // Hijau stabilo 40% opacity
             
-            // --- PERUBAHAN WARNA DISINI ---
-            // Menggunakan warna Hijau Stabilo/Neon (RGBA)
-            // 57, 255, 20 = Hijau Neon
-            // 0.2 = Opacity 20% (samar-samar tapi terlihat)
-            ctx.fillStyle = "rgba(57, 255, 20, 0.2)"; 
-            // ---------------------------------
+            // Bayangan agar teks menonjol
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            
+            // Posisi Pojok Kiri Bawah
             const margin = 20;
-
-            // Untuk kiri bawah:
-            // x = margin (tepi kiri)
-            // y = tinggi canvas - margin (tepi bawah)
             const x = margin;
             const y = finalCanvas.height - margin;
              
             ctx.textAlign = "left";
             ctx.textBaseline = "bottom";
-
-             // Tambahkan ini sebelum ctx.fillText
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 2;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-            // Gambar teks
             ctx.fillText(text, x, y);
-
-            // --- SELESAI LOGIKA WATERMARK ---
             
-            // 4. Pindah Tampilan
+            // Reset shadow agar tidak mengganggu elemen lain
+            ctx.shadowColor = "transparent";
+
+            // Pindah Tampilan
             document.getElementById('editorSection').classList.add('hidden');
             document.getElementById('finalSection').classList.remove('hidden');
             
-            // 5. Jalankan OCR pada file asli
             startOCR();
         }
 

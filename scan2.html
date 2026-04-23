@@ -216,48 +216,36 @@
             document.getElementById('editorSection').classList.remove('hidden');
         }
 
-    async function startOCR() {
-    document.getElementById('fileNameInput').value = ""; 
-    document.getElementById('status').innerText = "TUNGGU, SEDANG BACA NO KK...";
-    
-    // Konversi canvas ke blob
+   async function startOCR() {
     const canvas = document.getElementById('canvas');
-    canvas.toBlob(async (blob) => {
-        const formData = new FormData();
-        formData.append('file', blob, 'kk.jpg');
-        formData.append('apikey', 'K83502824388957'); 
-        formData.append('OCREngine', '3');            
-        formData.append('language', 'auto');          // Menggunakan auto-detect
-        
-        try {
-            const response = await fetch('https://api.ocr.space/parse/image', {
-                method: 'POST',
-                body: formData
-            });
+    const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+    
+    document.getElementById('fileNameInput').value = ""; 
+    document.getElementById('status').innerText = "Memproses OCR via Server...";
+    
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            // Kita kirim sebagai JSON agar bisa ditangkap oleh GAS
+            body: JSON.stringify({ action: 'ocr', base64Data: base64Data })
+        });
 
-            const result = await response.json();
+        const result = await response.json();
 
-            if (result.IsErroredOnProcessing) {
-                throw new Error(result.ErrorMessage[0]);
-            }
-
-            // Menggabungkan teks dari semua baris hasil OCR
-            const parsedResults = result.ParsedResults;
-            let text = "";
-            if (parsedResults && parsedResults.length > 0) {
-                text = parsedResults[0].ParsedText;
-            }
-            
-            // Regex mencari 16 digit angka (Nik/No KK)
-            const match = text.match(/\d{16}/);
-            document.getElementById('fileNameInput').value = match ? match[0] : "";
-            document.getElementById('status').innerText = "CEK NO KK SEBELUM DIKIRIM..";
-            
-        } catch (err) {
-            console.error(err);
-            document.getElementById('status').innerText = "GAGAL BACA NO KK, SCAN ULANG: " + err.message;
+        if (result.IsErroredOnProcessing) {
+            throw new Error(result.ErrorMessage[0]);
         }
-    }, 'image/jpeg', 0.9);
+
+        const text = result.ParsedResults[0].ParsedText;
+        const match = text.match(/\d{16}/);
+        
+        document.getElementById('fileNameInput').value = match ? match[0] : "";
+        document.getElementById('status').innerText = "OCR selesai.";
+        
+    } catch (err) {
+        console.error(err);
+        document.getElementById('status').innerText = "Gagal OCR: " + err.message;
+    }
 }
 
         async function upload() {

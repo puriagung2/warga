@@ -103,25 +103,46 @@ function rotateImage(){
     drawImage();
 }
 
-// 🔥 EKSTRAK NOMOR KK (SUPER AKURAT)
+// 🔥 RESIZE + COMPRESS (ANTI ERROR 1MB)
+function resizeCanvas(canvas, maxWidth = 1200) {
+    const ratio = canvas.width / canvas.height;
+
+    let newWidth = canvas.width;
+    let newHeight = canvas.height;
+
+    if (canvas.width > maxWidth) {
+        newWidth = maxWidth;
+        newHeight = maxWidth / ratio;
+    }
+
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+
+    tempCanvas.width = newWidth;
+    tempCanvas.height = newHeight;
+
+    // optional enhance
+    ctx.filter = "grayscale(100%) contrast(140%)";
+
+    ctx.drawImage(canvas, 0, 0, newWidth, newHeight);
+
+    return tempCanvas;
+}
+
+// 🔥 EKSTRAK NOMOR KK
 function extractKK(text){
 
-    // normalisasi OCR (huruf sering salah)
     text = text.replace(/O/g, "0").replace(/I/g, "1");
 
-    // 1. prioritas: cari setelah "No"
     let match = text.match(/No\.?\s*[:\-]?\s*(\d{16})/i);
     if (match) return match[1];
 
-    // 2. cari setelah "KK"
     match = text.match(/KK\s*[:\-]?\s*(\d{16})/i);
     if (match) return match[1];
 
-    // 3. cari angka 16 digit berdiri sendiri
     match = text.match(/\b\d{16}\b/);
     if (match) return match[0];
 
-    // 4. fallback (scan semua angka)
     let numbers = text.match(/\d+/g) || [];
     for (let num of numbers) {
         if (num.length === 16) return num;
@@ -140,13 +161,17 @@ async function startOCR(){
     status.innerText = "Membaca OCR...";
 
     try{
+        const resizedCanvas = resizeCanvas(canvas, 1200);
+        const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);
+
+        console.log("SIZE KB:", Math.round(base64Image.length / 1024));
+
         const res = await fetch(GAS_URL,{
             method:'POST',
             body: new URLSearchParams({
                 type: "ocr",
-const resizedCanvas = resizeCanvas(canvas, 1200);
-
-const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);            })
+                base64: base64Image
+            })
         });
 
         const result = await res.json();
@@ -157,9 +182,7 @@ const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);            })
             throw new Error(result.message);
         }
 
-        // 🔥 HANDLE ERROR OCR
         if(result.data?.IsErroredOnProcessing){
-            console.error(result.data.ErrorMessage);
             status.innerText = "OCR error";
             return;
         }
@@ -176,7 +199,7 @@ const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);            })
         console.log("HASIL OCR:", text);
 
         if(!text.trim()){
-            status.innerText = "OCR tidak membaca teks";
+            status.innerText = "Tidak ada teks terbaca";
             return;
         }
 
@@ -224,28 +247,6 @@ async function upload(){
         Swal.fire("Gagal upload");
         document.getElementById('btnUpload').disabled = false;
     }
-}
-
-    function resizeCanvas(canvas, maxWidth = 1200) {
-    const ratio = canvas.width / canvas.height;
-
-    let newWidth = canvas.width;
-    let newHeight = canvas.height;
-
-    if (canvas.width > maxWidth) {
-        newWidth = maxWidth;
-        newHeight = maxWidth / ratio;
-    }
-
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-
-    tempCanvas.width = newWidth;
-    tempCanvas.height = newHeight;
-
-    ctx.drawImage(canvas, 0, 0, newWidth, newHeight);
-
-    return tempCanvas;
 }
 </script>
 

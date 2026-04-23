@@ -144,8 +144,9 @@ async function startOCR(){
             method:'POST',
             body: new URLSearchParams({
                 type: "ocr",
-                base64: canvas.toDataURL('image/jpeg',0.9)
-            })
+const resizedCanvas = resizeCanvas(canvas, 1200);
+
+const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);            })
         });
 
         const result = await res.json();
@@ -223,6 +224,28 @@ async function upload(){
         Swal.fire("Gagal upload");
         document.getElementById('btnUpload').disabled = false;
     }
+}
+
+    function resizeCanvas(canvas, maxWidth = 1200) {
+    const ratio = canvas.width / canvas.height;
+
+    let newWidth = canvas.width;
+    let newHeight = canvas.height;
+
+    if (canvas.width > maxWidth) {
+        newWidth = maxWidth;
+        newHeight = maxWidth / ratio;
+    }
+
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+
+    tempCanvas.width = newWidth;
+    tempCanvas.height = newHeight;
+
+    ctx.drawImage(canvas, 0, 0, newWidth, newHeight);
+
+    return tempCanvas;
 }
 </script>
 

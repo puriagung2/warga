@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner KK RW6</title>
-    
+    <title>Scanner KK RW 06</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    
-    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
@@ -25,271 +21,107 @@
         </div>
 
         <div id="editorSection" class="hidden mt-4">
-            <div class="img-container mb-4 border rounded overflow-hidden">
+            <div class="border rounded overflow-hidden">
                 <img id="imagePreview" src="" alt="Preview">
             </div>
-            
-            <div class="flex justify-center gap-2 mt-4 editor-controls">
-                <button onclick="rotateImageEditor(-90)">↺ Putar L</button>
-                <button onclick="rotateImageEditor(90)">↻ Putar R</button>
-                <button onclick="zoomImage(0.1)">＋</button>
-                <button onclick="zoomImage(-0.1)">－</button>
-            </div>
-            
-            <div class="flex gap-2 mt-4">
-                <button onclick="resetForm()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
-                <button onclick="applyCrop()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Potong & Lanjut</button>
-            </div>
+            <button onclick="applyCrop()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded shadow">Potong & Scan NIK</button>
         </div>
 
         <div id="finalSection" class="hidden mt-4">
             <canvas id="canvas" class="w-full rounded border mb-4"></canvas>
             
-            <div class="flex justify-center gap-2">
-                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow text-sm">Scan Ulang (OCR)</button>
-                <button onclick="backToEditor()" class="bg-gray-600 text-white px-4 py-2 rounded shadow text-sm">Edit Ulang</button>
-            </div>
-            
-            <div class="mt-4 space-y-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Kategori:</label>
-                    <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
-                        <option value="KK BATAM">KK BATAM</option>
-                        <option value="KK LUAR BATAM">KK LUAR BATAM</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">RT:</label>
-                    <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
-                        <option value="RT 01">RT 01</option>
-                        <option value="RT 02">RT 02</option>
-                        <option value="RT 03">RT 03</option>
-                        <option value="RT 04">RT 04</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi):</label>
-                    <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
-                </div>
+            <div class="space-y-3">
+                <select id="kategoriFile" class="w-full p-2 border rounded-md">
+                    <option value="KK BATAM">KK BATAM</option>
+                    <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+                </select>
+                <select id="rtSelector" class="w-full p-2 border rounded-md">
+                    <option value="RT 01">RT 01</option>
+                    <option value="RT 02">RT 02</option>
+                    <option value="RT 03">RT 03</option>
+                    <option value="RT 04">RT 04</option>
+                </select>
+                <input type="text" id="fileNameInput" class="w-full p-2 border rounded-md" placeholder="Nomor KK">
             </div>
 
-            <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium"></div>
+            <div id="status" class="mt-4 text-center text-sm text-gray-600"></div>
 
             <div class="flex gap-2 mt-4">
                 <button id="btn" onclick="upload()" class="flex-1 bg-green-600 text-white py-2 rounded shadow">KIRIM</button>
-                <button onclick="resetForm()" class="bg-red-500 text-white py-2 px-4 rounded shadow">RESET</button>
+                <button onclick="window.location.reload()" class="bg-red-500 text-white px-4 py-2 rounded shadow">RESET</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    
     <script>
-        // URL WEB APP ANDA
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
+        // GANTI DENGAN URL DEPLOYMENT TERBARU ANDA
+        const GAS_URL = "ISI_URL_DEPLOYMENT_GAS_ANDA_DISINI";
+        let cropper = null;
 
-        let cropper = null; // Variabel state untuk Cropper.js
-        let originalFile = null;
-
-        // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
-        function resetForm() {
-            document.getElementById('uploadSection').classList.remove('hidden');
-            document.getElementById('editorSection').classList.add('hidden');
-            document.getElementById('finalSection').classList.add('hidden');
-            
-            document.getElementById('fileInput').value = "";
-            document.getElementById('fileNameInput').value = "";
-            document.getElementById('status').innerText = "";
-            document.getElementById('btn').disabled = false;
-            
-            // Hancurkan instance cropper jika ada
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            
-            // Reset canvas
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            originalFile = null;
-        }
-
-        // MEMUAT FILE DAN MASUK KE MODE EDITOR (CROP)
         function loadFile(input) {
-            if (input.files && input.files[0]) {
-                originalFile = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    const imagePreview = document.getElementById('imagePreview');
-                    imagePreview.src = e.target.result;
-                    
-                    document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('editorSection').classList.remove('hidden');
-                    
-                    // Inisialisasi Cropper.js
-                    if (cropper) cropper.destroy(); // Bersihkan yang lama
-                    
-                    cropper = new Cropper(imagePreview, {
-                        aspectRatio: NaN, // Bebas memotong (tidak dikunci rasio A4 dulu)
-                        viewMode: 1, // Membatasi crop box di dalam gambar
-                        autoCropArea: 0.8, // Otomatis buat kotak crop 80% area
-                        responsive: true,
-                        restore: false,
-                        checkOrientation: false, // Matikan auto-rotate EXIF agar kontrol kita akurat
-                    });
-                };
-                reader.readAsDataURL(originalFile);
-            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('imagePreview');
+                img.src = e.target.result;
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+                if(cropper) cropper.destroy();
+                cropper = new Cropper(img, { aspectRatio: 1.5, viewMode: 1 });
+            };
+            reader.readAsDataURL(input.files[0]);
         }
 
-        // KONTROL EDITOR
-        function rotateImageEditor(degree) { if (cropper) cropper.rotate(degree); }
-        function zoomImage(ratio) { if (cropper) cropper.zoom(ratio); }
-
- // MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
-         function applyCrop() {
-            if (!cropper) return;
+        async function applyCrop() {
+            const canvas = document.getElementById('canvas');
+            const cropped = cropper.getCroppedCanvas({width: 1200});
+            canvas.width = cropped.width;
+            canvas.height = cropped.height;
+            canvas.getContext('2d').drawImage(cropped, 0, 0);
             
-            // 1. Ambil hasil crop dalam bentuk canvas
-            const croppedCanvas = cropper.getCroppedCanvas({
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-            
-            // 2. Siapkan canvas final
-            const finalCanvas = document.getElementById('canvas');
-            const ctx = finalCanvas.getContext('2d');
-            finalCanvas.width = croppedCanvas.width;
-            finalCanvas.height = croppedCanvas.height;
-            
-            // 3. Gambar hasil crop ke canvas final
-            ctx.drawImage(croppedCanvas, 0, 0);
-            
-            // --- MULAI LOGIKA WATERMARK HIJAU STABILO ---
-            
-            const text = "PURI AGUNG 2 RW 06";
-            
-            // Dinamiskan ukuran font berdasarkan lebar gambar (misal 5% dari lebar)
-            const fontSize = Math.max(finalCanvas.width * 0.05, 20); 
-            ctx.font = `bold ${fontSize}px Arial`; // Tulisan Tebal
-            
-            // --- PERUBAHAN WARNA DISINI ---
-            // Menggunakan warna Hijau Stabilo/Neon (RGBA)
-            // 57, 255, 20 = Hijau Neon
-            // 0.2 = Opacity 20% (samar-samar tapi terlihat)
-            ctx.fillStyle = "rgba(57, 255, 20, 0.2)"; 
-            // ---------------------------------
-            const margin = 20;
-
-            // Untuk kiri bawah:
-            // x = margin (tepi kiri)
-            // y = tinggi canvas - margin (tepi bawah)
-            const x = margin;
-            const y = finalCanvas.height - margin;
-             
-            ctx.textAlign = "left";
-            ctx.textBaseline = "bottom";
-
-             // Tambahkan ini sebelum ctx.fillText
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 2;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-            // Gambar teks
-            ctx.fillText(text, x, y);
-
-            // --- SELESAI LOGIKA WATERMARK ---
-            
-            // 4. Pindah Tampilan
             document.getElementById('editorSection').classList.add('hidden');
             document.getElementById('finalSection').classList.remove('hidden');
             
-            // 5. Jalankan OCR pada file asli
-            startOCR();
+            // Jalankan OCR
+            await startOCR(canvas.toDataURL('image/jpeg', 0.8));
         }
 
-        function backToEditor() {
-            document.getElementById('finalSection').classList.add('hidden');
-            document.getElementById('editorSection').classList.remove('hidden');
+        async function startOCR(base64Data) {
+            document.getElementById('status').innerText = "Sedang membaca NIK via server...";
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'ocr', base64Data: base64Data })
+                });
+                const result = await res.json();
+                const text = result.ParsedResults[0].ParsedText;
+                const match = text.match(/\d{16}/);
+                document.getElementById('fileNameInput').value = match ? match[0] : "";
+                document.getElementById('status').innerText = "Selesai.";
+            } catch(e) {
+                document.getElementById('status').innerText = "Error OCR: " + e.message;
+            }
         }
-
-   async function startOCR() {
-    const canvas = document.getElementById('canvas');
-    const base64Data = canvas.toDataURL('image/jpeg', 0.8);
-    
-    document.getElementById('fileNameInput').value = ""; 
-    document.getElementById('status').innerText = "Memproses OCR via Server...";
-    
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'cors', // <--- TAMBAHKAN INI
-            headers: { 'Content-Type': 'application/json' }, // <--- TAMBAHKAN INI
-            body: JSON.stringify({ action: 'ocr', base64Data: base64Data })
-        });
-
-        const result = await response.json();
-
-        if (result.IsErroredOnProcessing) {
-            throw new Error(result.ErrorMessage[0]);
-        }
-
-        const text = result.ParsedResults[0].ParsedText;
-        const match = text.match(/\d{16}/);
-        
-        document.getElementById('fileNameInput').value = match ? match[0] : "";
-        document.getElementById('status').innerText = "OCR selesai.";
-        
-    } catch (err) {
-        console.error(err);
-        document.getElementById('status').innerText = "Gagal OCR: " + err.message;
-    }
-}
 
         async function upload() {
             const status = document.getElementById('status');
-            const kategori = document.getElementById('kategoriFile').value; 
-            const rt = document.getElementById('rtSelector').value; 
-            const nomorKK = document.getElementById('fileNameInput').value.trim();
+            const payload = {
+                action: 'upload',
+                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                fileName: document.getElementById('kategoriFile').value + " " + document.getElementById('fileNameInput').value + ".jpg",
+                selectedRt: document.getElementById('rtSelector').value
+            };
             
-            if(!nomorKK) {
-                Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-                return;
-            }
-
-            const fileName = kategori + " " + nomorKK + ".pdf";
-            document.getElementById('btn').disabled = true;
-            status.innerText = "TUNGGU, SEDANG DIKIRIM...";
-
-            try {
-                // Ambil data gambar dari canvas final (hasil crop)
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                        fileName: fileName,
-                        selectedRt: rt
-                    })
-                });
-                
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: 'Berhasil!', 
-                    text: fileName + ' telah tersimpan.' 
-                }).then(() => {
-                    resetForm();
-                });
-                
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-                document.getElementById('btn').disabled = false;
-            }
+            status.innerText = "Mengirim ke Drive...";
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            Swal.fire("Berhasil", "Data tersimpan", "success").then(() => window.location.reload());
         }
     </script>
 </body>

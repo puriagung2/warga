@@ -226,7 +226,8 @@
     try {
         const response = await fetch(GAS_URL, {
             method: 'POST',
-            // Kita kirim sebagai JSON agar bisa ditangkap oleh GAS
+            mode: 'cors', // <--- TAMBAHKAN INI
+            headers: { 'Content-Type': 'application/json' }, // <--- TAMBAHKAN INI
             body: JSON.stringify({ action: 'ocr', base64Data: base64Data })
         });
 

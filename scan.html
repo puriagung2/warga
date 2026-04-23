@@ -117,37 +117,39 @@
         document.getElementById('btn').disabled = true;
         status.innerText = "Mengunggah...";
 
-  try {
-    await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors', // MENGHILANGKAN BLOKIR CORS
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-            fileName: fileName,
-            selectedRt: rt
-        })
-    });
-    
-    // Karena no-cors, kita anggap sukses saja
-    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File sedang diproses di server.' });
-    location.reload();
-} catch (err) {
-    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-}
-
-            const result = await response.json();
-
-            if (result.status === "success") {
-                Swal.fire({ icon: 'success', title: 'Berhasil!', text: fileName + ' disimpan ke ' + rt });
-                location.reload();
-            } else {
-                throw new Error(result.message);
-            }
+        try {
+            // Kita menggunakan mode 'no-cors' agar tidak terblokir CORS
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: fileName,
+                    selectedRt: rt
+                })
+            });
+            
+            // Karena 'no-cors' tidak memberikan data balik, kita asumsikan berhasil
+            // Jika Anda butuh kepastian, Anda harus tetap menggunakan mode 'cors' 
+            // dan memperbaiki header di Code.gs (seperti langkah sebelumnya)
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Terkirim!', 
+                text: fileName + ' sedang diproses ke ' + rt 
+            });
+            
+            // Reset form
+            document.getElementById('btn').disabled = false;
+            status.innerText = "✅ Selesai dikirim";
+            // Jika ingin reload setelah sukses, hapus komentar di bawah ini:
+            // setTimeout(() => location.reload(), 2000);
+            
         } catch (err) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan pada jaringan.' });
             document.getElementById('btn').disabled = false;
         }
     }

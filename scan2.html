@@ -110,14 +110,13 @@ async function startOCR(){
     const canvas = document.getElementById('canvas');
 
     input.value = "";
-    status.innerText = "Membaca OCR (online)...";
+    status.innerText = "Membaca OCR...";
 
     try{
         const res = await fetch(GAS_URL,{
             method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                type:"ocr",
+            body: new URLSearchParams({
+                type: "ocr",
                 base64: canvas.toDataURL('image/jpeg',0.9)
             })
         });
@@ -132,13 +131,11 @@ async function startOCR(){
         let match = text.match(/\d{16}/);
 
         input.value = match ? match[0] : "";
-        status.innerText = match 
-            ? "OCR berhasil" 
-            : "Nomor KK tidak ditemukan";
+        status.innerText = match ? "OCR berhasil" : "Nomor KK tidak ditemukan";
 
     }catch(err){
         console.error(err);
-        status.innerText = "OCR gagal, cek koneksi.";
+        status.innerText = "OCR gagal";
     }
 }
 

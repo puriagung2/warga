@@ -210,7 +210,7 @@
 
     async function startOCR() {
     document.getElementById('fileNameInput').value = ""; 
-    document.getElementById('status').innerText = "Sedang memproses OCR (OCR.space)...";
+    document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
     
     // Konversi canvas ke blob
     const canvas = document.getElementById('canvas');
@@ -243,11 +243,11 @@
             // Regex mencari 16 digit angka (Nik/No KK)
             const match = text.match(/\d{16}/);
             document.getElementById('fileNameInput').value = match ? match[0] : "";
-            document.getElementById('status').innerText = "OCR selesai.";
+            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK..";
             
         } catch (err) {
             console.error(err);
-            document.getElementById('status').innerText = "OCR Gagal: " + err.message;
+            document.getElementById('status').innerText = "GAGAL BACA NO KK, SCAN ULANG: " + err.message;
         }
     }, 'image/jpeg', 0.9);
 }

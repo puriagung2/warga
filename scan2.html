@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <title>Scanner KK RW6</title>
 </head>
@@ -108,25 +107,12 @@ function rotateImage(){
 async function startOCR(){
     const status = document.getElementById('status');
     const input = document.getElementById('fileNameInput');
+    const canvas = document.getElementById('canvas');
 
     input.value = "";
-    status.innerText = "Membaca (lokal)...";
+    status.innerText = "Membaca OCR (online)...";
 
     try{
-        // 1. Tesseract
-        const { data:{ text } } = await Tesseract.recognize(originalFile, 'ind');
-        let match = text.match(/\d{16}/);
-
-        if(match){
-            input.value = match[0];
-            status.innerText = "Berhasil (lokal)";
-            return;
-        }
-
-        // 2. OCR ONLINE
-        status.innerText = "Lokal gagal, mencoba online...";
-
-        const canvas = document.getElementById('canvas');
         const res = await fetch(GAS_URL,{
             method:'POST',
             headers:{'Content-Type':'application/json'},
@@ -137,15 +123,22 @@ async function startOCR(){
         });
 
         const result = await res.json();
-        let text2 = result.data?.ParsedResults?.[0]?.ParsedText || "";
-        match = text2.match(/\d{16}/);
+
+        if(result.status !== "success"){
+            throw new Error(result.message);
+        }
+
+        let text = result.data?.ParsedResults?.[0]?.ParsedText || "";
+        let match = text.match(/\d{16}/);
 
         input.value = match ? match[0] : "";
-        status.innerText = match ? "Berhasil (online)" : "Tidak ditemukan";
+        status.innerText = match 
+            ? "OCR berhasil" 
+            : "Nomor KK tidak ditemukan";
 
-    }catch(e){
-        console.error(e);
-        status.innerText = "OCR gagal";
+    }catch(err){
+        console.error(err);
+        status.innerText = "OCR gagal, cek koneksi.";
     }
 }
 

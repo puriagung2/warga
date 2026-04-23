@@ -1,34 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Scanner KK Puri Agung 2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Scanner KK Pro</title>
 </head>
-<body class="bg-gray-100 p-4">
-    <div id="uploadSection" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-xl font-bold mb-4 text-center">Scanner KK</h2>
-        <input type="file" id="fileInput" accept="image/*" class="w-full mb-4">
+<body class="bg-gray-100 min-h-screen p-4">
+
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Scanner KK Puri Agung 2</h3>
         
-        <div id="editorSection" class="hidden">
-            <canvas id="canvas" class="w-full border mb-4"></canvas>
-            <select id="kategoriFile" class="w-full p-2 border rounded-md mb-2">
-                <option value="KK BATAM">KK BATAM</option>
-                <option value="KK LUAR BATAM">KK LUAR BATAM</option>
-            </select>
-            <select id="rtSelector" class="w-full p-2 border rounded-md mb-2">
-                <option value="RT 01">RT 01</option>
-                <option value="RT 02">RT 02</option>
-                <option value="RT 03">RT 03</option>
-                <option value="RT 04">RT 04</option>
-            </select>
-            <input type="text" id="fileNameInput" placeholder="Masukkan Nomor KK" class="w-full p-2 border rounded-md mb-4">
-            <button id="btn" onclick="upload()" class="w-full bg-blue-600 text-white p-2 rounded-md">Simpan ke Drive</button>
-            <p id="status" class="mt-2 text-sm text-center"></p>
+        <div id="uploadSection">
+            <label class="block w-full text-center py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <span class="text-gray-500">Klik untuk ambil foto KK</span>
+                <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="loadFile(this)">
+            </label>
+        </div>
+
+        <div id="editorSection" class="hidden mt-4">
+            <canvas id="canvas" class="w-full rounded border"></canvas>
+            <div class="flex justify-center gap-2 mt-4">
+                <button onclick="rotateImage()" class="bg-gray-600 text-white px-4 py-2 rounded shadow">Putar 90°</button>
+                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow">Scan Ulang (OCR)</button>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
+                <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
+                    <option value="KK BATAM">KK BATAM</option>
+                    <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+                </select>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
+                <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
+                    <option value="RT 01">RT 01</option>
+                    <option value="RT 02">RT 02</option>
+                    <option value="RT 03">RT 03</option>
+                    <option value="RT 04">RT 04</option>
+                </select>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi Manual):</label>
+                <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
+            </div>
+
+            <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium"></div>
+
+            <div class="flex gap-2 mt-4">
+                <button id="btn" onclick="upload()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Simpan ke Drive</button>
+                <button onclick="location.reload()" class="bg-red-500 text-white py-2 px-4 rounded shadow">Reset</button>
+            </div>
         </div>
     </div>
-    <script src="scanscript.js"></script>
+
+<script>
+    // URL WEB APP ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
+
+    let img = new Image();
+    let rotation = 0;
+    let originalFile = null;
+
+    function loadFile(input) {
+        if (input.files && input.files[0]) {
+            originalFile = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.onload = () => { drawImage(); startOCR(); };
+                img.src = e.target.result;
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+            };
+            reader.readAsDataURL(originalFile);
+        }
+    }
+
+    async function startOCR() {
+        document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
+        const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
+        const match = text.match(/\d{16}/);
+        document.getElementById('fileNameInput').value = match ? match[0] : "";
+        document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+    }
+
+    function drawImage() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = (rotation % 180 !== 0) ? img.height : img.width;
+        canvas.height = (rotation % 180 !== 0) ? img.width : img.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
+    }
+
+    function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
+
+    async function upload() {
+        const status = document.getElementById('status');
+        const kategori = document.getElementById('kategoriFile').value; 
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
+        
+        if(!nomorKK) {
+            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+            return;
+        }
+
+        const fileName = kategori + " " + nomorKK + ".pdf";
+        document.getElementById('btn').disabled = true;
+        status.innerText = "Mengunggah...";
+
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: fileName,
+                    selectedRt: rt
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: fileName + ' disimpan ke ' + rt });
+                location.reload();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            document.getElementById('btn').disabled = false;
+        }
+    }
+</script>
 </body>
 </html>

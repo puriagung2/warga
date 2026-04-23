@@ -218,7 +218,7 @@
 
     async function startOCR() {
     document.getElementById('fileNameInput').value = ""; 
-    document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
+    document.getElementById('status').innerText = "TUNGGU, SEDANG BACA NO KK...";
     
     // Konversi canvas ke blob
     const canvas = document.getElementById('canvas');
@@ -251,7 +251,7 @@
             // Regex mencari 16 digit angka (Nik/No KK)
             const match = text.match(/\d{16}/);
             document.getElementById('fileNameInput').value = match ? match[0] : "";
-            document.getElementById('status').innerText = "Periksa kembali nomor KK sebelum dikirim..";
+            document.getElementById('status').innerText = "CEK NO KK SEBELUM DIKIRIM..";
             
         } catch (err) {
             console.error(err);
@@ -273,7 +273,7 @@
 
             const fileName = kategori + " " + nomorKK + ".pdf";
             document.getElementById('btn').disabled = true;
-            status.innerText = "Mengunggah...";
+            status.innerText = "TUNGGU, SEDANG DIKIRIM...";
 
             try {
                 // Ambil data gambar dari canvas final (hasil crop)

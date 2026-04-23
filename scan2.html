@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner KK RW 06</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Scanner KK RW6</title>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
@@ -21,108 +21,155 @@
         </div>
 
         <div id="editorSection" class="hidden mt-4">
-            <div class="border rounded overflow-hidden">
-                <img id="imagePreview" src="" alt="Preview">
+            <canvas id="canvas" class="w-full rounded border"></canvas>
+            <div class="flex justify-center gap-2 mt-4">
+                <button onclick="rotateImage()" class="bg-gray-600 text-white px-4 py-2 rounded shadow">Putar 90°</button>
+                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow">Scan Ulang (OCR)</button>
             </div>
-            <button onclick="applyCrop()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded shadow">Potong & Scan NIK</button>
-        </div>
-
-        <div id="finalSection" class="hidden mt-4">
-            <canvas id="canvas" class="w-full rounded border mb-4"></canvas>
             
-            <div class="space-y-3">
-                <select id="kategoriFile" class="w-full p-2 border rounded-md">
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
+                <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
                     <option value="KK BATAM">KK BATAM</option>
                     <option value="KK LUAR BATAM">KK LUAR BATAM</option>
                 </select>
-                <select id="rtSelector" class="w-full p-2 border rounded-md">
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
+                <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
                     <option value="RT 01">RT 01</option>
                     <option value="RT 02">RT 02</option>
                     <option value="RT 03">RT 03</option>
                     <option value="RT 04">RT 04</option>
                 </select>
-                <input type="text" id="fileNameInput" class="w-full p-2 border rounded-md" placeholder="Nomor KK">
             </div>
 
-            <div id="status" class="mt-4 text-center text-sm text-gray-600"></div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi Manual):</label>
+                <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
+            </div>
+
+            <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium"></div>
 
             <div class="flex gap-2 mt-4">
-                <button id="btn" onclick="upload()" class="flex-1 bg-green-600 text-white py-2 rounded shadow">KIRIM</button>
-                <button onclick="window.location.reload()" class="bg-red-500 text-white px-4 py-2 rounded shadow">RESET</button>
+                <button id="btn" onclick="upload()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Simpan ke Drive</button>
+                <button onclick="location.reload()" class="bg-red-500 text-white py-2 px-4 rounded shadow">Reset</button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script>
-        // GANTI DENGAN URL DEPLOYMENT TERBARU ANDA
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzXh2wXJYOg5Z-4Q3Kz5iRSm7tPb7RSFgilap1DFBCFOEBXfNwfTYvSnk0XER13xmX2cQ/exec";
-        let cropper = null;
+<script>
+    // URL WEB APP ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzXh2wXJYOg5Z-4Q3Kz5iRSm7tPb7RSFgilap1DFBCFOEBXfNwfTYvSnk0XER13xmX2cQ/exec";
 
-        function loadFile(input) {
+    let img = new Image();
+    let rotation = 0;
+    let originalFile = null;
+
+    // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
+    function resetForm() {
+        document.getElementById('uploadSection').classList.remove('hidden');
+        document.getElementById('editorSection').classList.add('hidden');
+        document.getElementById('fileInput').value = "";
+        document.getElementById('fileNameInput').value = "";
+        document.getElementById('status').innerText = "";
+        document.getElementById('btn').disabled = false;
+        
+        // Reset canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reset state
+        rotation = 0;
+        originalFile = null;
+    }
+
+    function loadFile(input) {
+        if (input.files && input.files[0]) {
+            originalFile = input.files[0];
             const reader = new FileReader();
             reader.onload = (e) => {
-                const img = document.getElementById('imagePreview');
+                img.onload = () => { drawImage(); startOCR(); };
                 img.src = e.target.result;
                 document.getElementById('uploadSection').classList.add('hidden');
                 document.getElementById('editorSection').classList.remove('hidden');
-                if(cropper) cropper.destroy();
-                cropper = new Cropper(img, { aspectRatio: 1.5, viewMode: 1 });
             };
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(originalFile);
+        }
+    }
+
+    async function startOCR() {
+        // Kosongkan input agar user tahu OCR sedang bekerja
+        document.getElementById('fileNameInput').value = ""; 
+        document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
+        
+        try {
+            const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
+            const match = text.match(/\d{16}/);
+            document.getElementById('fileNameInput').value = match ? match[0] : "";
+            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+        } catch (err) {
+            document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
+        }
+    }
+
+    function drawImage() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = (rotation % 180 !== 0) ? img.height : img.width;
+        canvas.height = (rotation % 180 !== 0) ? img.width : img.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
+    }
+
+    function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
+
+    async function upload() {
+        const status = document.getElementById('status');
+        const kategori = document.getElementById('kategoriFile').value; 
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
+        
+        if(!nomorKK) {
+            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+            return;
         }
 
-        async function applyCrop() {
-            const canvas = document.getElementById('canvas');
-            const cropped = cropper.getCroppedCanvas({width: 1200});
-            canvas.width = cropped.width;
-            canvas.height = cropped.height;
-            canvas.getContext('2d').drawImage(cropped, 0, 0);
-            
-            document.getElementById('editorSection').classList.add('hidden');
-            document.getElementById('finalSection').classList.remove('hidden');
-            
-            // Jalankan OCR
-            await startOCR(canvas.toDataURL('image/jpeg', 0.8));
-        }
+        const fileName = kategori + " " + nomorKK + ".pdf";
+        document.getElementById('btn').disabled = true;
+        status.innerText = "Mengunggah...";
 
-        async function startOCR(base64Data) {
-            document.getElementById('status').innerText = "Sedang membaca NIK via server...";
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ action: 'ocr', base64Data: base64Data })
-                });
-                const result = await res.json();
-                const text = result.ParsedResults[0].ParsedText;
-                const match = text.match(/\d{16}/);
-                document.getElementById('fileNameInput').value = match ? match[0] : "";
-                document.getElementById('status').innerText = "Selesai.";
-            } catch(e) {
-                document.getElementById('status').innerText = "Error OCR: " + e.message;
-            }
-        }
-
-        async function upload() {
-            const status = document.getElementById('status');
-            const payload = {
-                action: 'upload',
-                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                fileName: document.getElementById('kategoriFile').value + " " + document.getElementById('fileNameInput').value + ".jpg",
-                selectedRt: document.getElementById('rtSelector').value
-            };
-            
-            status.innerText = "Mengirim ke Drive...";
+        try {
             await fetch(GAS_URL, {
                 method: 'POST',
-                mode: 'cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: fileName,
+                    selectedRt: rt
+                })
             });
-            Swal.fire("Berhasil", "Data tersimpan", "success").then(() => window.location.reload());
+            
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Berhasil!', 
+                text: fileName + ' telah tersimpan.' 
+            }).then(() => {
+                // RESET FORM SETELAH POPUP DITUTUP
+                resetForm();
+            });
+            
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
+            document.getElementById('btn').disabled = false;
         }
-    </script>
+    }
+</script>
 </body>
 </html>

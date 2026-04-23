@@ -150,13 +150,34 @@ async function startOCR(){
 
         const result = await res.json();
 
+        console.log("FULL OCR RESULT:", result);
+
         if(result.status !== "success"){
             throw new Error(result.message);
         }
 
-        let text = result.data?.ParsedResults?.[0]?.ParsedText || "";
+        // 🔥 HANDLE ERROR OCR
+        if(result.data?.IsErroredOnProcessing){
+            console.error(result.data.ErrorMessage);
+            status.innerText = "OCR error";
+            return;
+        }
 
-        console.log("HASIL OCR:", text); // 🔍 DEBUG
+        let parsed = result.data?.ParsedResults;
+
+        if(!parsed || parsed.length === 0){
+            status.innerText = "OCR kosong";
+            return;
+        }
+
+        let text = parsed[0].ParsedText || "";
+
+        console.log("HASIL OCR:", text);
+
+        if(!text.trim()){
+            status.innerText = "OCR tidak membaca teks";
+            return;
+        }
 
         let nomorKK = extractKK(text);
 

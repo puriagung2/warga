@@ -119,16 +119,17 @@
 
         try {
             const response = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-            fileName: fileName,
-            selectedRt: rt
-        })
-    });
+    method: 'POST',
+    mode: 'cors', // Pastikan mode ini eksplisit
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+        fileName: fileName,
+        selectedRt: rt
+    })
+});
 
             const result = await response.json();
 

@@ -149,9 +149,8 @@
         function rotateImageEditor(degree) { if (cropper) cropper.rotate(degree); }
         function zoomImage(ratio) { if (cropper) cropper.zoom(ratio); }
 
-        // MENERAPKAN CROP DAN LANJUT KE VERIFIKASI
-// MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
-        function applyCrop() {
+ // MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
+         function applyCrop() {
             if (!cropper) return;
             
             // 1. Ambil hasil crop dalam bentuk canvas
@@ -169,7 +168,7 @@
             // 3. Gambar hasil crop ke canvas final
             ctx.drawImage(croppedCanvas, 0, 0);
             
-            // --- MULAI LOGIKA WATERMARK ---
+            // --- MULAI LOGIKA WATERMARK HIJAU STABILO ---
             
             const text = "PURI AGUNG 2 RW 06";
             
@@ -177,8 +176,13 @@
             const fontSize = Math.max(finalCanvas.width * 0.05, 20); 
             ctx.font = `bold ${fontSize}px Arial`; // Tulisan Tebal
             
-            // Atur warna dan transparansi (transparan)
-            ctx.fillStyle = "rgba(0, 0, 0, 0.15)"; // Hitam dengan opacity 15%
+            // --- PERUBAHAN WARNA DISINI ---
+            // Menggunakan warna Hijau Stabilo/Neon (RGBA)
+            // 57, 255, 20 = Hijau Neon
+            // 0.2 = Opacity 20% (samar-samar tapi terlihat)
+            ctx.fillStyle = "rgba(57, 255, 20, 0.2)"; 
+            // ---------------------------------
+            
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             
@@ -186,20 +190,8 @@
             const x = finalCanvas.width / 2;
             const y = finalCanvas.height / 2;
             
-            // Terapkan efek transparansi khusus untuk gambar (Opsional, fillColor sudah transparan)
-            // ctx.globalAlpha = 0.15; 
-            
             // Gambar teks di tengah
             ctx.fillText(text, x, y);
-            
-            // Tambahkan watermark miring di beberapa tempat (opsional, lebih aman)
-            // let angle = -30 * Math.PI / 180;
-            // ctx.rotate(angle);
-            // ctx.fillText(text, finalCanvas.width / 4, finalCanvas.height / 1.5);
-            // ctx.rotate(-angle); // Reset rotasi
-            
-            // Reset transparansi ke penuh (penting!)
-            // ctx.globalAlpha = 1.0; 
 
             // --- SELESAI LOGIKA WATERMARK ---
             

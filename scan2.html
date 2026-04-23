@@ -179,19 +179,19 @@
             document.getElementById('editorSection').classList.remove('hidden');
         }
 
-        async function startOCR() {
+    async function startOCR() {
     document.getElementById('fileNameInput').value = ""; 
     document.getElementById('status').innerText = "Sedang memproses OCR (OCR.space)...";
     
-    // Konversi canvas ke blob agar bisa dikirim sebagai file
+    // Konversi canvas ke blob
     const canvas = document.getElementById('canvas');
     canvas.toBlob(async (blob) => {
         const formData = new FormData();
         formData.append('file', blob, 'kk.jpg');
-        formData.append('apikey', 'K83502824388957'); // API Key Anda
-        formData.append('OCREngine', '3');            // Menggunakan Engine 3
-        formData.append('language', 'ind');           // Bahasa Indonesia
-
+        formData.append('apikey', 'K83502824388957'); 
+        formData.append('OCREngine', '3');            
+        formData.append('language', 'auto');          // Menggunakan auto-detect
+        
         try {
             const response = await fetch('https://api.ocr.space/parse/image', {
                 method: 'POST',
@@ -204,10 +204,14 @@
                 throw new Error(result.ErrorMessage[0]);
             }
 
-            // Ambil teks hasil OCR
-            const text = result.ParsedResults[0].ParsedText;
+            // Menggabungkan teks dari semua baris hasil OCR
+            const parsedResults = result.ParsedResults;
+            let text = "";
+            if (parsedResults && parsedResults.length > 0) {
+                text = parsedResults[0].ParsedText;
+            }
             
-            // Regex mencari 16 digit angka
+            // Regex mencari 16 digit angka (Nik/No KK)
             const match = text.match(/\d{16}/);
             document.getElementById('fileNameInput').value = match ? match[0] : "";
             document.getElementById('status').innerText = "OCR selesai.";

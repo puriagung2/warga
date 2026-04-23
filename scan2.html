@@ -183,15 +183,22 @@
             ctx.fillStyle = "rgba(57, 255, 20, 0.2)"; 
             // ---------------------------------
             const margin = 20;
-            // Tentukan posisi watermark
-            const x = finalCanvas.width - margin;
-            const y = margin;
+
+            // Untuk kiri bawah:
+            // x = margin (tepi kiri)
+            // y = tinggi canvas - margin (tepi bawah)
+            const x = margin;
+            const y = finalCanvas.height - margin;
              
             ctx.textAlign = "left";
             ctx.textBaseline = "bottom";
 
-            
-            // Gambar teks di tengah
+             // Tambahkan ini sebelum ctx.fillText
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowBlur = 2;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            // Gambar teks
             ctx.fillText(text, x, y);
 
             // --- SELESAI LOGIKA WATERMARK ---

@@ -152,55 +152,59 @@
 
  // MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
  function applyCrop() {
-            if (!cropper) return;
-            
-            // Ambil hasil crop dengan ukuran terkunci (lebar 1200px agar aman dari limit 1MB)
-            const croppedCanvas = cropper.getCroppedCanvas({
-                width: 1200, 
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-            
-            const finalCanvas = document.getElementById('canvas');
-            const ctx = finalCanvas.getContext('2d');
-            
-            finalCanvas.width = croppedCanvas.width;
-            finalCanvas.height = croppedCanvas.height;
-            
-            // Gambar hasil crop ke canvas final
-            ctx.drawImage(croppedCanvas, 0, 0);
-            
-            // --- LOGIKA WATERMARK HIJAU STABILO ---
-            const text = "PURI AGUNG 2 RW 06";
-            const fontSize = Math.max(finalCanvas.width * 0.03, 16); 
-            ctx.font = `bold ${fontSize}px Arial`;
-            
-            ctx.fillStyle = "rgba(57, 255, 20, 0.4)"; // Hijau stabilo 40% opacity
-            
-            // Bayangan agar teks menonjol
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 2;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-            
-            // Posisi Pojok Kiri Bawah
-            const margin = 20;
-            const x = margin;
-            const y = finalCanvas.height - margin;
-             
-            ctx.textAlign = "left";
-            ctx.textBaseline = "bottom";
-            ctx.fillText(text, x, y);
-            
-            // Reset shadow agar tidak mengganggu elemen lain
-            ctx.shadowColor = "transparent";
-
-            // Pindah Tampilan
-            document.getElementById('editorSection').classList.add('hidden');
-            document.getElementById('finalSection').classList.remove('hidden');
-            
-            startOCR();
-        }
+    if (!cropper) return;
+    
+    // 1. Ambil data hasil crop
+    const croppedCanvas = cropper.getCroppedCanvas({
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    const finalCanvas = document.getElementById('canvas');
+    const ctx = finalCanvas.getContext('2d');
+    
+    // 2. LOGIKA PAKSA LANDSCAPE
+    // Jika hasil crop adalah Portrait (tinggi > lebar), kita putar canvas-nya
+    let finalW = croppedCanvas.width;
+    let finalH = croppedCanvas.height;
+    
+    if (finalH > finalW) {
+        // Tukar dimensi jika portrait
+        finalCanvas.width = finalH;
+        finalCanvas.height = finalW;
+        
+        // Putar canvas 90 derajat
+        ctx.translate(finalCanvas.width / 2, finalCanvas.height / 2);
+        ctx.rotate(90 * Math.PI / 180);
+        ctx.drawImage(croppedCanvas, -finalW / 2, -finalH / 2);
+    } else {
+        // Jika sudah landscape, pakai normal
+        finalCanvas.width = finalW;
+        finalCanvas.height = finalH;
+        ctx.drawImage(croppedCanvas, 0, 0);
+    }
+    
+    // 3. Tambahkan Watermark Hijau Stabilo (di pojok kiri bawah)
+    const text = "PURI AGUNG 2 RW 06";
+    const fontSize = Math.max(finalCanvas.width * 0.03, 16); 
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.fillStyle = "rgba(57, 255, 20, 0.4)";
+    
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = 2;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(text, 20, finalCanvas.height - 20);
+    
+    // 4. Pindah Tampilan
+    document.getElementById('editorSection').classList.add('hidden');
+    document.getElementById('finalSection').classList.remove('hidden');
+    
+    startOCR();
+}
 
         function backToEditor() {
             document.getElementById('finalSection').classList.add('hidden');

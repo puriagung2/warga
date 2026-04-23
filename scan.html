@@ -67,6 +67,25 @@
     let rotation = 0;
     let originalFile = null;
 
+    // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
+    function resetForm() {
+        document.getElementById('uploadSection').classList.remove('hidden');
+        document.getElementById('editorSection').classList.add('hidden');
+        document.getElementById('fileInput').value = "";
+        document.getElementById('fileNameInput').value = "";
+        document.getElementById('status').innerText = "";
+        document.getElementById('btn').disabled = false;
+        
+        // Reset canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reset state
+        rotation = 0;
+        originalFile = null;
+    }
+
     function loadFile(input) {
         if (input.files && input.files[0]) {
             originalFile = input.files[0];
@@ -82,11 +101,18 @@
     }
 
     async function startOCR() {
+        // Kosongkan input agar user tahu OCR sedang bekerja
+        document.getElementById('fileNameInput').value = ""; 
         document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
-        const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
-        const match = text.match(/\d{16}/);
-        document.getElementById('fileNameInput').value = match ? match[0] : "";
-        document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+        
+        try {
+            const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
+            const match = text.match(/\d{16}/);
+            document.getElementById('fileNameInput').value = match ? match[0] : "";
+            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+        } catch (err) {
+            document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
+        }
     }
 
     function drawImage() {
@@ -118,13 +144,10 @@
         status.innerText = "Mengunggah...";
 
         try {
-            // Kita menggunakan mode 'no-cors' agar tidak terblokir CORS
             await fetch(GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors', 
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
                     fileName: fileName,
@@ -132,24 +155,18 @@
                 })
             });
             
-            // Karena 'no-cors' tidak memberikan data balik, kita asumsikan berhasil
-            // Jika Anda butuh kepastian, Anda harus tetap menggunakan mode 'cors' 
-            // dan memperbaiki header di Code.gs (seperti langkah sebelumnya)
             Swal.fire({ 
                 icon: 'success', 
-                title: 'Terkirim!', 
-                text: fileName + ' sedang diproses ke ' + rt 
+                title: 'Berhasil!', 
+                text: fileName + ' telah tersimpan.' 
+            }).then(() => {
+                // RESET FORM SETELAH POPUP DITUTUP
+                resetForm();
             });
-            
-            // Reset form
-            document.getElementById('btn').disabled = false;
-            status.innerText = "✅ Selesai dikirim";
-            // Jika ingin reload setelah sukses, hapus komentar di bawah ini:
-            // setTimeout(() => location.reload(), 2000);
             
         } catch (err) {
             console.error(err);
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan pada jaringan.' });
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
             document.getElementById('btn').disabled = false;
         }
     }

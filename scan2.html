@@ -150,27 +150,64 @@
         function zoomImage(ratio) { if (cropper) cropper.zoom(ratio); }
 
         // MENERAPKAN CROP DAN LANJUT KE VERIFIKASI
+// MENERAPKAN CROP, MENAMBAHKAN WATERMARK, DAN LANJUT KE VERIFIKASI
         function applyCrop() {
             if (!cropper) return;
             
-            // Ambil hasil crop dalam bentuk canvas
-            // Kita atur agar hasilnya JPEG untuk efisiensi
+            // 1. Ambil hasil crop dalam bentuk canvas
             const croppedCanvas = cropper.getCroppedCanvas({
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high',
             });
             
-            // Pindahkan hasil crop ke canvas final kita
+            // 2. Siapkan canvas final
             const finalCanvas = document.getElementById('canvas');
+            const ctx = finalCanvas.getContext('2d');
             finalCanvas.width = croppedCanvas.width;
             finalCanvas.height = croppedCanvas.height;
-            finalCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0);
             
-            // Pindah Tampilan
+            // 3. Gambar hasil crop ke canvas final
+            ctx.drawImage(croppedCanvas, 0, 0);
+            
+            // --- MULAI LOGIKA WATERMARK ---
+            
+            const text = "PURI AGUNG 2 RW 06";
+            
+            // Dinamiskan ukuran font berdasarkan lebar gambar (misal 5% dari lebar)
+            const fontSize = Math.max(finalCanvas.width * 0.05, 20); 
+            ctx.font = `bold ${fontSize}px Arial`; // Tulisan Tebal
+            
+            // Atur warna dan transparansi (transparan)
+            ctx.fillStyle = "rgba(0, 0, 0, 0.15)"; // Hitam dengan opacity 15%
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Tentukan posisi (tengah kanvas)
+            const x = finalCanvas.width / 2;
+            const y = finalCanvas.height / 2;
+            
+            // Terapkan efek transparansi khusus untuk gambar (Opsional, fillColor sudah transparan)
+            // ctx.globalAlpha = 0.15; 
+            
+            // Gambar teks di tengah
+            ctx.fillText(text, x, y);
+            
+            // Tambahkan watermark miring di beberapa tempat (opsional, lebih aman)
+            // let angle = -30 * Math.PI / 180;
+            // ctx.rotate(angle);
+            // ctx.fillText(text, finalCanvas.width / 4, finalCanvas.height / 1.5);
+            // ctx.rotate(-angle); // Reset rotasi
+            
+            // Reset transparansi ke penuh (penting!)
+            // ctx.globalAlpha = 1.0; 
+
+            // --- SELESAI LOGIKA WATERMARK ---
+            
+            // 4. Pindah Tampilan
             document.getElementById('editorSection').classList.add('hidden');
             document.getElementById('finalSection').classList.remove('hidden');
             
-            // Jalankan OCR pada file asli (lebih akurat daripada hasil crop yang mungkin terpotong datanya)
+            // 5. Jalankan OCR pada file asli
             startOCR();
         }
 

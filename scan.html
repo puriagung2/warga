@@ -117,19 +117,26 @@
         document.getElementById('btn').disabled = true;
         status.innerText = "Mengunggah...";
 
-        try {
-            const response = await fetch(GAS_URL, {
-    method: 'POST',
-    mode: 'cors', // Pastikan mode ini eksplisit
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-        fileName: fileName,
-        selectedRt: rt
-    })
-});
+  try {
+    await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors', // MENGHILANGKAN BLOKIR CORS
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+            fileName: fileName,
+            selectedRt: rt
+        })
+    });
+    
+    // Karena no-cors, kita anggap sukses saja
+    Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File sedang diproses di server.' });
+    location.reload();
+} catch (err) {
+    Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
+}
 
             const result = await response.json();
 

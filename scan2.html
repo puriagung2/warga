@@ -128,8 +128,11 @@ async function startOCR(){
         }
 
         let text = result.data?.ParsedResults?.[0]?.ParsedText || "";
-        let match = text.match(/\d{16}/);
+// 🔥 1. Bersihkan teks (hapus selain angka)
+let cleaned = text.replace(/\D/g, "");
 
+// 🔥 2. Cari 16 digit
+let match = cleaned.match(/\d{16}/);
         input.value = match ? match[0] : "";
         status.innerText = match ? "OCR berhasil" : "Nomor KK tidak ditemukan";
 

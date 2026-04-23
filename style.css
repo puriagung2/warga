@@ -1,0 +1,16 @@
+/* style.css - Simpan di GitHub */
+
+/* Mengatur agar area preview canvas responsif */
+.img-container img {
+    max-width: 100%;
+}
+
+/* Memastikan elemen cropper tidak 'tumpah' keluar container */
+.cropper-container {
+    width: 100% !important;
+}
+
+/* Kustomisasi tombol editor agar rapi di HP */
+.editor-controls button {
+    @apply bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm;
+}

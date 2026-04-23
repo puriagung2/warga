@@ -129,16 +129,17 @@
                     document.getElementById('uploadSection').classList.add('hidden');
                     document.getElementById('editorSection').classList.remove('hidden');
                     
-                    // Inisialisasi Cropper.js
-                    if (cropper) cropper.destroy(); // Bersihkan yang lama
+                    if (cropper) cropper.destroy();
                     
                     cropper = new Cropper(imagePreview, {
-                        aspectRatio: NaN, // Bebas memotong (tidak dikunci rasio A4 dulu)
-                        viewMode: 1, // Membatasi crop box di dalam gambar
-                        autoCropArea: 0.8, // Otomatis buat kotak crop 80% area
+                        // KUNCI ASPECT RATIO LANDSCAPE (3:2 atau 1.5)
+                        // Kartu Keluarga biasanya berbentuk Landscape
+                        aspectRatio: 1.5, 
+                        viewMode: 1,
+                        autoCropArea: 0.9,
                         responsive: true,
                         restore: false,
-                        checkOrientation: false, // Matikan auto-rotate EXIF agar kontrol kita akurat
+                        checkOrientation: false,
                     });
                 };
                 reader.readAsDataURL(originalFile);
@@ -167,7 +168,14 @@
             
             // 3. Gambar hasil crop ke canvas final
             ctx.drawImage(croppedCanvas, 0, 0);
-            
+
+const croppedCanvas = cropper.getCroppedCanvas({
+    // Tambahkan ini agar hasil crop tetap tajam
+    width: 1200, 
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high',
+});
+             
             // --- MULAI LOGIKA WATERMARK HIJAU STABILO ---
             
             const text = "PURI AGUNG 2 RW 06";

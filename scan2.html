@@ -103,7 +103,34 @@ function rotateImage(){
     drawImage();
 }
 
-// OCR HYBRID
+// 🔥 EKSTRAK NOMOR KK (SUPER AKURAT)
+function extractKK(text){
+
+    // normalisasi OCR (huruf sering salah)
+    text = text.replace(/O/g, "0").replace(/I/g, "1");
+
+    // 1. prioritas: cari setelah "No"
+    let match = text.match(/No\.?\s*[:\-]?\s*(\d{16})/i);
+    if (match) return match[1];
+
+    // 2. cari setelah "KK"
+    match = text.match(/KK\s*[:\-]?\s*(\d{16})/i);
+    if (match) return match[1];
+
+    // 3. cari angka 16 digit berdiri sendiri
+    match = text.match(/\b\d{16}\b/);
+    if (match) return match[0];
+
+    // 4. fallback (scan semua angka)
+    let numbers = text.match(/\d+/g) || [];
+    for (let num of numbers) {
+        if (num.length === 16) return num;
+    }
+
+    return "";
+}
+
+// OCR
 async function startOCR(){
     const status = document.getElementById('status');
     const input = document.getElementById('fileNameInput');
@@ -128,13 +155,13 @@ async function startOCR(){
         }
 
         let text = result.data?.ParsedResults?.[0]?.ParsedText || "";
-// 🔥 1. Bersihkan teks (hapus selain angka)
-let cleaned = text.replace(/\D/g, "");
 
-// 🔥 2. Cari 16 digit
-let match = cleaned.match(/\d{16}/);
-        input.value = match ? match[0] : "";
-        status.innerText = match ? "OCR berhasil" : "Nomor KK tidak ditemukan";
+        console.log("HASIL OCR:", text); // 🔍 DEBUG
+
+        let nomorKK = extractKK(text);
+
+        input.value = nomorKK;
+        status.innerText = nomorKK ? "OCR berhasil" : "Nomor KK tidak ditemukan";
 
     }catch(err){
         console.error(err);
@@ -159,7 +186,7 @@ async function upload(){
     try{
         await fetch(GAS_URL,{
             method:'POST',
-            mode:'no-cors', // 🔥 WAJIB
+            mode:'no-cors',
             body: JSON.stringify({
                 type:"upload",
                 base64Data: document.getElementById('canvas').toDataURL('image/jpeg',0.9),
@@ -168,7 +195,6 @@ async function upload(){
             })
         });
 
-        // karena no-cors → kita anggap sukses
         Swal.fire("Berhasil!", fileName, "success").then(()=>location.reload());
 
     }catch(e){

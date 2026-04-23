@@ -1,69 +1,34 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Scanner KK Lokal</title>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .box { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; }
-        #status { margin-top: 15px; color: #555; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scanner KK Puri Agung 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-    <div class="box">
-        <h2>Scanner KK (Lokal)</h2>
-        <input type="file" id="fileInput" accept="image/*" capture="environment">
-        <button id="btn" onclick="startProcess()">Scan & Simpan</button>
-        <div id="status">Pilih foto dokumen...</div>
+<body class="bg-gray-100 p-4">
+    <div id="uploadSection" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4 text-center">Scanner KK</h2>
+        <input type="file" id="fileInput" accept="image/*" class="w-full mb-4">
+        
+        <div id="editorSection" class="hidden">
+            <canvas id="canvas" class="w-full border mb-4"></canvas>
+            <select id="kategoriFile" class="w-full p-2 border rounded-md mb-2">
+                <option value="KK BATAM">KK BATAM</option>
+                <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+            </select>
+            <select id="rtSelector" class="w-full p-2 border rounded-md mb-2">
+                <option value="RT 01">RT 01</option>
+                <option value="RT 02">RT 02</option>
+                <option value="RT 03">RT 03</option>
+                <option value="RT 04">RT 04</option>
+            </select>
+            <input type="text" id="fileNameInput" placeholder="Masukkan Nomor KK" class="w-full p-2 border rounded-md mb-4">
+            <button id="btn" onclick="upload()" class="w-full bg-blue-600 text-white p-2 rounded-md">Simpan ke Drive</button>
+            <p id="status" class="mt-2 text-sm text-center"></p>
+        </div>
     </div>
-
-    <script>
-
-        // Tambahkan prefix proxy ini di depan URL Anda
-const PROXY_URL = "https://cors-anywhere.herokuapp.com/"; 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbymE6TezVMwgH9hDTyMqCWt7RX6d5dx2kE9gb-9uzfazsxQZnMRzy3Lp1hC6Ixyyzjj/exec";
-
-// Di dalam fungsi uploadKeGoogle():
-const response = await fetch(PROXY_URL + WEB_APP_URL, {
-    method: "POST",
-    body: JSON.stringify({ ... })
-});
-
-        async function startProcess() {
-            const file = document.getElementById('fileInput').files[0];
-            const status = document.getElementById('status');
-            const btn = document.getElementById('btn');
-            
-            if (!file) return alert("Pilih foto!");
-
-            btn.disabled = true;
-            status.innerText = "Sedang membaca teks (OCR Lokal)...";
-
-            // 1. Proses OCR Lokal dengan Tesseract
-            Tesseract.recognize(file, 'ind') // 'ind' untuk bahasa Indonesia
-            .then(({ data: { text } }) => {
-                const kkMatch = text.match(/\d{16}/);
-                const kkNumber = kkMatch ? kkMatch[0] : "KK_" + new Date().getTime();
-                
-                status.innerText = "Berhasil dibaca: " + kkNumber + ". Mengirim ke Drive...";
-
-                // 2. Kirim hasil ke Google Apps Script
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    fetch(WEB_APP_URL, {
-                        method: "POST",
-                        body: JSON.stringify({ image: e.target.result, fileName: kkNumber + ".jpg" })
-                    })
-                    .then(r => r.json())
-                    .then(res => {
-                        status.innerText = "✅ Selesai! Tersimpan sebagai " + kkNumber + ".pdf";
-                        btn.disabled = false;
-                    });
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-    </script>
+    <script src="scanscript.js"></script>
 </body>
 </html>

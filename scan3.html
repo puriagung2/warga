@@ -196,27 +196,24 @@ async function processOCR() {
 
 // Fungsi ekstraksi yang diperbarui agar lebih "pintar"
 function extractKK(text) {
-    // Pecah teks jadi baris
-    const lines = text.split('\n');
+    // 1. Bersihkan teks agar baris-baris tidak menempel
+    let cleanText = text.replace(/\r?\n/g, ' | '); 
+
+    // 2. Cari pola spesifik: Kata "No." diikuti spasi dan 16 angka
+    // Pola ini mencari "No. 2171..." di teks
+    const regex = /No\.\s*(\d{16})/i;
+    const match = cleanText.match(regex);
     
-    // Cari baris yang mengandung angka 16 digit dan keyword "No"
-    for (let i = 0; i < Math.min(lines.length, 5); i++) { // Cek 5 baris pertama saja
-        const line = lines[i];
-        if (line.match(/No\.?\s*[:.]?\s*(\d{16})/i)) {
-            return line.match(/(\d{16})/)[0];
-        }
+    if (match && match[1]) {
+        console.log("Ditemukan via header:", match[1]);
+        return match[1];
     }
-    
-    // Taktik cadangan: Jika header benar-benar tidak terbaca sebagai teks,
-    // Kita cari semua angka 16 digit, tapi yang berada di *bawah* 200 karakter pertama
-    // (Karena NIK tabel pasti di bawah posisi itu)
-    const matches = text.match(/\d{16}/g);
-    if (matches) {
-        // Asumsikan NIK paling pertama muncul adalah NIK orang (bukan No KK)
-        // Jadi kita ambil angka 16 digit yang unik atau yang muncul paling atas
-        return matches[0]; // Ini yang sekarang Anda alami
-    }
-    return "";
+
+    // 3. Cadangan: Jika pola di atas gagal, ambil 16 digit pertama yang muncul
+    // di 100 karakter pertama teks (area header)
+    const prefix = cleanText.substring(0, 100);
+    const fallback = prefix.match(/\d{16}/);
+    return fallback ? fallback[0] : "";
 }
 
 const kkNumber = extractKK(scannedText);

@@ -166,6 +166,15 @@ async function startOCR() {
         status.innerText = "";
     }
 }
+
+    console.log("Mengirim data ke:", GAS_URL);
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({...})
+        });
+        console.log("Response diterima");
+        const result = await response.json();
 </script>
 </body>
 </html>

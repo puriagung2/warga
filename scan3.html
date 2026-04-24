@@ -194,27 +194,18 @@ async function processOCR() {
 
 // Fungsi ekstraksi yang diperbarui agar lebih "pintar"
 function extractKK(text) {
-    // 1. Bersihkan teks
-    let cleanText = text.replace(/\s+/g, ' '); 
-    
-    // 2. Cari pola No./Nomor diikuti angka 16 digit
-    // Menggunakan regex untuk mencari 'No' atau 'Nomor' lalu mengambil angka setelahnya
-    const regex = /(?:No\.?|Nomor)[:\.\s]*(\d{16})/i;
-    const match = cleanText.match(regex);
+    // Engine 2 membaca "No. 2171..." dengan sangat jelas.
+    // Kita gunakan pola yang mencari kata "No." diikuti 16 digit.
+    const regex = /No\.\s*(\d{16})/i;
+    const match = text.match(regex);
     
     if (match && match[1]) {
         return match[1];
     }
     
-    // 3. Jika tidak ketemu, cari 16 digit yang letaknya paling awal di teks
-    // (Karena Nomor KK biasanya paling atas di header)
-    const all16Digits = cleanText.match(/\d{16}/g);
-    if (all16Digits) {
-        // Return digit pertama yang muncul
-        return all16Digits[0];
-    }
-    
-    return "";
+    // Fallback: Jika "No." tidak tertangkap, ambil 16 digit pertama yang muncul di 50 karakter awal
+    const firstMatch = text.match(/\d{16}/);
+    return firstMatch ? firstMatch[0] : "";
 }
 
 const kkNumber = extractKK(scannedText);

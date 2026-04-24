@@ -180,6 +180,28 @@
     }
 }
 
+    function extractKK(text) {
+    // Pola: Mencari kata "No" diikuti karakter apapun lalu 16 digit angka
+    // Kita buat regex yang menghindari jika ada kata "NIK" di dekatnya
+    const lines = text.split('\n');
+    for (let line of lines) {
+        // Cek jika baris mengandung "No" tapi tidak mengandung "NIK"
+        if (line.toLowerCase().includes('no') && !line.toLowerCase().includes('nik')) {
+            const match = line.match(/\d{16}/);
+            if (match) return match[0];
+        }
+    }
+    // Fallback: Jika tidak ketemu pola di atas, ambil 16 digit pertama yang muncul
+    const fallback = text.match(/\d{16}/);
+    return fallback ? fallback[0] : null;
+}
+
+const kkNumber = extractKK(scannedText);
+kkInput.value = kkNumber || "";
+if (!kkNumber) {
+    alert("Nomor KK tidak terdeteksi otomatis. Silahkan input manual.");
+}
+
     // --- LOGIKA 3: GENERATE PDF (DENGAN FOTO CROP) + WATERMARK + UPLOAD ---
     async function generatePdfAndUpload() {
         const noKk = kkInput.value.trim();

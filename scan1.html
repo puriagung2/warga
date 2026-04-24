@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner KK RW6</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Scanner KK RW6</title>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
@@ -25,217 +21,155 @@
         </div>
 
         <div id="editorSection" class="hidden mt-4">
-            <div class="img-container mb-4 border rounded overflow-hidden">
-                <img id="imagePreview" src="" alt="Preview">
+            <canvas id="canvas" class="w-full rounded border"></canvas>
+            <div class="flex justify-center gap-2 mt-4">
+                <button onclick="rotateImage()" class="bg-gray-600 text-white px-4 py-2 rounded shadow">Putar 90°</button>
+                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow">Scan Ulang (OCR)</button>
             </div>
             
-            <div class="flex justify-center gap-2 mt-4 editor-controls">
-                <button onclick="rotateImageEditor(-90)">↺ Putar L</button>
-                <button onclick="rotateImageEditor(90)">↻ Putar R</button>
-                <button onclick="zoomImage(0.1)">＋</button>
-                <button onclick="zoomImage(-0.1)">－</button>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
+                <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
+                    <option value="KK BATAM">KK BATAM</option>
+                    <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+                </select>
             </div>
-            
-            <div class="flex gap-2 mt-4">
-                <button onclick="resetForm()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
-                <button onclick="applyCrop()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Potong & Lanjut</button>
-            </div>
-        </div>
 
-        <div id="finalSection" class="hidden mt-4">
-            <canvas id="canvas" class="w-full rounded border mb-4"></canvas>
-            
-            <div class="flex justify-center gap-2">
-                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow text-sm">Scan Ulang (OCR)</button>
-                <button onclick="backToEditor()" class="bg-gray-600 text-white px-4 py-2 rounded shadow text-sm">Edit Ulang</button>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
+                <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
+                    <option value="RT 01">RT 01</option>
+                    <option value="RT 02">RT 02</option>
+                    <option value="RT 03">RT 03</option>
+                    <option value="RT 04">RT 04</option>
+                </select>
             </div>
-            
-            <div class="mt-4 space-y-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Kategori:</label>
-                    <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
-                        <option value="KK BATAM">KK BATAM</option>
-                        <option value="KK LUAR BATAM">KK LUAR BATAM</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">RT:</label>
-                    <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
-                        <option value="RT 01">RT 01</option>
-                        <option value="RT 02">RT 02</option>
-                        <option value="RT 03">RT 03</option>
-                        <option value="RT 04">RT 04</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi):</label>
-                    <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
-                </div>
+
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi Manual):</label>
+                <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
             </div>
 
             <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium"></div>
 
             <div class="flex gap-2 mt-4">
-                <button id="btn" onclick="upload()" class="flex-1 bg-green-600 text-white py-2 rounded shadow">Simpan ke Drive</button>
-                <button onclick="resetForm()" class="bg-red-500 text-white py-2 px-4 rounded shadow">Reset</button>
+                <button id="btn" onclick="upload()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Simpan ke Drive</button>
+                <button onclick="location.reload()" class="bg-red-500 text-white py-2 px-4 rounded shadow">Reset</button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    
-    <script>
-        // URL WEB APP ANDA
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
+<script>
+    // URL WEB APP ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
 
-        let cropper = null; // Variabel state untuk Cropper.js
-        let originalFile = null;
+    let img = new Image();
+    let rotation = 0;
+    let originalFile = null;
 
-        // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
-        function resetForm() {
-            document.getElementById('uploadSection').classList.remove('hidden');
-            document.getElementById('editorSection').classList.add('hidden');
-            document.getElementById('finalSection').classList.add('hidden');
-            
-            document.getElementById('fileInput').value = "";
-            document.getElementById('fileNameInput').value = "";
-            document.getElementById('status').innerText = "";
-            document.getElementById('btn').disabled = false;
-            
-            // Hancurkan instance cropper jika ada
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            
-            // Reset canvas
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            originalFile = null;
+    // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
+    function resetForm() {
+        document.getElementById('uploadSection').classList.remove('hidden');
+        document.getElementById('editorSection').classList.add('hidden');
+        document.getElementById('fileInput').value = "";
+        document.getElementById('fileNameInput').value = "";
+        document.getElementById('status').innerText = "";
+        document.getElementById('btn').disabled = false;
+        
+        // Reset canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reset state
+        rotation = 0;
+        originalFile = null;
+    }
+
+    function loadFile(input) {
+        if (input.files && input.files[0]) {
+            originalFile = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.onload = () => { drawImage(); startOCR(); };
+                img.src = e.target.result;
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+            };
+            reader.readAsDataURL(originalFile);
+        }
+    }
+
+    async function startOCR() {
+        // Kosongkan input agar user tahu OCR sedang bekerja
+        document.getElementById('fileNameInput').value = ""; 
+        document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
+        
+        try {
+            const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
+            const match = text.match(/\d{16}/);
+            document.getElementById('fileNameInput').value = match ? match[0] : "";
+            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+        } catch (err) {
+            document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
+        }
+    }
+
+    function drawImage() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = (rotation % 180 !== 0) ? img.height : img.width;
+        canvas.height = (rotation % 180 !== 0) ? img.width : img.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
+    }
+
+    function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
+
+    async function upload() {
+        const status = document.getElementById('status');
+        const kategori = document.getElementById('kategoriFile').value; 
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
+        
+        if(!nomorKK) {
+            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+            return;
         }
 
-        // MEMUAT FILE DAN MASUK KE MODE EDITOR (CROP)
-        function loadFile(input) {
-            if (input.files && input.files[0]) {
-                originalFile = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = (e) => {
-                    const imagePreview = document.getElementById('imagePreview');
-                    imagePreview.src = e.target.result;
-                    
-                    document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('editorSection').classList.remove('hidden');
-                    
-                    // Inisialisasi Cropper.js
-                    if (cropper) cropper.destroy(); // Bersihkan yang lama
-                    
-                    cropper = new Cropper(imagePreview, {
-                        aspectRatio: NaN, // Bebas memotong (tidak dikunci rasio A4 dulu)
-                        viewMode: 1, // Membatasi crop box di dalam gambar
-                        autoCropArea: 0.8, // Otomatis buat kotak crop 80% area
-                        responsive: true,
-                        restore: false,
-                        checkOrientation: false, // Matikan auto-rotate EXIF agar kontrol kita akurat
-                    });
-                };
-                reader.readAsDataURL(originalFile);
-            }
-        }
+        const fileName = kategori + " " + nomorKK + ".pdf";
+        document.getElementById('btn').disabled = true;
+        status.innerText = "Mengunggah...";
 
-        // KONTROL EDITOR
-        function rotateImageEditor(degree) { if (cropper) cropper.rotate(degree); }
-        function zoomImage(ratio) { if (cropper) cropper.zoom(ratio); }
-
-        // MENERAPKAN CROP DAN LANJUT KE VERIFIKASI
-        function applyCrop() {
-            if (!cropper) return;
-            
-            // Ambil hasil crop dalam bentuk canvas
-            // Kita atur agar hasilnya JPEG untuk efisiensi
-            const croppedCanvas = cropper.getCroppedCanvas({
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: fileName,
+                    selectedRt: rt
+                })
             });
             
-            // Pindahkan hasil crop ke canvas final kita
-            const finalCanvas = document.getElementById('canvas');
-            finalCanvas.width = croppedCanvas.width;
-            finalCanvas.height = croppedCanvas.height;
-            finalCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0);
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Berhasil!', 
+                text: fileName + ' telah tersimpan.' 
+            }).then(() => {
+                // RESET FORM SETELAH POPUP DITUTUP
+                resetForm();
+            });
             
-            // Pindah Tampilan
-            document.getElementById('editorSection').classList.add('hidden');
-            document.getElementById('finalSection').classList.remove('hidden');
-            
-            // Jalankan OCR pada file asli (lebih akurat daripada hasil crop yang mungkin terpotong datanya)
-            startOCR();
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
+            document.getElementById('btn').disabled = false;
         }
-
-        function backToEditor() {
-            document.getElementById('finalSection').classList.add('hidden');
-            document.getElementById('editorSection').classList.remove('hidden');
-        }
-
-        async function startOCR() {
-            document.getElementById('fileNameInput').value = ""; 
-            document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
-            
-            try {
-                // Tesseract.js berjalan di latar belakang (Web Worker)
-                const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
-                const match = text.match(/\d{16}/);
-                document.getElementById('fileNameInput').value = match ? match[0] : "";
-                document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali.";
-            } catch (err) {
-                document.getElementById('status').innerText = "Gagal membaca, masukkan manual.";
-            }
-        }
-
-        async function upload() {
-            const status = document.getElementById('status');
-            const kategori = document.getElementById('kategoriFile').value; 
-            const rt = document.getElementById('rtSelector').value; 
-            const nomorKK = document.getElementById('fileNameInput').value.trim();
-            
-            if(!nomorKK) {
-                Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-                return;
-            }
-
-            const fileName = kategori + " " + nomorKK + ".pdf";
-            document.getElementById('btn').disabled = true;
-            status.innerText = "Mengunggah...";
-
-            try {
-                // Ambil data gambar dari canvas final (hasil crop)
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                        fileName: fileName,
-                        selectedRt: rt
-                    })
-                });
-                
-                Swal.fire({ 
-                    icon: 'success', 
-                    title: 'Berhasil!', 
-                    text: fileName + ' telah tersimpan.' 
-                }).then(() => {
-                    resetForm();
-                });
-                
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-                document.getElementById('btn').disabled = false;
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

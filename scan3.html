@@ -183,7 +183,8 @@
 function extractKK(text) {
     // 1. Bersihkan teks menjadi satu baris panjang agar regex lebih mudah bekerja
     let cleanText = text.replace(/\s+/g, ' '); 
-
+    alert(cleanText);
+    
     // 2. TEKNIK FILTER AGRESIF:
     // Kita hapus semua angka 16 digit yang kemungkinan adalah NIK.
     // NIK anggota keluarga biasanya muncul setelah nama.

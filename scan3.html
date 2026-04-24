@@ -180,20 +180,23 @@
     }
 }
 
-    function extractKK(text) {
-    // Pola: Mencari kata "No" diikuti karakter apapun lalu 16 digit angka
-    // Kita buat regex yang menghindari jika ada kata "NIK" di dekatnya
+function extractKK(text) {
+    // 1. Ambil 5 baris pertama saja (area header)
     const lines = text.split('\n');
-    for (let line of lines) {
-        // Cek jika baris mengandung "No" tapi tidak mengandung "NIK"
-        if (line.toLowerCase().includes('no') && !line.toLowerCase().includes('nik')) {
-            const match = line.match(/\d{16}/);
-            if (match) return match[0];
-        }
+    const headerArea = lines.slice(0, 5).join(' ');
+
+    // 2. Cari pola 16 digit yang berada di area tersebut
+    const match = headerArea.match(/\d{16}/);
+    
+    if (match) {
+        console.log("Nomor KK terdeteksi:", match[0]);
+        return match[0];
     }
-    // Fallback: Jika tidak ketemu pola di atas, ambil 16 digit pertama yang muncul
-    const fallback = text.match(/\d{16}/);
-    return fallback ? fallback[0] : null;
+
+    // 3. Fallback jika tidak ketemu di header (mungkin crop kurang ke atas)
+    // Cari angka 16 digit yang diawali dengan kata "No"
+    const generalMatch = text.match(/No\.?\s*(\d{16})/i);
+    return generalMatch ? generalMatch[1] : null;
 }
 
 const kkNumber = extractKK(scannedText);

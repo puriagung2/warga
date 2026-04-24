@@ -161,31 +161,30 @@ async function startOCR(){
     status.innerText = "Membaca OCR...";
 
     try{
-        // 🔥 crop + resize
         const cropped = cropTopArea(canvas);
         const resizedCanvas = resizeCanvas(cropped, 900);
         const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.5);
 
         console.log("SIZE KB:", Math.round(base64Image.length / 1024));
 
-        // 🔥 FIX: pakai GET (anti CORS)
-        const url = GAS_URL + "?" + new URLSearchParams({
-            type: "ocr",
-            base64: base64Image
+        const res = await fetch(GAS_URL,{
+            method:'POST',
+            headers:{
+                "Content-Type":"application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                type: "ocr",
+                base64: base64Image
+            })
         });
 
-        const res = await fetch(url); // ✅ res sekarang ada
-        const result = await res.json();
+        const textResponse = await res.text(); // 🔥 ambil text dulu
+        const result = JSON.parse(textResponse); // baru parse
 
         console.log("FULL OCR RESULT:", result);
 
         if(result.status !== "success"){
             throw new Error(result.message);
-        }
-
-        if(result.data?.IsErroredOnProcessing){
-            status.innerText = "OCR error";
-            return;
         }
 
         let parsed = result.data?.ParsedResults;
@@ -198,11 +197,6 @@ async function startOCR(){
         let text = parsed[0].ParsedText || "";
 
         console.log("HASIL OCR:", text);
-
-        if(!text.trim()){
-            status.innerText = "Tidak ada teks terbaca";
-            return;
-        }
 
         let nomorKK = extractKK(text);
 

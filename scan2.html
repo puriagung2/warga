@@ -166,13 +166,14 @@ const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.5);
 
         console.log("SIZE KB:", Math.round(base64Image.length / 1024));
 
-        const res = await fetch(GAS_URL,{
-            method:'POST',
-            body: new URLSearchParams({
-                type: "ocr",
-                base64: base64Image
-            })
-        });
+await fetch(GAS_URL,{
+    method:'POST',
+    mode:'no-cors', // 🔥 WAJIB
+    body: new URLSearchParams({
+        type: "ocr",
+        base64: base64Image
+    })
+});
 
         const result = await res.json();
 

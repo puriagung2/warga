@@ -126,20 +126,15 @@ function loadFile(input) {
         const response = await fetch(GAS_URL, {
             method: 'POST',
             mode: 'cors',
+            headers: { 
+                'Content-Type': 'application/json' // PENTING
+            },
             body: JSON.stringify({
                 action: 'ocr',
                 base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.8)
             })
         });
-        const result = await response.json();
-        
-        if (result.nomorKK) {
-            document.getElementById('fileNameInput').value = result.nomorKK;
-            status.innerText = "Nomor berhasil dideteksi!";
-        } else {
-            status.innerText = "Nomor tidak ditemukan, silakan cek manual.";
-        }
-    } catch (err) {
+        catch (err) {
         status.innerText = "Error server: " + err.message;
         console.error(err);
     }

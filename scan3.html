@@ -157,9 +157,15 @@
         if (!cropper) return alert("Pilih foto terlebih dahulu!");
         showLoader(true);
 
+        const canvas = cropper.getCroppedCanvas({
+        maxWidth: 2000,
+        fillColor: '#fff',
+        imageSmoothingQuality: 'high'
+    });
+        
         // Gunakan resolusi tinggi agar header terbaca
         const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 2000}).toDataURL('image/jpeg', 0.9).split(',')[1];
-
+        console.log("Gambar untuk OCR:", canvas.toDataURL('image/jpeg', 0.5));
         try {
             const response = await fetch(GAS_WEB_APP_URL, {
                 method: 'POST',

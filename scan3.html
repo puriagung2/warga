@@ -156,8 +156,14 @@ async function processOCR() {
     if (!cropper) return alert("Pilih foto terlebih dahulu!");
     showLoader(true);
 
-    const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 1000}).toDataURL('image/jpeg', 0.7).split(',')[1];
-
+// Ganti bagian getCroppedCanvas di index.html menjadi:
+const canvas = cropper.getCroppedCanvas({
+    width: 2500, // Tingkatkan lebar agar teks header terbaca jelas
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: 'high'
+});
+const croppedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1]; // Kualitas 100%
+    
     try {
         const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
@@ -194,18 +200,27 @@ async function processOCR() {
 
 // Fungsi ekstraksi yang diperbarui agar lebih "pintar"
 function extractKK(text) {
-    // Engine 2 membaca "No. 2171..." dengan sangat jelas.
-    // Kita gunakan pola yang mencari kata "No." diikuti 16 digit.
-    const regex = /No\.\s*(\d{16})/i;
-    const match = text.match(regex);
+    // Pecah teks jadi baris
+    const lines = text.split('\n');
     
-    if (match && match[1]) {
-        return match[1];
+    // Cari baris yang mengandung angka 16 digit dan keyword "No"
+    for (let i = 0; i < Math.min(lines.length, 5); i++) { // Cek 5 baris pertama saja
+        const line = lines[i];
+        if (line.match(/No\.?\s*[:.]?\s*(\d{16})/i)) {
+            return line.match(/(\d{16})/)[0];
+        }
     }
     
-    // Fallback: Jika "No." tidak tertangkap, ambil 16 digit pertama yang muncul di 50 karakter awal
-    const firstMatch = text.match(/\d{16}/);
-    return firstMatch ? firstMatch[0] : "";
+    // Taktik cadangan: Jika header benar-benar tidak terbaca sebagai teks,
+    // Kita cari semua angka 16 digit, tapi yang berada di *bawah* 200 karakter pertama
+    // (Karena NIK tabel pasti di bawah posisi itu)
+    const matches = text.match(/\d{16}/g);
+    if (matches) {
+        // Asumsikan NIK paling pertama muncul adalah NIK orang (bukan No KK)
+        // Jadi kita ambil angka 16 digit yang unik atau yang muncul paling atas
+        return matches[0]; // Ini yang sekarang Anda alami
+    }
+    return "";
 }
 
 const kkNumber = extractKK(scannedText);

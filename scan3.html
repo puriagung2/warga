@@ -151,11 +151,11 @@
     }
 
     // --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
-    async function processOCR() {
+// --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
+async function processOCR() {
     if (!cropper) return alert("Pilih foto terlebih dahulu!");
     showLoader(true);
 
-    // Ambil base64 dari cropper
     const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 1000}).toDataURL('image/jpeg', 0.7).split(',')[1];
 
     try {
@@ -168,48 +168,53 @@
         });
         
         const result = await response.json();
-        const scannedText = result.ParsedResults[0].ParsedText;
-        const match = scannedText.match(/\d{16}/);
         
-        kkInput.value = match ? match[0] : "";
+        // Pastikan kita mengakses teks dari struktur OCR.space
+        // Jika hasil dari GAS Anda berupa objek yang membungkus ParsedResults:
+        const scannedText = result.ParsedResults[0].ParsedText;
+        
+        // Panggil fungsi ekstraksi di sini, di dalam alur proses
+        const kkNumber = extractKK(scannedText);
+        
+        kkInput.value = kkNumber;
         ocrArea.style.display = 'block';
+        
+        if (!kkNumber) {
+            alert("Nomor KK tidak terdeteksi otomatis. Silahkan input manual.");
+        }
+
     } catch (error) {
-        alert("Gagal memproses OCR via Proxy.");
+        console.error(error);
+        alert("Gagal memproses OCR. Silahkan input nomor KK secara manual.");
+        ocrArea.style.display = 'block';
     } finally {
         showLoader(false);
     }
 }
 
+// Fungsi ekstraksi yang diperbarui agar lebih "pintar"
 function extractKK(text) {
-    // 1. Bersihkan teks menjadi satu baris panjang agar regex lebih mudah bekerja
+    // 1. Bersihkan teks
     let cleanText = text.replace(/\s+/g, ' '); 
-    alert(cleanText);
     
-    // 2. TEKNIK FILTER AGRESIF:
-    // Kita hapus semua angka 16 digit yang kemungkinan adalah NIK.
-    // NIK anggota keluarga biasanya muncul setelah nama.
-    // Kita HANYA ingin angka 16 digit yang didahului oleh "No" atau "Nomor".
-    
-    // Cari angka 16 digit yang didahului label 'No' atau 'Nomor' (case insensitive)
-    // Pola ini sangat spesifik untuk header KK
-    const regexHeader = /(?:No\.?|Nomor)[:\.\s]*(\d{16})/i;
-    const match = cleanText.match(regexHeader);
+    // 2. Cari pola No./Nomor diikuti angka 16 digit
+    // Menggunakan regex untuk mencari 'No' atau 'Nomor' lalu mengambil angka setelahnya
+    const regex = /(?:No\.?|Nomor)[:\.\s]*(\d{16})/i;
+    const match = cleanText.match(regex);
     
     if (match && match[1]) {
-        console.log("Nomor KK ditemukan via regex spesifik header:", match[1]);
         return match[1];
     }
-
-    // 3. Jika cara di atas gagal, ambil angka 16 digit yang paling awal muncul 
-    // dalam teks (karena di header, No KK selalu muncul paling awal)
-    // TAPI kita pastikan dia berada di 50 karakter pertama teks
-    const firstMatch = cleanText.match(/\d{16}/);
-    if (firstMatch && firstMatch.index < 50) {
-        console.log("Nomor KK ditemukan via posisi awal:", firstMatch[0]);
-        return firstMatch[0];
+    
+    // 3. Jika tidak ketemu, cari 16 digit yang letaknya paling awal di teks
+    // (Karena Nomor KK biasanya paling atas di header)
+    const all16Digits = cleanText.match(/\d{16}/g);
+    if (all16Digits) {
+        // Return digit pertama yang muncul
+        return all16Digits[0];
     }
-
-    return ""; // Jika benar-benar tidak ketemu
+    
+    return "";
 }
 
 const kkNumber = extractKK(scannedText);

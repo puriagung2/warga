@@ -130,15 +130,18 @@
             }
 
             // Inisialisasi Cropper.js
-            cropper = new Cropper(imagePreview, {
-                viewMode: 1, // Drag mode: move canvas
-                movable: true,
-                rotatable: true,
-                scalable: true,
-                zoomable: true,
-                autoCropArea: 0.5, // Otomatis seleksi seluruh gambar di awal
-                background: false,
-            });
+cropper = new Cropper(imagePreview, {
+    viewMode: 1,
+    dragMode: 'move',
+    autoCropArea: 0.9, // Set ke 0.9 agar hampir seluruh halaman terpilih
+    // Tambahkan ini untuk membatasi area agar tidak memotong header terlalu dekat:
+    minContainerHeight: 400,
+    background: false,
+    ready: function () {
+        // Saat gambar dimuat, geser sedikit crop area ke atas secara otomatis
+        this.cropper.move(0, -50); 
+    }
+});
         };
         reader.readAsDataURL(file);
     });

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Scanner KK RW6</title>
 </head>
@@ -61,7 +60,7 @@
 
 <script>
     // URL WEB APP ANDA
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzFxO1x7e5ou8yGSDdyhwnv8L3qzAeeM-P7mOQ3_qsj7jz8UoX9L_Ch6k2oS3G1n6gzuw/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
 
     let img = new Image();
     let rotation = 0;
@@ -101,17 +100,43 @@
     }
 
     async function startOCR() {
-        // Kosongkan input agar user tahu OCR sedang bekerja
-        document.getElementById('fileNameInput').value = ""; 
+        document.getElementById('fileNameInput').value = "";
         document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
-        
+
         try {
-            const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
+            // Ambil gambar dari canvas sebagai base64
+            const canvas = document.getElementById('canvas');
+            const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+            const base64Data = base64Image.split(',')[1]; // Hapus prefix "data:image/jpeg;base64,"
+
+            const formData = new FormData();
+            formData.append('base64Image', 'data:image/jpeg;base64,' + base64Data);
+            formData.append('apikey', 'K83502824388957');
+            formData.append('language', 'eng');
+            formData.append('OCREngine', '3');
+            formData.append('isOverlayRequired', 'false');
+
+            const response = await fetch('https://api.ocr.space/parse/image', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.IsErroredOnProcessing) {
+                throw new Error(result.ErrorMessage);
+            }
+
+            const text = result.ParsedResults[0]?.ParsedText || '';
             const match = text.match(/\d{16}/);
-            document.getElementById('fileNameInput').value = match ? match[0] : "";
-            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
+            document.getElementById('fileNameInput').value = match ? match[0] : '';
+            document.getElementById('status').innerText = match
+                ? 'Pembacaan selesai. Periksa kembali nomor KK.'
+                : 'Nomor KK tidak ditemukan, silakan masukkan manual.';
+
         } catch (err) {
-            document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
+            console.error(err);
+            document.getElementById('status').innerText = 'Gagal membaca, silakan masukkan manual.';
         }
     }
 

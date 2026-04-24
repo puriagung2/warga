@@ -115,26 +115,35 @@
 
     // Fungsi ini dipanggil manual oleh user untuk memicu OCR server
     async function startOCR() {
-        const status = document.getElementById('status');
-        status.innerText = "Sedang proses OCR...";
+    const status = document.getElementById('status');
+    const btnScan = event.target; // Tombol yang ditekan
+    
+    btnScan.disabled = true; // Nonaktifkan tombol saat proses
+    status.innerText = "Sedang proses OCR, mohon tunggu...";
+    
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'cors',
+            body: JSON.stringify({
+                action: 'ocr',
+                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.8) // Kompres sedikit agar lebih cepat
+            })
+        });
+        const result = await response.json();
         
-        try {
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                mode: 'cors', // Penting
-                body: JSON.stringify({
-                    action: 'ocr',
-                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9)
-                })
-            });
-            const result = await response.json();
-            document.getElementById('fileNameInput').value = result.nomorKK || "";
-            status.innerText = result.nomorKK ? "OCR Berhasil!" : "Nomor tidak ditemukan.";
-        } catch (err) {
-            status.innerText = "Gagal. Pastikan Deployment 'Anyone'.";
-            console.error(err);
+        if (result.nomorKK) {
+            document.getElementById('fileNameInput').value = result.nomorKK;
+            status.innerText = "Nomor berhasil dideteksi!";
+        } else {
+            status.innerText = "Gagal. Coba foto ulang dengan lebih jelas.";
         }
+    } catch (err) {
+        status.innerText = "Error server: " + err.message;
+    } finally {
+        btnScan.disabled = false;
     }
+}
 
     async function upload() {
         const status = document.getElementById('status');

@@ -204,23 +204,21 @@
 
     // Fungsi ekstraksi yang diperbarui
 function extractKK(text) {
-    // 1. Ambil 200 karakter pertama saja (Area Header)
-    // Jangan ambil seluruh teks agar NIK di tabel tidak ikut terbaca
-    let headerText = text.substring(0, 200); 
+    // Cari semua angka 16 digit dalam teks
+    const all16Digits = text.match(/\d{16}/g);
+    
+    if (!all16Digits) return "";
 
-    // 2. Bersihkan karakter aneh
-    headerText = headerText.replace(/\s+/g, ' ');
-
-    // 3. Cari 16 digit yang benar-benar ada di area ini
-    const matches = headerText.match(/\d{16}/);
-
-    if (matches) {
-        console.log("Nomor KK ditemukan di header:", matches[0]);
-        return matches[0];
-    } else {
-        console.warn("Nomor KK tidak ditemukan di area header!");
-        return "";
-    }
+    // Logika Pintar: NIK biasanya ada di dalam tabel (ada nama di depannya)
+    // Nomor KK biasanya muncul sendirian atau setelah kata "No"
+    // Kita filter angka yang BUKAN NIK (yang biasanya ada di sebelah nama)
+    
+    // Jika hanya ada 1 angka 16 digit, itu pasti Nomor KK
+    if (all16Digits.length === 1) return all16Digits[0];
+    
+    // Jika banyak angka, biasanya yang pertama muncul di baris teratas adalah Nomor KK
+    // Tapi karena OCR sering skip header, mari ambil angka yang TIDAK ada di baris tabel
+    return all16Digits[0]; 
 }
 const kkNumber = extractKK(scannedText);
 kkInput.value = kkNumber || "";

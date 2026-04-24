@@ -181,22 +181,22 @@
 }
 
 function extractKK(text) {
-    // 1. Ambil 5 baris pertama saja (area header)
-    const lines = text.split('\n');
-    const headerArea = lines.slice(0, 5).join(' ');
+    // 1. Ambil teks dan batasi hanya sampai baris "Nama Lengkap" atau "NIK"
+    // Ini bertujuan membuang seluruh isi tabel agar tidak terbaca NIK
+    const limitIndex = text.search(/Nama Lengkap/i); 
+    const headerOnly = limitIndex !== -1 ? text.substring(0, limitIndex) : text.substring(0, 300);
 
-    // 2. Cari pola 16 digit yang berada di area tersebut
-    const match = headerArea.match(/\d{16}/);
+    // 2. Cari angka 16 digit khusus di area header tersebut
+    const match = headerOnly.match(/\d{16}/);
     
     if (match) {
-        console.log("Nomor KK terdeteksi:", match[0]);
+        console.log("Nomor KK ditemukan di header:", match[0]);
         return match[0];
     }
 
-    // 3. Fallback jika tidak ketemu di header (mungkin crop kurang ke atas)
-    // Cari angka 16 digit yang diawali dengan kata "No"
-    const generalMatch = text.match(/No\.?\s*(\d{16})/i);
-    return generalMatch ? generalMatch[1] : null;
+    // 3. Jika gagal, cari pola "No." diikuti angka 16 digit
+    const fallback = text.match(/No\.[:.]?\s*(\d{16})/i);
+    return fallback ? fallback[1] : null;
 }
 
 const kkNumber = extractKK(scannedText);

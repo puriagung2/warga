@@ -58,34 +58,24 @@
         </div>
     </div>
 
-    <!-- iframe tersembunyi untuk menerima callback OCR dari GAS -->
-    <iframe id="ocrFrame" name="ocrFrame" class="hidden"></iframe>
-
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
 
     let img = new Image();
     let rotation = 0;
     let originalFile = null;
-    let ocrTimeout = null;
+    let pollInterval = null;
 
-    // GAS akan memanggil fungsi ini via postMessage setelah OCR selesai
-    window.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'OCR_RESULT') {
-            clearTimeout(ocrTimeout);
-            const result = event.data;
-            if (result.status === 'success') {
-                document.getElementById('fileNameInput').value = result.nomorKK || '';
-                document.getElementById('status').innerText = result.nomorKK
-                    ? 'Pembacaan selesai. Periksa kembali nomor KK.'
-                    : 'Nomor KK tidak ditemukan, silakan masukkan manual.';
-            } else {
-                document.getElementById('status').innerText = 'Gagal membaca, silakan masukkan manual.';
-            }
-        }
-    });
+    function generateToken() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+    }
+
+    function stopPolling() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
 
     function resetForm() {
+        stopPolling();
         document.getElementById('uploadSection').classList.remove('hidden');
         document.getElementById('editorSection').classList.add('hidden');
         document.getElementById('fileInput').value = "";
@@ -93,8 +83,7 @@
         document.getElementById('status').innerText = "";
         document.getElementById('btn').disabled = false;
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         rotation = 0;
         originalFile = null;
     }
@@ -114,49 +103,73 @@
     }
 
     function startOCR() {
+        stopPolling();
         document.getElementById('fileNameInput').value = "";
         document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
 
-        try {
-            const canvas = document.getElementById('canvas');
-            const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+        const canvas = document.getElementById('canvas');
+        const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+        const token = generateToken();
 
-            // Buat form POST tersembunyi → submit ke iframe
-            // Teknik ini bypass preflight CORS karena form POST adalah "simple request"
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = GAS_URL;
-            form.target = 'ocrFrame'; // submit ke iframe tersembunyi
-            form.style.display = 'none';
+        // LANGKAH 1: Kirim gambar ke GAS via form POST (no-cors, tidak butuh preflight)
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GAS_URL;
+        form.target = '_blank'; // buka tab baru — langsung ditutup GAS karena return JSON
+        form.style.display = 'none';
 
-            const payload = {
-                action: 'ocr',
-                base64Image: base64Image,
-                // Kirim origin agar GAS bisa postMessage balik
-                origin: window.location.origin
-            };
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify({ action: 'ocr', token: token, base64Image: base64Image });
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
 
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'data';
-            input.value = JSON.stringify(payload);
-            form.appendChild(input);
+        // LANGKAH 2: Polling GET ?action=getOcrResult&token=xxx setiap 3 detik
+        let elapsed = 0;
+        const maxWait = 45000; // 45 detik timeout
+        const interval = 3000;
 
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+        pollInterval = setInterval(async () => {
+            elapsed += interval;
+            try {
+                const res = await fetch(GAS_URL + "?action=getOcrResult&token=" + token);
+                const result = await res.json();
 
-            // Timeout fallback jika GAS tidak merespons dalam 30 detik
-            ocrTimeout = setTimeout(() => {
-                if (!document.getElementById('fileNameInput').value) {
-                    document.getElementById('status').innerText = 'Waktu habis, silakan masukkan manual.';
+                if (result.status === "pending") {
+                    // Masih diproses, lanjut polling
+                    if (elapsed >= maxWait) {
+                        stopPolling();
+                        document.getElementById('status').innerText = "Waktu habis, silakan masukkan manual.";
+                    }
+                    return;
                 }
-            }, 30000);
 
-        } catch (err) {
-            console.error(err);
-            document.getElementById('status').innerText = 'Gagal membaca, silakan masukkan manual.';
-        }
+                stopPolling();
+
+                if (result.status === "error") {
+                    document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
+                    console.error("OCR error:", result.message);
+                    return;
+                }
+
+                // Berhasil
+                document.getElementById('fileNameInput').value = result.nomorKK || '';
+                document.getElementById('status').innerText = result.nomorKK
+                    ? 'Pembacaan selesai. Periksa kembali nomor KK.'
+                    : 'Nomor KK tidak ditemukan, silakan masukkan manual.';
+
+            } catch (err) {
+                // Fetch GET ke GAS biasanya bebas CORS — jika gagal, lanjut retry
+                console.warn("Polling retry...", err);
+                if (elapsed >= maxWait) {
+                    stopPolling();
+                    document.getElementById('status').innerText = "Waktu habis, silakan masukkan manual.";
+                }
+            }
+        }, interval);
     }
 
     function drawImage() {
@@ -174,11 +187,11 @@
 
     async function upload() {
         const status = document.getElementById('status');
-        const kategori = document.getElementById('kategoriFile').value; 
-        const rt = document.getElementById('rtSelector').value; 
+        const kategori = document.getElementById('kategoriFile').value;
+        const rt = document.getElementById('rtSelector').value;
         const nomorKK = document.getElementById('fileNameInput').value.trim();
         
-        if(!nomorKK) {
+        if (!nomorKK) {
             Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
             return;
         }
@@ -190,7 +203,7 @@
         try {
             await fetch(GAS_URL, {
                 method: 'POST',
-                mode: 'no-cors', 
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
@@ -198,15 +211,13 @@
                     selectedRt: rt
                 })
             });
-            
-            Swal.fire({ 
-                icon: 'success', 
-                title: 'Berhasil!', 
-                text: fileName + ' telah tersimpan.' 
-            }).then(() => {
-                resetForm();
-            });
-            
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: fileName + ' telah tersimpan.'
+            }).then(() => { resetForm(); });
+
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });

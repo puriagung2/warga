@@ -152,66 +152,33 @@
 
     // --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
     async function processOCR() {
-        if (!cropper) return alert("Pilih foto terlebih dahulu!");
+    if (!cropper) return alert("Pilih foto terlebih dahulu!");
+    showLoader(true);
 
-        showLoader(true);
-        btnScan.disabled = true;
+    // Ambil base64 dari cropper
+    const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 1000}).toDataURL('image/jpeg', 0.7).split(',')[1];
 
-        // 1. Ambil Gambar yang sudah di-crop (dalam bentuk Canvas)
-        // Kita batasi max width/height agar OCR lebih cepat & hemat kuota
-        const canvas = cropper.getCroppedCanvas({
-            maxWidth: 2000,
-            maxHeight: 2000,
+    try {
+        const response = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: "ocr", 
+                file: croppedBase64 
+            })
         });
-
-        // 2. Ubah Canvas ke Blob (JPEG) untuk dikirim ke API
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('apikey', OCR_API_KEY);
-            formData.append('file', blob, 'cropped_kk.jpg');
-            formData.append('language', 'eng');
-            formData.append('OCREngine', '3'); // Sesuai permintaan
-
-            try {
-                const response = await fetch('https://api.ocr.space/parse/image', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-
-                if (result.ParsedResults && result.ParsedResults.length > 0) {
-                    const scannedText = result.ParsedResults[0].ParsedText;
-                    
-                    // Regex cari 16 digit angka berurutan
-                    const match = scannedText.match(/\d{16}/);
-                    
-                    if (match) {
-                        kkInput.value = match[0];
-                    } else {
-                        kkInput.value = ""; // Kosongkan jika tidak ketemu
-                        alert("OCR gagal mendeteksi 16 digit No KK. Silahkan input manual.");
-                    }
-                    
-                    // Tampilkan area edit No KK
-                    ocrArea.style.display = 'block';
-                    // Scroll ke bawah
-                    window.scrollTo(0, document.body.scrollHeight);
-
-                } else {
-                    alert("Error dari API OCR. Silahkan input manual.");
-                    ocrArea.style.display = 'block';
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Gagal menghubungi server OCR. Periksa koneksi.");
-                ocrArea.style.display = 'block'; // Tetap tampilkan agar bisa input manual
-            } finally {
-                showLoader(false);
-                btnScan.innerText = "Scan Ulang OCR (Jika foto diubah)";
-                btnScan.disabled = false;
-            }
-        }, 'image/jpeg', 0.8); // Kualitas 80% (compress ringan)
+        
+        const result = await response.json();
+        const scannedText = result.ParsedResults[0].ParsedText;
+        const match = scannedText.match(/\d{16}/);
+        
+        kkInput.value = match ? match[0] : "";
+        ocrArea.style.display = 'block';
+    } catch (error) {
+        alert("Gagal memproses OCR via Proxy.");
+    } finally {
+        showLoader(false);
     }
+}
 
     // --- LOGIKA 3: GENERATE PDF (DENGAN FOTO CROP) + WATERMARK + UPLOAD ---
     async function generatePdfAndUpload() {

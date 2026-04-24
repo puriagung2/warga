@@ -125,47 +125,47 @@ async function startOCR() {
     function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
 
     async function upload() {
-        const status = document.getElementById('status');
-        const kategori = document.getElementById('kategoriFile').value; 
-        const rt = document.getElementById('rtSelector').value; 
-        const nomorKK = document.getElementById('fileNameInput').value.trim();
-        
-        if(!nomorKK) {
-            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-            return;
-        }
-
-        const fileName = kategori + " " + nomorKK + ".pdf";
-        document.getElementById('btn').disabled = true;
-        status.innerText = "Mengunggah...";
-
-        try {
-            await fetch(GAS_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                    fileName: fileName,
-                    selectedRt: rt
-                })
-            });
-            
-            Swal.fire({ 
-                icon: 'success', 
-                title: 'Berhasil!', 
-                text: fileName + ' telah tersimpan.' 
-            }).then(() => {
-                // RESET FORM SETELAH POPUP DITUTUP
-                resetForm();
-            });
-            
-        } catch (err) {
-            console.error(err);
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-            document.getElementById('btn').disabled = false;
-        }
+    const status = document.getElementById('status');
+    const rt = document.getElementById('rtSelector').value; 
+    const nomorKK = document.getElementById('fileNameInput').value.trim();
+    
+    // Pastikan nomorKK sudah terisi (bisa dari hasil OCR atau manual)
+    if(!nomorKK) {
+        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+        return;
     }
+
+    const fileName = "KK " + nomorKK + ".pdf";
+    document.getElementById('btn').disabled = true;
+    status.innerText = "Mengunggah dan Proses OCR...";
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            // mode: 'no-cors' harus dihapus agar kita bisa membaca respon dari server
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                fileName: fileName,
+                selectedRt: rt
+            })
+        });
+
+        const result = await response.json(); // Sekarang kita bisa membaca hasil dari GAS
+        
+        if (result.status === "success") {
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File telah tersimpan.' });
+            resetForm();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+        document.getElementById('btn').disabled = false;
+        status.innerText = "";
+    }
+}
 </script>
 </body>
 </html>

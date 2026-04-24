@@ -116,22 +116,61 @@
     // Fungsi ini dipanggil manual oleh user untuk memicu OCR server
     async function startOCR() {
         const status = document.getElementById('status');
-        status.innerText = "Sedang proses OCR via Server...";
+        status.innerText = "Sedang proses OCR...";
         
         try {
             const response = await fetch(GAS_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                mode: 'cors', // Penting
                 body: JSON.stringify({
-                    action: 'ocr', // Menandakan kita hanya ingin OCR
+                    action: 'ocr',
                     base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9)
                 })
             });
             const result = await response.json();
             document.getElementById('fileNameInput').value = result.nomorKK || "";
-            status.innerText = result.nomorKK ? "OCR Berhasil!" : "Nomor KK tidak ditemukan.";
+            status.innerText = result.nomorKK ? "OCR Berhasil!" : "Nomor tidak ditemukan.";
         } catch (err) {
-            status.innerText = "Gagal OCR: " + err.message;
+            status.innerText = "Gagal. Pastikan Deployment 'Anyone'.";
+            console.error(err);
+        }
+    }
+
+    async function upload() {
+        const status = document.getElementById('status');
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
+        
+        if(!nomorKK) {
+            Swal.fire({ icon: 'warning', text: 'Nomor KK wajib diisi!' });
+            return;
+        }
+
+        document.getElementById('btn').disabled = true;
+        status.innerText = "Mengunggah ke Drive...";
+
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'cors', // Penting
+                body: JSON.stringify({
+                    action: 'upload',
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: "KK " + nomorKK + ".pdf",
+                    selectedRt: rt
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === "success") {
+                Swal.fire({ icon: 'success', title: 'Berhasil!' });
+                resetForm();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            document.getElementById('btn').disabled = false;
         }
     }
 

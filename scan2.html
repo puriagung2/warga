@@ -83,19 +83,23 @@
         originalFile = null;
     }
 
-    function loadFile(input) {
-        if (input.files && input.files[0]) {
-            originalFile = input.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                img.onload = () => { drawImage(); }; // Hapus startOCR dari sini agar tidak auto-scan
-                img.src = e.target.result;
-                document.getElementById('uploadSection').classList.add('hidden');
-                document.getElementById('editorSection').classList.remove('hidden');
+function loadFile(input) {
+    if (input.files && input.files[0]) {
+        originalFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            img.onload = () => { 
+                drawImage(); 
+                // PANGGIL OCR OTOMATIS DI SINI
+                startOCR(); 
             };
-            reader.readAsDataURL(originalFile);
-        }
+            img.src = e.target.result;
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('editorSection').classList.remove('hidden');
+        };
+        reader.readAsDataURL(originalFile);
     }
+}
 
     function drawImage() {
         const canvas = document.getElementById('canvas');
@@ -114,12 +118,9 @@
     }
 
     // Fungsi ini dipanggil manual oleh user untuk memicu OCR server
-    async function startOCR() {
+   async function startOCR() {
     const status = document.getElementById('status');
-    const btnScan = event.target; // Tombol yang ditekan
-    
-    btnScan.disabled = true; // Nonaktifkan tombol saat proses
-    status.innerText = "Sedang proses OCR, mohon tunggu...";
+    status.innerText = "Sedang proses OCR, mohon tunggu..."; // Pesan akan muncul di sini
     
     try {
         const response = await fetch(GAS_URL, {
@@ -127,7 +128,7 @@
             mode: 'cors',
             body: JSON.stringify({
                 action: 'ocr',
-                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.8) // Kompres sedikit agar lebih cepat
+                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.8)
             })
         });
         const result = await response.json();
@@ -136,12 +137,11 @@
             document.getElementById('fileNameInput').value = result.nomorKK;
             status.innerText = "Nomor berhasil dideteksi!";
         } else {
-            status.innerText = "Gagal. Coba foto ulang dengan lebih jelas.";
+            status.innerText = "Nomor tidak ditemukan, silakan cek manual.";
         }
     } catch (err) {
         status.innerText = "Error server: " + err.message;
-    } finally {
-        btnScan.disabled = false;
+        console.error(err);
     }
 }
 

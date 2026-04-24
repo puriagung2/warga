@@ -156,43 +156,39 @@ async function processOCR() {
     if (!cropper) return alert("Pilih foto terlebih dahulu!");
     showLoader(true);
 
-// Ganti bagian getCroppedCanvas di index.html menjadi:
-const canvas = cropper.getCroppedCanvas({
-    width: 2500, // Tingkatkan lebar agar teks header terbaca jelas
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high'
-});
-const croppedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1]; // Kualitas 100%
-    
+    const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 1500}).toDataURL('image/jpeg', 0.9).split(',')[1];
+
     try {
         const response = await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({ 
-                action: "ocr", 
-                file: croppedBase64 
-            })
+            body: JSON.stringify({ action: "ocr", file: croppedBase64 })
         });
         
         const result = await response.json();
         
-        // Pastikan kita mengakses teks dari struktur OCR.space
-        // Jika hasil dari GAS Anda berupa objek yang membungkus ParsedResults:
-        const scannedText = result.ParsedResults[0].ParsedText;
-        
-        // Panggil fungsi ekstraksi di sini, di dalam alur proses
-        const kkNumber = extractKK(scannedText);
-        
-        kkInput.value = kkNumber;
-        ocrArea.style.display = 'block';
-        
-        if (!kkNumber) {
-            alert("Nomor KK tidak terdeteksi otomatis. Silahkan input manual.");
-        }
+        // --- DEBUGGING: Tampilkan isi respon agar kita tahu masalahnya ---
+        console.log("Respon API:", result);
 
+        // Validasi: Cek apakah ParsedResults ada dan tidak kosong
+        if (result && result.ParsedResults && result.ParsedResults.length > 0) {
+            const scannedText = result.ParsedResults[0].ParsedText;
+            
+            // Panggil fungsi ekstraksi
+            const kkNumber = extractKK(scannedText);
+            
+            kkInput.value = kkNumber;
+            ocrArea.style.display = 'block';
+            
+            if (!kkNumber) {
+                alert("Data ditemukan, tapi nomor KK tidak terbaca. Silahkan isi manual.");
+            }
+        } else {
+            console.error("Respon API kosong atau error:", result);
+            alert("OCR gagal membaca dokumen. Pastikan pencahayaan cukup dan gambar fokus.");
+        }
     } catch (error) {
-        console.error(error);
-        alert("Gagal memproses OCR. Silahkan input nomor KK secara manual.");
-        ocrArea.style.display = 'block';
+        console.error("Error Fetch:", error);
+        alert("Gagal menghubungi server. Periksa koneksi internet Anda.");
     } finally {
         showLoader(false);
     }

@@ -136,7 +136,7 @@
                 rotatable: true,
                 scalable: true,
                 zoomable: true,
-                autoCropArea: 1, // Otomatis seleksi seluruh gambar di awal
+                autoCropArea: 0.5, // Otomatis seleksi seluruh gambar di awal
                 background: false,
             });
         };
@@ -173,6 +173,10 @@
                 
                 // Panggil fungsi ekstraksi DI DALAM alur proses
                 const kkNumber = extractKK(scannedText);
+                // --- TAMBAHKAN LOG DI SINI ---
+                console.log("--- ISI TEKS MENTAH DARI OCR ---");
+                console.log(scannedText);
+                console.log("--------------------------------");
                 
                 kkInput.value = kkNumber;
                 ocrArea.style.display = 'block';
@@ -193,16 +197,25 @@
     }
 
     // Fungsi ekstraksi yang diperbarui
-    function extractKK(text) {
-        // Gabungkan baris agar teks header yang terputus bisa terbaca
-        let cleanText = text.replace(/\r?\n/g, ' '); 
-        
-        // Pola: Mencari angka 16 digit yang letaknya di awal teks (area header)
-        // Kita tidak lagi memaksa mencari "No." jika sering gagal
-        const matches = cleanText.match(/\d{16}/);
-        return matches ? matches[0] : "";
-    }
+function extractKK(text) {
+    // 1. Ambil 200 karakter pertama saja (Area Header)
+    // Jangan ambil seluruh teks agar NIK di tabel tidak ikut terbaca
+    let headerText = text.substring(0, 200); 
 
+    // 2. Bersihkan karakter aneh
+    headerText = headerText.replace(/\s+/g, ' ');
+
+    // 3. Cari 16 digit yang benar-benar ada di area ini
+    const matches = headerText.match(/\d{16}/);
+
+    if (matches) {
+        console.log("Nomor KK ditemukan di header:", matches[0]);
+        return matches[0];
+    } else {
+        console.warn("Nomor KK tidak ditemukan di area header!");
+        return "";
+    }
+}
 const kkNumber = extractKK(scannedText);
 kkInput.value = kkNumber || "";
 if (!kkNumber) {

@@ -161,20 +161,20 @@ async function startOCR(){
     status.innerText = "Membaca OCR...";
 
     try{
-const resizedCanvas = resizeCanvas(canvas, 900);
-const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.5);
+        // 🔥 crop + resize
+        const cropped = cropTopArea(canvas);
+        const resizedCanvas = resizeCanvas(cropped, 900);
+        const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.5);
 
         console.log("SIZE KB:", Math.round(base64Image.length / 1024));
 
-await fetch(GAS_URL,{
-    method:'POST',
-    mode:'no-cors', // 🔥 WAJIB
-    body: new URLSearchParams({
-        type: "ocr",
-        base64: base64Image
-    })
-});
+        // 🔥 FIX: pakai GET (anti CORS)
+        const url = GAS_URL + "?" + new URLSearchParams({
+            type: "ocr",
+            base64: base64Image
+        });
 
+        const res = await fetch(url); // ✅ res sekarang ada
         const result = await res.json();
 
         console.log("FULL OCR RESULT:", result);

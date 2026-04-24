@@ -161,8 +161,8 @@ async function startOCR(){
     status.innerText = "Membaca OCR...";
 
     try{
-        const resizedCanvas = resizeCanvas(canvas, 1200);
-        const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.6);
+const resizedCanvas = resizeCanvas(canvas, 900);
+const base64Image = resizedCanvas.toDataURL('image/jpeg', 0.5);
 
         console.log("SIZE KB:", Math.round(base64Image.length / 1024));
 
@@ -232,12 +232,12 @@ async function upload(){
         await fetch(GAS_URL,{
             method:'POST',
             mode:'no-cors',
-            body: JSON.stringify({
-                type:"upload",
-                base64Data: document.getElementById('canvas').toDataURL('image/jpeg',0.9),
-                fileName: fileName,
-                selectedRt: rt
-            })
+            body: new URLSearchParams({
+        type: "upload",
+        base64Data: document.getElementById('canvas').toDataURL('image/jpeg',0.9),
+        fileName: fileName,
+        selectedRt: rt
+    })
         });
 
         Swal.fire("Berhasil!", fileName, "success").then(()=>location.reload());
@@ -247,6 +247,20 @@ async function upload(){
         Swal.fire("Gagal upload");
         document.getElementById('btnUpload').disabled = false;
     }
+}
+    function cropTopArea(canvas) {
+    const ctx = canvas.getContext('2d');
+
+    const cropHeight = canvas.height * 0.35; // ambil 35% atas
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = cropHeight;
+
+    const tctx = tempCanvas.getContext('2d');
+    tctx.drawImage(canvas, 0, 0, canvas.width, cropHeight, 0, 0, canvas.width, cropHeight);
+
+    return tempCanvas;
 }
 </script>
 

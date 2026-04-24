@@ -100,20 +100,16 @@
         }
     }
 
-    async function startOCR() {
-        // Kosongkan input agar user tahu OCR sedang bekerja
-        document.getElementById('fileNameInput').value = ""; 
-        document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
-        
-        try {
-            const { data: { text } } = await Tesseract.recognize(originalFile, 'ind');
-            const match = text.match(/\d{16}/);
-            document.getElementById('fileNameInput').value = match ? match[0] : "";
-            document.getElementById('status').innerText = "Pembacaan selesai. Periksa kembali nomor KK.";
-        } catch (err) {
-            document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
-        }
-    }
+async function startOCR() {
+    document.getElementById('status').innerText = "Sedang proses OCR via Server...";
+    
+    // Kirim data ke GAS untuk diproses OCR
+    const canvas = document.getElementById('canvas');
+    const base64 = canvas.toDataURL('image/jpeg', 0.9);
+    
+    // Buat fungsi baru di kode.gs (doPost) yang memanggil performOCR
+    // Atau integrasikan langsung di dalam flow upload agar efisien
+}
 
     function drawImage() {
         const canvas = document.getElementById('canvas');

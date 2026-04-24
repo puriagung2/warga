@@ -60,14 +60,13 @@
     </div>
 
 <script>
-    // URL WEB APP ANDA
+    // URL WEB APP ANDA (Pastikan sudah di-deploy ulang dan URL ini benar)
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyMhCfoYTIA3p_dDBS79rSwgU9ADrs8SK6PFhlzei19AX8_1q_pR2Q1Ds1HPpZBn2KNnQ/exec";
 
     let img = new Image();
     let rotation = 0;
     let originalFile = null;
 
-    // FUNGSI RESET UNTUK MEMBERSIHKAN FORM
     function resetForm() {
         document.getElementById('uploadSection').classList.remove('hidden');
         document.getElementById('editorSection').classList.add('hidden');
@@ -76,12 +75,10 @@
         document.getElementById('status').innerText = "";
         document.getElementById('btn').disabled = false;
         
-        // Reset canvas
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Reset state
         rotation = 0;
         originalFile = null;
     }
@@ -91,7 +88,7 @@
             originalFile = input.files[0];
             const reader = new FileReader();
             reader.onload = (e) => {
-                img.onload = () => { drawImage(); startOCR(); };
+                img.onload = () => { drawImage(); }; // Hapus startOCR dari sini agar tidak auto-scan
                 img.src = e.target.result;
                 document.getElementById('uploadSection').classList.add('hidden');
                 document.getElementById('editorSection').classList.remove('hidden');
@@ -99,17 +96,6 @@
             reader.readAsDataURL(originalFile);
         }
     }
-
-async function startOCR() {
-    document.getElementById('status').innerText = "Sedang proses OCR via Server...";
-    
-    // Kirim data ke GAS untuk diproses OCR
-    const canvas = document.getElementById('canvas');
-    const base64 = canvas.toDataURL('image/jpeg', 0.9);
-    
-    // Buat fungsi baru di kode.gs (doPost) yang memanggil performOCR
-    // Atau integrasikan langsung di dalam flow upload agar efisien
-}
 
     function drawImage() {
         const canvas = document.getElementById('canvas');
@@ -122,59 +108,70 @@ async function startOCR() {
         ctx.drawImage(img, -img.width/2, -img.height/2);
     }
 
-    function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
+    function rotateImage() { 
+        rotation = (rotation + 90) % 360; 
+        drawImage(); 
+    }
+
+    // Fungsi ini dipanggil manual oleh user untuk memicu OCR server
+    async function startOCR() {
+        const status = document.getElementById('status');
+        status.innerText = "Sedang proses OCR via Server...";
+        
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'ocr', // Menandakan kita hanya ingin OCR
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9)
+                })
+            });
+            const result = await response.json();
+            document.getElementById('fileNameInput').value = result.nomorKK || "";
+            status.innerText = result.nomorKK ? "OCR Berhasil!" : "Nomor KK tidak ditemukan.";
+        } catch (err) {
+            status.innerText = "Gagal OCR: " + err.message;
+        }
+    }
 
     async function upload() {
-    const status = document.getElementById('status');
-    const rt = document.getElementById('rtSelector').value; 
-    const nomorKK = document.getElementById('fileNameInput').value.trim();
-    
-    // Pastikan nomorKK sudah terisi (bisa dari hasil OCR atau manual)
-    if(!nomorKK) {
-        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-        return;
-    }
-
-    const fileName = "KK " + nomorKK + ".pdf";
-    document.getElementById('btn').disabled = true;
-    status.innerText = "Mengunggah dan Proses OCR...";
-
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            // mode: 'no-cors' harus dihapus agar kita bisa membaca respon dari server
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                fileName: fileName,
-                selectedRt: rt
-            })
-        });
-
-        const result = await response.json(); // Sekarang kita bisa membaca hasil dari GAS
+        const status = document.getElementById('status');
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
         
-        if (result.status === "success") {
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File telah tersimpan.' });
-            resetForm();
-        } else {
-            throw new Error(result.message);
+        if(!nomorKK) {
+            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+            return;
         }
-    } catch (err) {
-        console.error(err);
-        Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
-        document.getElementById('btn').disabled = false;
-        status.innerText = "";
-    }
-}
 
-    console.log("Mengirim data ke:", GAS_URL);
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({...})
-        });
-        console.log("Response diterima");
-        const result = await response.json();
+        document.getElementById('btn').disabled = true;
+        status.innerText = "Mengunggah...";
+
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'upload', // Menandakan kita ingin simpan file
+                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                    fileName: "KK " + nomorKK + ".pdf",
+                    selectedRt: rt
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === "success") {
+                Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File tersimpan.' });
+                resetForm();
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            document.getElementById('btn').disabled = false;
+        }
+    }
 </script>
 </body>
 </html>

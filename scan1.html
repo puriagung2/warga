@@ -58,12 +58,32 @@
         </div>
     </div>
 
+    <!-- iframe tersembunyi untuk menerima callback OCR dari GAS -->
+    <iframe id="ocrFrame" name="ocrFrame" class="hidden"></iframe>
+
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
 
     let img = new Image();
     let rotation = 0;
     let originalFile = null;
+    let ocrTimeout = null;
+
+    // GAS akan memanggil fungsi ini via postMessage setelah OCR selesai
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'OCR_RESULT') {
+            clearTimeout(ocrTimeout);
+            const result = event.data;
+            if (result.status === 'success') {
+                document.getElementById('fileNameInput').value = result.nomorKK || '';
+                document.getElementById('status').innerText = result.nomorKK
+                    ? 'Pembacaan selesai. Periksa kembali nomor KK.'
+                    : 'Nomor KK tidak ditemukan, silakan masukkan manual.';
+            } else {
+                document.getElementById('status').innerText = 'Gagal membaca, silakan masukkan manual.';
+            }
+        }
+    });
 
     function resetForm() {
         document.getElementById('uploadSection').classList.remove('hidden');
@@ -93,7 +113,7 @@
         }
     }
 
-    async function startOCR() {
+    function startOCR() {
         document.getElementById('fileNameInput').value = "";
         document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
 
@@ -101,24 +121,37 @@
             const canvas = document.getElementById('canvas');
             const base64Image = canvas.toDataURL('image/jpeg', 0.9);
 
-            // Kirim ke GAS sebagai proxy — GAS yang memanggil OCR.space
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: "ocr",
-                    base64Image: base64Image
-                })
-            });
+            // Buat form POST tersembunyi → submit ke iframe
+            // Teknik ini bypass preflight CORS karena form POST adalah "simple request"
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = GAS_URL;
+            form.target = 'ocrFrame'; // submit ke iframe tersembunyi
+            form.style.display = 'none';
 
-            const result = await response.json();
+            const payload = {
+                action: 'ocr',
+                base64Image: base64Image,
+                // Kirim origin agar GAS bisa postMessage balik
+                origin: window.location.origin
+            };
 
-            if (result.status === "error") throw new Error(result.message);
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify(payload);
+            form.appendChild(input);
 
-            document.getElementById('fileNameInput').value = result.nomorKK || '';
-            document.getElementById('status').innerText = result.nomorKK
-                ? 'Pembacaan selesai. Periksa kembali nomor KK.'
-                : 'Nomor KK tidak ditemukan, silakan masukkan manual.';
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            // Timeout fallback jika GAS tidak merespons dalam 30 detik
+            ocrTimeout = setTimeout(() => {
+                if (!document.getElementById('fileNameInput').value) {
+                    document.getElementById('status').innerText = 'Waktu habis, silakan masukkan manual.';
+                }
+            }, 30000);
 
         } catch (err) {
             console.error(err);

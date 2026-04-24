@@ -152,69 +152,56 @@
 
     // --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
 // --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
-async function processOCR() {
-    if (!cropper) return alert("Pilih foto terlebih dahulu!");
-    showLoader(true);
+// --- LOGIKA 2: CROP, COMPRESS, & SCAN OCR ---
+    async function processOCR() {
+        if (!cropper) return alert("Pilih foto terlebih dahulu!");
+        showLoader(true);
 
-    const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 1500}).toDataURL('image/jpeg', 0.9).split(',')[1];
+        // Gunakan resolusi tinggi agar header terbaca
+        const croppedBase64 = cropper.getCroppedCanvas({maxWidth: 2000}).toDataURL('image/jpeg', 0.9).split(',')[1];
 
-    try {
-        const response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "ocr", file: croppedBase64 })
-        });
-        
-        const result = await response.json();
-        
-        // --- DEBUGGING: Tampilkan isi respon agar kita tahu masalahnya ---
-        console.log("Respon API:", result);
-
-        // Validasi: Cek apakah ParsedResults ada dan tidak kosong
-        if (result && result.ParsedResults && result.ParsedResults.length > 0) {
-            const scannedText = result.ParsedResults[0].ParsedText;
+        try {
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "ocr", file: croppedBase64 })
+            });
             
-            // Panggil fungsi ekstraksi
-            const kkNumber = extractKK(scannedText);
+            const result = await response.json();
             
-            kkInput.value = kkNumber;
-            ocrArea.style.display = 'block';
-            
-            if (!kkNumber) {
-                alert("Data ditemukan, tapi nomor KK tidak terbaca. Silahkan isi manual.");
+            if (result && result.ParsedResults && result.ParsedResults.length > 0) {
+                const scannedText = result.ParsedResults[0].ParsedText;
+                
+                // Panggil fungsi ekstraksi DI DALAM alur proses
+                const kkNumber = extractKK(scannedText);
+                
+                kkInput.value = kkNumber;
+                ocrArea.style.display = 'block';
+                
+                if (!kkNumber) {
+                    alert("Nomor KK tidak terdeteksi otomatis. Silahkan input manual.");
+                }
+            } else {
+                alert("OCR gagal membaca. Silahkan input manual.");
+                ocrArea.style.display = 'block';
             }
-        } else {
-            console.error("Respon API kosong atau error:", result);
-            alert("OCR gagal membaca dokumen. Pastikan pencahayaan cukup dan gambar fokus.");
+        } catch (error) {
+            console.error(error);
+            alert("Gagal menghubungi server.");
+        } finally {
+            showLoader(false);
         }
-    } catch (error) {
-        console.error("Error Fetch:", error);
-        alert("Gagal menghubungi server. Periksa koneksi internet Anda.");
-    } finally {
-        showLoader(false);
-    }
-}
-
-// Fungsi ekstraksi yang diperbarui agar lebih "pintar"
-function extractKK(text) {
-    // 1. Bersihkan teks agar baris-baris tidak menempel
-    let cleanText = text.replace(/\r?\n/g, ' | '); 
-
-    // 2. Cari pola spesifik: Kata "No." diikuti spasi dan 16 angka
-    // Pola ini mencari "No. 2171..." di teks
-    const regex = /No\.\s*(\d{16})/i;
-    const match = cleanText.match(regex);
-    
-    if (match && match[1]) {
-        console.log("Ditemukan via header:", match[1]);
-        return match[1];
     }
 
-    // 3. Cadangan: Jika pola di atas gagal, ambil 16 digit pertama yang muncul
-    // di 100 karakter pertama teks (area header)
-    const prefix = cleanText.substring(0, 100);
-    const fallback = prefix.match(/\d{16}/);
-    return fallback ? fallback[0] : "";
-}
+    // Fungsi ekstraksi yang diperbarui
+    function extractKK(text) {
+        // Gabungkan baris agar teks header yang terputus bisa terbaca
+        let cleanText = text.replace(/\r?\n/g, ' '); 
+        
+        // Pola: Mencari angka 16 digit yang letaknya di awal teks (area header)
+        // Kita tidak lagi memaksa mencari "No." jika sering gagal
+        const matches = cleanText.match(/\d{16}/);
+        return matches ? matches[0] : "";
+    }
 
 const kkNumber = extractKK(scannedText);
 kkInput.value = kkNumber || "";

@@ -129,47 +129,37 @@
     function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
 
     async function upload() {
-        const status = document.getElementById('status');
-        const kategori = document.getElementById('kategoriFile').value; 
-        const rt = document.getElementById('rtSelector').value; 
-        const nomorKK = document.getElementById('fileNameInput').value.trim();
-        
-        if(!nomorKK) {
-            Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-            return;
-        }
+    const status = document.getElementById('status');
+    // ... (ambil nilai kategori, rt, dan nomorKK seperti sebelumnya)
+    
+    // GANTI: Hapus 'no-cors' agar kita bisa menangkap error dari server
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            // mode: 'cors' (default, jadi tidak perlu ditulis)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: "upload", // Pastikan sesuai dengan switch di Code.gs
+                base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
+                fileName: fileName,
+                selectedRt: rt
+            })
+        });
 
-        const fileName = kategori + " " + nomorKK + ".pdf";
-        document.getElementById('btn').disabled = true;
-        status.innerText = "Mengunggah...";
+        const result = await response.json(); // Sekarang kita bisa baca pesan error dari GAS
 
-        try {
-            await fetch(GAS_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                    fileName: fileName,
-                    selectedRt: rt
-                })
-            });
-            
-            Swal.fire({ 
-                icon: 'success', 
-                title: 'Berhasil!', 
-                text: fileName + ' telah tersimpan.' 
-            }).then(() => {
-                // RESET FORM SETELAH POPUP DITUTUP
-                resetForm();
-            });
-            
-        } catch (err) {
-            console.error(err);
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-            document.getElementById('btn').disabled = false;
+        if (result.status === "success") {
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File tersimpan.' });
+            resetForm();
+        } else {
+            throw new Error(result.message); // Tampilkan error dari Apps Script
         }
+    } catch (err) {
+        console.error(err);
+        Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+        document.getElementById('btn').disabled = false;
     }
+}
 </script>
 </body>
 </html>

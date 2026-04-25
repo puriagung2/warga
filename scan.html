@@ -187,7 +187,7 @@
 }
 
         // === FUNGSI 3: OCR (TESSERACT.JS) ===
-     async function startOCR() {
+   async function startOCR() {
     const fileNameInput = document.getElementById('fileNameInput');
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
@@ -195,36 +195,41 @@
     status.innerText = "Membaca...";
     
     try {
-        // ... (proses Tesseract tetap sama)
+        const ctx = canvas.getContext('2d');
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = data[i+1] = data[i+2] = avg;
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));
+        
         const { data: { text } } = await Tesseract.recognize(blob, 'ind');
         
-        console.log("Hasil OCR Mentah:", text);
+        // 1. Bersihkan teks: hapus enter (\n) agar baris menyatu
+        let cleanText = text.replace(/[\n\r]+/g, ' ');
+        
+        // 2. Pembersihan karakter yang sering salah baca
+        cleanText = cleanText.replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1');
+        
+        console.log("Teks setelah digabung:", cleanText);
 
-        // 1. PEMBERSIHAN DATA (Data Cleaning)
-        // Ubah huruf yang sering tertukar menjadi angka
-        let cleanText = text
-            .replace(/L/gi, '0') // Ganti semua L/l jadi 0
-            .replace(/O/gi, '0') // Ganti semua O/o jadi 0
-            .replace(/I/gi, '1') // Ganti I jadi 1
-            .replace(/S/gi, '5') // Ganti S jadi 5
-            .replace(/Z/gi, '2'); // Ganti Z jadi 2
-
-        // 2. LOGIKA PENGETATAN YANG LEBIH FLEKSIBEL
-        // Pola: cari "No", diikuti simbol apapun (titik, strip, spasi, dll), lalu angka
-        const regex = /No[^0-9]*(\d{16})/i;
-        const match = cleanText.match(regex);
+        // 3. Regex yang mencari angka 16 digit meskipun ada jeda/spasi/karakter di antaranya
+        // Pola: cari "No", lalu karakter apapun, lalu ambil 16 digit angka
+        const match = cleanText.match(/No[^0-9]*(\d{16})/i);
         
         if (match && match[1]) {
             fileNameInput.value = match[1];
             status.innerText = "Berhasil dibaca!";
         } else {
-            status.innerText = "Nomor tidak ditemukan. Isi manual.";
+            status.innerText = "Nomor tidak ditemukan otomatis. Isi manual.";
         }
     } catch (err) {
-        status.innerText = "Gagal. Isi manual.";
-    } catch (err) {
-        status.innerText = "Gagal membaca. Isi manual.";
+        status.innerText = "Gagal membaca.";
     }
+}
 }
 
         // === FUNGSI 4: UPLOAD (GAS VIA NO-CORS) ===

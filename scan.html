@@ -37,11 +37,11 @@
                 <img id="imagePreview" src="" alt="Preview">
             </div>
             
-            <div class="flex justify-center gap-2 mt-4">
-                <button onclick="cropper.rotate(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
-                <button onclick="cropper.rotate(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
-                <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
-            </div>
+<div class="flex justify-center gap-2 mt-4">
+    <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
+    <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
+    <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
+</div>
             
             <div class="flex gap-2 mt-4">
                 <button onclick="location.reload()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
@@ -103,7 +103,13 @@
     // === STATE ===
     let cropper = null; 
     let originalFile = null;
-
+    
+function rotateImage(degree) {
+        cropper.rotate(degree);
+        // Setelah rotasi, kotak crop mungkin perlu di-reset agar pas dengan orientasi baru
+        // cropper.setCropBoxData({ ... }); // Opsional jika ingin mengatur manual
+    }
+    
     // === FUNGSI 1: MEMUAT FILE ===
     function loadFile(input) {
         if (input.files && input.files[0]) {
@@ -120,9 +126,9 @@
                 if (cropper) cropper.destroy();
                 
 cropper = new Cropper(imagePreview, {
-    aspectRatio: 1 / 1.41, // Paksa ke rasio kertas A4
-    viewMode: 1,           // Membatasi crop box agar tidak keluar dari gambar
-    autoCropArea: 1,       // Paksa crop box langsung menutupi seluruh gambar
+    aspectRatio: NaN, // Bebas, agar landscape tidak terpotong
+    viewMode: 1,
+    autoCropArea: 0.9, // Mulai dengan 90% area
     responsive: true,
     guides: true,
 });
@@ -182,28 +188,28 @@ cropper = new Cropper(imagePreview, {
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Menganalisis Nomor KK...";
-    
-    // Teknik: Hanya ambil 20% area atas gambar untuk OCR agar akurat
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height * 0.25; // Ambil 25% area atas saja
-    tempCanvas.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
+    status.innerText = "Membacaaaa...";
     
     try {
-        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 1.0));
-        const { data: { text } } = await Tesseract.recognize(blob, 'ind');
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));
         
-        // Bersihkan teks & cari 16 digit
-        const allNumbers = text.replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1').match(/\d+/g);
+        // Tambahkan opsi psm (Page Segmentation Mode) 
+        // 3 = Default, 6 = Assume a single uniform block of text
+        const { data: { text } } = await Tesseract.recognize(blob, 'ind', {
+            logger: m => console.log(m),
+        });
         
-        let found = allNumbers ? allNumbers.find(num => num.length === 16) : null;
+        // Jika hasil OCR tetap berantakan, tambahkan pembersihan karakter di sini
+        let cleanText = text.replace(/[\n\r]+/g, ' ').replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1');
         
-        if (found) {
-            fileNameInput.value = found;
-            status.innerText = "Berhasil!";
+        // Cari angka 16 digit
+        const match = cleanText.match(/(\d{16})/);
+        
+        if (match) {
+            fileNameInput.value = match[0];
+            status.innerText = "Berhasil dibaca!";
         } else {
-            status.innerText = "Otomatis gagal. Silakan cek manual.";
+            status.innerText = "Nomor KK tidak terdeteksi. Silakan input manual.";
         }
     } catch (err) {
         status.innerText = "Gagal membaca.";

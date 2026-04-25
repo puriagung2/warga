@@ -31,10 +31,22 @@
     /* Hapus transition jika ada */
     display: block;
 }
-     .rotate-90 { transform: rotate(90deg); }
-.rotate-180 { transform: rotate(180deg); }
-.rotate-270 { transform: rotate(270deg); }   
- 
+    .rotate-90 { transform: rotate(90deg); }
+    .rotate-180 { transform: rotate(180deg); }
+    .rotate-270 { transform: rotate(270deg); }   
+
+        /* Overlay untuk panduan header */
+.header-guide {
+    position: absolute;
+    top: 5%; /* Sesuaikan dengan posisi header KK */
+    left: 10%;
+    width: 80%;
+    height: 15%; /* Hanya area header */
+    border: 3px dashed rgba(255, 255, 0, 0.8);
+    pointer-events: none; /* Biar tetap bisa klik/geser gambar di bawahnya */
+    z-index: 10;
+}
+        
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
@@ -50,6 +62,13 @@
             </label>
         </div>
 
+        <div id="editorSection" class="hidden mt-4">
+    <div class="img-container border rounded overflow-hidden relative">
+        <img id="imagePreview" src="" alt="Preview">
+        <div class="header-guide"></div>
+    </div>
+    </div>
+        
         <div id="editorSection" class="hidden mt-4">
             <div class="img-container border rounded overflow-hidden">
                 <img id="imagePreview" src="" alt="Preview">
@@ -218,45 +237,46 @@ cropper = new Cropper(imagePreview, {
 }
 
     // === FUNGSI 3: OCR ===
-  async function startOCR() {
+ async function startOCR() {
     const fileNameInput = document.getElementById('fileNameInput');
     const status = document.getElementById('status');
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('canvas'); // Ini adalah canvas hasil potong/final
     
     status.innerText = "Menganalisis (Fast Mode)...";
     
     try {
-        // 1. BUAT VIRTUAL CANVAS (Hanya 25% area atas & resize ke 800px)
-        // Ini mengurangi beban kerja Tesseract hingga 80-90%
+        // 1. Tentukan area OCR (mengikuti header-guide 15% dari atas)
+        // Kita gunakan persentase yang sama dengan CSS .header-guide
+        const yOffset = canvas.height * 0.05; 
+        const cropHeight = canvas.height * 0.15;
+        
+        // 2. Buat virtual canvas untuk OCR
         const tempCanvas = document.createElement('canvas');
-        const scale = 800 / canvas.width; 
+        const scale = 800 / canvas.width; // Resize lebar ke 800px untuk kecepatan
         tempCanvas.width = 800;
-        tempCanvas.height = canvas.height * 0.25 * scale; // Hanya 25% area atas
+        tempCanvas.height = cropHeight * scale;
         
         const ctx = tempCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
+        // Gambar bagian atas saja ke tempCanvas
+        ctx.drawImage(canvas, 0, yOffset, canvas.width, cropHeight, 0, 0, tempCanvas.width, tempCanvas.height);
         
-        // 2. Konversi ke Blob dengan kualitas rendah (0.5) sudah cukup untuk angka
+        // 3. Konversi ke Blob
         const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 0.5));
         
-        // 3. Panggil Tesseract dengan konfigurasi lebih ringan
+        // 4. OCR dengan Tesseract
         const { data: { text } } = await Tesseract.recognize(blob, 'ind', {
-            // PSM 6: Anggap sebagai satu blok teks yang seragam (sangat cepat untuk baris)
-            psm: 6 
+            psm: 6 // Anggap sebagai blok teks satu baris
         });
         
-        // 4. Proses pembersihan
-        let cleanText = text.replace(/[^\d]/g, ''); // Ambil hanya angka
-        
-        // Cari angka 16 digit yang benar
-        // Karena kita sudah membuang karakter lain, cari deretan 16 angka
+        // 5. Bersihkan hasil
+        let cleanText = text.replace(/[^\d]/g, ''); 
         const match = cleanText.match(/\d{16}/);
         
         if (match) {
             fileNameInput.value = match[0];
             status.innerText = "Berhasil dibaca!";
         } else {
-            status.innerText = "Nomor KK tidak terdeteksi.";
+            status.innerText = "Nomor KK tidak terdeteksi. Silakan input manual.";
         }
     } catch (err) {
         console.error(err);

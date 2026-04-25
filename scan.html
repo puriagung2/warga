@@ -26,11 +26,11 @@
         align-items: center;
         background-color: #f3f4f6;
     }
-    #imagePreview {
-        max-width: 100%;
-        max-height: 100%;
-        display: block;
-    }
+#imagePreview {
+    max-width: 100%;
+    /* Hapus transition jika ada */
+    display: block;
+}
      .rotate-90 { transform: rotate(90deg); }
 .rotate-180 { transform: rotate(180deg); }
 .rotate-270 { transform: rotate(270deg); }   
@@ -123,24 +123,24 @@
     let originalFile = null;
     
 function rotateImage(degree) {
-    const img = document.getElementById('imagePreview');
-    // Ambil rotasi saat ini
-    let currentRotation = parseInt(img.dataset.rotation || '0');
-    currentRotation = (currentRotation + degree) % 360;
-    img.dataset.rotation = currentRotation;
+    if (!cropper) return;
     
-    // Terapkan rotasi CSS
-    img.style.transform = `rotate(${currentRotation}deg)`;
+    // 1. Gunakan rotasi bawaan Cropper
+    cropper.rotate(degree);
     
-    // Beri tahu cropper bahwa gambar telah berubah ukuran/orientasi
+    // 2. Berikan jeda sebentar agar Cropper selesai menghitung ulang canvas
     setTimeout(() => {
-        cropper.destroy();
-        cropper = new Cropper(img, {
-            aspectRatio: NaN,
-            viewMode: 1,
-            autoCropArea: 0.9,
+        // Mendapatkan dimensi canvas gambar setelah diputar
+        const canvasData = cropper.getCanvasData();
+        
+        // Memaksa crop box menyesuaikan ukuran canvas yang baru
+        cropper.setCropBoxData({
+            left: canvasData.left,
+            top: canvasData.top,
+            width: canvasData.width,
+            height: canvasData.height
         });
-    }, 300);
+    }, 200);
 }
     
     // === FUNGSI 1: MEMUAT FILE ===
@@ -159,12 +159,13 @@ function rotateImage(degree) {
                 if (cropper) cropper.destroy();
                 
 cropper = new Cropper(imagePreview, {
-    aspectRatio: NaN, 
-    viewMode: 1, // Penting: Agar kotak crop tetap di dalam batas gambar
-    dragMode: 'move', // Memudahkan menggeser dokumen yang landscape
+    aspectRatio: NaN,
+    viewMode: 1,
+    dragMode: 'move',
     autoCropArea: 0.9,
     responsive: true,
-    rotatable: true, // Pastikan ini true
+    rotatable: true, // WAJIB ada agar cropper mengizinkan rotasi
+    checkOrientation: true,
 });
             };
             reader.readAsDataURL(originalFile);

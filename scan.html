@@ -135,82 +135,67 @@
 
     // === FUNGSI 2: CROP & WATERMARK ===
     function applyCrop() {
-        if (!cropper) return;
-        const status = document.getElementById('status');
-        status.innerText = "Memproses gambar...";
-        
-        const croppedCanvas = cropper.getCroppedCanvas({
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
-        
-        const finalCanvas = document.getElementById('canvas');
-        finalCanvas.width = croppedCanvas.width;
-        finalCanvas.height = croppedCanvas.height;
-        const ctx = finalCanvas.getContext('2d');
-        
-        ctx.drawImage(croppedCanvas, 0, 0);
-        
-        const fontSize = Math.floor(finalCanvas.width / 20); 
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.fillStyle = "rgb(0, 50, 200)"; 
-        ctx.globalAlpha = 0.6; 
-        
-        const x = finalCanvas.width * 0.05; 
-        const y = finalCanvas.height - (finalCanvas.height * 0.05);
-        ctx.fillText("PURI AGUNG 2 RW 6", x, y);
-        ctx.globalAlpha = 1.0;
-        
-        document.getElementById('croppedPreview').src = finalCanvas.toDataURL('image/jpeg', 0.9);
-        document.getElementById('editorSection').classList.add('hidden');
-        document.getElementById('finalSection').classList.remove('hidden');
-        
-        startOCR();
-    }
+    if (!cropper) return;
+    
+    // Ambil gambar UTUH (bukan hasil potong)
+    const fullCanvas = cropper.getCroppedCanvas({
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    // Terapkan Watermark ke fullCanvas
+    const ctx = fullCanvas.getContext('2d');
+    const fontSize = Math.floor(fullCanvas.width / 40); 
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.fillStyle = "rgb(0, 50, 200)"; 
+    ctx.globalAlpha = 0.6; 
+    ctx.fillText("PURI AGUNG 2 RW 6", fullCanvas.width * 0.05, fullCanvas.height - (fullCanvas.height * 0.02));
+    ctx.globalAlpha = 1.0;
+
+    // Simpan ke canvas utama (canvas ini yang akan di-upload ke PDF)
+    const finalCanvas = document.getElementById('canvas');
+    finalCanvas.width = fullCanvas.width;
+    finalCanvas.height = fullCanvas.height;
+    finalCanvas.getContext('2d').drawImage(fullCanvas, 0, 0);
+    
+    // Tampilkan preview utuh
+    document.getElementById('croppedPreview').src = finalCanvas.toDataURL('image/jpeg', 0.9);
+    
+    document.getElementById('editorSection').classList.add('hidden');
+    document.getElementById('finalSection').classList.remove('hidden');
+    
+    // Tetap jalankan OCR
+    startOCR();
+}
 
     // === FUNGSI 3: OCR ===
-   async function startOCR() {
+  async function startOCR() {
     const fileNameInput = document.getElementById('fileNameInput');
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Menganalisis...";
+    status.innerText = "Menganalisis Nomor KK...";
+    
+    // Teknik: Hanya ambil 20% area atas gambar untuk OCR agar akurat
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height * 0.25; // Ambil 25% area atas saja
+    tempCanvas.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
     
     try {
-        const ctx = canvas.getContext('2d');
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-            data[i] = data[i+1] = data[i+2] = avg;
-        }
-        ctx.putImageData(imgData, 0, 0);
-
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));
+        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 1.0));
         const { data: { text } } = await Tesseract.recognize(blob, 'ind');
         
-        // 1. Ambil semua deretan angka yang ada di teks
-        const allNumbers = text.match(/\d+/g);
+        // Bersihkan teks & cari 16 digit
+        const allNumbers = text.replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1').match(/\d+/g);
         
-        if (allNumbers) {
-            // 2. Filter: cari angka yang panjangnya TEPAT 16
-            // Beberapa KK mungkin terbaca 17 digit karena noise, kita ambil 16 karakter pertama dari angka tersebut
-            let found = allNumbers.find(num => num.length === 16);
-            
-            // Jika tidak ada yang pas 16, cari yang 17 (sering terjadi karena OCR salah baca)
-            if (!found) {
-                const longNum = allNumbers.find(num => num.length === 17);
-                if (longNum) found = longNum.substring(0, 16); // Ambil 16 digit saja
-            }
-            
-            if (found) {
-                fileNameInput.value = found;
-                status.innerText = "Ditemukan: " + found;
-            } else {
-                status.innerText = "Nomor tidak valid (harus 16 digit).";
-            }
+        let found = allNumbers ? allNumbers.find(num => num.length === 16) : null;
+        
+        if (found) {
+            fileNameInput.value = found;
+            status.innerText = "Berhasil!";
         } else {
-            status.innerText = "Tidak ada angka terbaca.";
+            status.innerText = "Otomatis gagal. Silakan cek manual.";
         }
     } catch (err) {
         status.innerText = "Gagal membaca.";

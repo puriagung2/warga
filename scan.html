@@ -9,21 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
     <style>
-        .img-container {
-            max-height: 70vh; /* Batasi tinggi container biar nggak kepotong di HP */
-            overflow: hidden;
-            background-color: #f3f4f6; /* Warna abu muda biar kelihatan batas gambar */
-        }
-        img {
-            max-width: 100%; /* Wajib biar Cropper.js berfungsi benar */
-        }
- 
-    .img-container {
-        width: 100%;
-        height: 60vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+ .img-container {
+        position: relative; /* Wajib agar absolute .header-guide bekerja */
+        max-height: 60vh;
+        overflow: hidden;
         background-color: #f3f4f6;
     }
 #imagePreview {
@@ -37,97 +26,37 @@
 
         /* Overlay untuk panduan header */
 .header-guide {
-    position: absolute;
-    top: 5%; /* Sesuaikan dengan posisi header KK */
-    left: 10%;
-    width: 80%;
-    height: 15%; /* Hanya area header */
-    border: 3px dashed rgba(255, 255, 0, 0.8);
-    pointer-events: none; /* Biar tetap bisa klik/geser gambar di bawahnya */
-    z-index: 10;
-}
+        position: absolute;
+        top: 5%; 
+        left: 5%;
+        width: 90%;
+        height: 15%; 
+        border: 3px dashed rgba(255, 255, 0, 0.8);
+        pointer-events: none; /* Biar tombol di bawahnya tetap bisa diklik */
+        z-index: 10;
+    }
         
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Scanner KK Puri Agung 2</h3>
-        
-        <div id="uploadSection">
-            <label class="block w-full text-center py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition">
-                <span class="text-gray-500 block">Klik untuk ambil/pilih foto KK</span>
-                <span class="text-xs text-gray-400 block mt-1">(Bisa dari kamera atau galeri)</span>
-                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="loadFile(this)">
-            </label>
-        </div>
-
-        <div id="editorSection" class="hidden mt-4">
+  <div id="editorSection" class="hidden mt-4">
     <div class="img-container border rounded overflow-hidden relative">
         <img id="imagePreview" src="" alt="Preview">
         <div class="header-guide"></div>
     </div>
-    </div>
-        
-        <div id="editorSection" class="hidden mt-4">
-            <div class="img-container border rounded overflow-hidden">
-                <img id="imagePreview" src="" alt="Preview">
-            </div>
-            
-<div class="flex justify-center gap-2 mt-4">
-    <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
-    <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
-    <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
-</div>
-            
-            <div class="flex gap-2 mt-4">
-                <button onclick="location.reload()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
-                <button onclick="applyCrop()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow font-bold">Potong & Lanjut</button>
-            </div>
-        </div>
-
-       <div id="finalSection" class="hidden mt-4">
-    <canvas id="canvas" class="w-full rounded border mb-4 hidden"></canvas>
-    <img id="croppedPreview" class="w-full rounded border mb-4 shadow" alt="Hasil Potong">
     
-    <div class="mt-4 space-y-3">
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
-            <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
-                <option value="KK BATAM">KK BATAM</option>
-                <option value="KK LUAR BATAM">KK LUAR BATAM</option>
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
-            <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
-                <option value="RT 01">RT 01</option>
-                <option value="RT 02">RT 02</option>
-                <option value="RT 03">RT 03</option>
-                <option value="RT 04">RT 04</option>
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi/Edit):</label>
-            <div class="flex gap-2 mt-1">
-                <input type="text" id="fileNameInput" class="flex-1 p-2 border rounded-md" placeholder="Tunggu sedang membaca...">
-                <button onclick="startOCR()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-bold shadow transition">
-                    SCAN
-                </button>
-            </div>
-        </div>
+    <div class="flex justify-center gap-2 mt-4">
+        <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
+        <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
+        <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
     </div>
-
-    <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium min-h-[20px]"></div>
-
+    
     <div class="flex gap-2 mt-4">
-        <button id="btnUpload" onclick="upload()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded shadow font-bold transition">Simpan ke Drive</button>
-        <button onclick="location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded shadow text-sm transition">Ulang</button>
+        <button onclick="location.reload()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
+        <button onclick="applyCrop()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow font-bold">Potong & Lanjut</button>
     </div>
 </div>
-    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>

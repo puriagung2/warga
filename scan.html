@@ -128,32 +128,48 @@
 
     function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
 
-    async function upload() {
+  async function upload() {
     const status = document.getElementById('status');
-    // ... (ambil nilai kategori, rt, dan nomorKK seperti sebelumnya)
+    const kategori = document.getElementById('kategoriFile').value; 
+    const rt = document.getElementById('rtSelector').value; 
+    const nomorKK = document.getElementById('fileNameInput').value.trim();
     
-    // GANTI: Hapus 'no-cors' agar kita bisa menangkap error dari server
+    if(!nomorKK) {
+        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+        return;
+    }
+
+    // PASTIKAN ADA KATA KUNCI 'const' DI SINI
+    const fileName = kategori + " " + nomorKK + ".pdf"; 
+    
+    document.getElementById('btn').disabled = true;
+    status.innerText = "Mengunggah...";
+
     try {
         const response = await fetch(GAS_URL, {
             method: 'POST',
-            // mode: 'cors' (default, jadi tidak perlu ditulis)
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                type: "upload", // Pastikan sesuai dengan switch di Code.gs
                 base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                fileName: fileName,
+                fileName: fileName, // Variabel ini sekarang sudah dikenali
                 selectedRt: rt
             })
         });
-
-        const result = await response.json(); // Sekarang kita bisa baca pesan error dari GAS
-
+        
+        const result = await response.json();
+        
         if (result.status === "success") {
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'File tersimpan.' });
-            resetForm();
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Berhasil!', 
+                text: fileName + ' telah tersimpan.' 
+            }).then(() => {
+                location.reload();
+            });
         } else {
-            throw new Error(result.message); // Tampilkan error dari Apps Script
+            throw new Error(result.message);
         }
+        
     } catch (err) {
         console.error(err);
         Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });

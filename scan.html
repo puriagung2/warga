@@ -9,10 +9,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
     <style>
- .img-container {
-        position: relative; /* Wajib agar absolute .header-guide bekerja */
-        max-height: 60vh;
-        overflow: hidden;
+        .img-container {
+            max-height: 70vh; /* Batasi tinggi container biar nggak kepotong di HP */
+            overflow: hidden;
+            background-color: #f3f4f6; /* Warna abu muda biar kelihatan batas gambar */
+        }
+        img {
+            max-width: 100%; /* Wajib biar Cropper.js berfungsi benar */
+        }
+ 
+    .img-container {
+        width: 100%;
+        height: 60vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         background-color: #f3f4f6;
     }
 #imagePreview {
@@ -20,26 +31,14 @@
     /* Hapus transition jika ada */
     display: block;
 }
-    .rotate-90 { transform: rotate(90deg); }
-    .rotate-180 { transform: rotate(180deg); }
-    .rotate-270 { transform: rotate(270deg); }   
-
-        /* Overlay untuk panduan header */
-.header-guide {
-        position: absolute;
-        top: 5%; 
-        left: 5%;
-        width: 90%;
-        height: 15%; 
-        border: 3px dashed rgba(255, 255, 0, 0.8);
-        pointer-events: none; /* Biar tombol di bawahnya tetap bisa diklik */
-        z-index: 10;
-    }
-        
+     .rotate-90 { transform: rotate(90deg); }
+.rotate-180 { transform: rotate(180deg); }
+.rotate-270 { transform: rotate(270deg); }   
+ 
     </style>
 </head>
-
 <body class="bg-gray-100 min-h-screen p-4">
+
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Scanner KK Puri Agung 2</h3>
         
@@ -52,16 +51,15 @@
         </div>
 
         <div id="editorSection" class="hidden mt-4">
-            <div class="img-container border rounded overflow-hidden relative">
+            <div class="img-container border rounded overflow-hidden">
                 <img id="imagePreview" src="" alt="Preview">
-                <div class="header-guide"></div>
             </div>
             
-            <div class="flex justify-center gap-2 mt-4">
-                <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
-                <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
-                <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
-            </div>
+<div class="flex justify-center gap-2 mt-4">
+    <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
+    <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
+    <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
+</div>
             
             <div class="flex gap-2 mt-4">
                 <button onclick="location.reload()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
@@ -69,21 +67,48 @@
             </div>
         </div>
 
-        <div id="finalSection" class="hidden mt-4">
-            <canvas id="canvas" class="w-full rounded border mb-4 hidden"></canvas>
-            <img id="croppedPreview" class="w-full rounded border mb-4 shadow" alt="Hasil Potong">
-            
-            <div class="mt-4 space-y-3">
-                </div>
-            <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium min-h-[20px]"></div>
-            <div class="flex gap-2 mt-4">
-                <button id="btnUpload" onclick="upload()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded shadow font-bold transition">Simpan ke Drive</button>
-                <button onclick="location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded shadow text-sm transition">Ulang</button>
+       <div id="finalSection" class="hidden mt-4">
+    <canvas id="canvas" class="w-full rounded border mb-4 hidden"></canvas>
+    <img id="croppedPreview" class="w-full rounded border mb-4 shadow" alt="Hasil Potong">
+    
+    <div class="mt-4 space-y-3">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
+            <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
+                <option value="KK BATAM">KK BATAM</option>
+                <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
+            <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
+                <option value="RT 01">RT 01</option>
+                <option value="RT 02">RT 02</option>
+                <option value="RT 03">RT 03</option>
+                <option value="RT 04">RT 04</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi/Edit):</label>
+            <div class="flex gap-2 mt-1">
+                <input type="text" id="fileNameInput" class="flex-1 p-2 border rounded-md" placeholder="Tunggu sedang membaca...">
+                <button onclick="startOCR()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-bold shadow transition">
+                    SCAN
+                </button>
             </div>
         </div>
     </div>
-...
-</body>
+
+    <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium min-h-[20px]"></div>
+
+    <div class="flex gap-2 mt-4">
+        <button id="btnUpload" onclick="upload()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded shadow font-bold transition">Simpan ke Drive</button>
+        <button onclick="location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded shadow text-sm transition">Ulang</button>
+    </div>
+</div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
@@ -193,46 +218,45 @@ cropper = new Cropper(imagePreview, {
 }
 
     // === FUNGSI 3: OCR ===
- async function startOCR() {
+  async function startOCR() {
     const fileNameInput = document.getElementById('fileNameInput');
     const status = document.getElementById('status');
-    const canvas = document.getElementById('canvas'); // Ini adalah canvas hasil potong/final
+    const canvas = document.getElementById('canvas');
     
     status.innerText = "Menganalisis (Fast Mode)...";
     
     try {
-        // 1. Tentukan area OCR (mengikuti header-guide 15% dari atas)
-        // Kita gunakan persentase yang sama dengan CSS .header-guide
-        const yOffset = canvas.height * 0.05; 
-        const cropHeight = canvas.height * 0.15;
-        
-        // 2. Buat virtual canvas untuk OCR
+        // 1. BUAT VIRTUAL CANVAS (Hanya 25% area atas & resize ke 800px)
+        // Ini mengurangi beban kerja Tesseract hingga 80-90%
         const tempCanvas = document.createElement('canvas');
-        const scale = 800 / canvas.width; // Resize lebar ke 800px untuk kecepatan
+        const scale = 800 / canvas.width; 
         tempCanvas.width = 800;
-        tempCanvas.height = cropHeight * scale;
+        tempCanvas.height = canvas.height * 0.25 * scale; // Hanya 25% area atas
         
         const ctx = tempCanvas.getContext('2d');
-        // Gambar bagian atas saja ke tempCanvas
-        ctx.drawImage(canvas, 0, yOffset, canvas.width, cropHeight, 0, 0, tempCanvas.width, tempCanvas.height);
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
         
-        // 3. Konversi ke Blob
+        // 2. Konversi ke Blob dengan kualitas rendah (0.5) sudah cukup untuk angka
         const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 0.5));
         
-        // 4. OCR dengan Tesseract
+        // 3. Panggil Tesseract dengan konfigurasi lebih ringan
         const { data: { text } } = await Tesseract.recognize(blob, 'ind', {
-            psm: 6 // Anggap sebagai blok teks satu baris
+            // PSM 6: Anggap sebagai satu blok teks yang seragam (sangat cepat untuk baris)
+            psm: 6 
         });
         
-        // 5. Bersihkan hasil
-        let cleanText = text.replace(/[^\d]/g, ''); 
+        // 4. Proses pembersihan
+        let cleanText = text.replace(/[^\d]/g, ''); // Ambil hanya angka
+        
+        // Cari angka 16 digit yang benar
+        // Karena kita sudah membuang karakter lain, cari deretan 16 angka
         const match = cleanText.match(/\d{16}/);
         
         if (match) {
             fileNameInput.value = match[0];
             status.innerText = "Berhasil dibaca!";
         } else {
-            status.innerText = "Nomor KK tidak terdeteksi. Silakan input manual.";
+            status.innerText = "Nomor KK tidak terdeteksi.";
         }
     } catch (err) {
         console.error(err);

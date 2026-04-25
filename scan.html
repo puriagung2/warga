@@ -105,23 +105,28 @@
     let originalFile = null;
     
 function rotateImage(degree) {
-    // 1. Putar gambar
+    // 1. Ambil data posisi crop yang lama
+    const imageData = cropper.getImageData();
+    const cropData = cropper.getData();
+    
+    // 2. Putar gambar
     cropper.rotate(degree);
-
-    // 2. Trik: Setelah rotasi, kita "re-fit" kotak crop
-    // Agar kotak crop menyesuaikan dengan orientasi baru dokumen
+    
+    // 3. Re-initialize (Hancurkan dan buat ulang)
+    // Ini memaksa cropper menghitung ulang rasio dan orientasi kotak
+    const currentSrc = document.getElementById('imagePreview').src;
+    
+    // Beri jeda sedikit agar rotasi selesai diproses
     setTimeout(() => {
-        const containerData = cropper.getContainerData();
-        const canvasData = cropper.getCanvasData();
-        
-        // Atur agar kotak crop memenuhi area gambar yang sudah diputar
-        cropper.setCropBoxData({
-            left: canvasData.left,
-            top: canvasData.top,
-            width: canvasData.width,
-            height: canvasData.height
+        cropper.destroy();
+        cropper = new Cropper(document.getElementById('imagePreview'), {
+            aspectRatio: NaN, // Bebaskan rasio agar bisa landscape/portrait
+            viewMode: 1,
+            autoCropArea: 0.9,
+            responsive: true,
+            rotatable: true,
         });
-    }, 200); // Beri jeda sedikit untuk animasi rotasi selesai
+    }, 100);
 }
     
     // === FUNGSI 1: MEMUAT FILE ===

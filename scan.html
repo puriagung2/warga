@@ -134,46 +134,28 @@
     const rt = document.getElementById('rtSelector').value; 
     const nomorKK = document.getElementById('fileNameInput').value.trim();
     
-    if(!nomorKK) {
-        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
-        return;
-    }
-
-    // PASTIKAN ADA KATA KUNCI 'const' DI SINI
-    const fileName = kategori + " " + nomorKK + ".pdf"; 
-    
+    const fileName = kategori + " " + nomorKK + ".pdf";
     document.getElementById('btn').disabled = true;
-    status.innerText = "Mengunggah...";
+    status.innerText = "Mengirim...";
 
+    // UJI COBA: Kita pakai no-cors agar tidak terblokir browser
     try {
-        const response = await fetch(GAS_URL, {
+        await fetch(GAS_URL, {
             method: 'POST',
+            mode: 'no-cors', // Paksa kirim tanpa peduli balasan
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                fileName: fileName, // Variabel ini sekarang sudah dikenali
+                fileName: fileName,
                 selectedRt: rt
             })
         });
         
-        const result = await response.json();
-        
-        if (result.status === "success") {
-            Swal.fire({ 
-                icon: 'success', 
-                title: 'Berhasil!', 
-                text: fileName + ' telah tersimpan.' 
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            throw new Error(result.message);
-        }
+        // Karena no-cors, kita tidak bisa membaca response.json()
+        status.innerText = "Data terkirim (no-cors). Cek Drive sekarang.";
         
     } catch (err) {
-        console.error(err);
-        Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
-        document.getElementById('btn').disabled = false;
+        status.innerText = "Error fatal: " + err.message;
     }
 }
 </script>

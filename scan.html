@@ -17,6 +17,21 @@
         img {
             max-width: 100%; /* Wajib biar Cropper.js berfungsi benar */
         }
+        <style>
+    .img-container {
+        width: 100%;
+        height: 60vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f3f4f6;
+    }
+    #imagePreview {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+    }
+</style>
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
@@ -105,26 +120,23 @@
     let originalFile = null;
     
 function rotateImage(degree) {
-    // 1. Ambil data posisi crop yang lama
-    const imageData = cropper.getImageData();
-    const cropData = cropper.getData();
-    
-    // 2. Putar gambar
+    if (!cropper) return;
+
+    // 1. Lakukan rotasi
     cropper.rotate(degree);
-    
-    // 3. Re-initialize (Hancurkan dan buat ulang)
-    // Ini memaksa cropper menghitung ulang rasio dan orientasi kotak
-    const currentSrc = document.getElementById('imagePreview').src;
-    
-    // Beri jeda sedikit agar rotasi selesai diproses
+
+    // 2. Penting: Panggil replace() atau setCanvasData untuk memaksa 
+    // Cropper menghitung ulang ruang yang tersedia setelah rotasi
     setTimeout(() => {
-        cropper.destroy();
-        cropper = new Cropper(document.getElementById('imagePreview'), {
-            aspectRatio: NaN, // Bebaskan rasio agar bisa landscape/portrait
-            viewMode: 1,
-            autoCropArea: 0.9,
-            responsive: true,
-            rotatable: true,
+        // Mengambil data canvas yang sudah diputar
+        const canvasData = cropper.getCanvasData();
+        
+        // Memaksa Cropper untuk menyesuaikan area crop dengan orientasi baru
+        cropper.setCropBoxData({
+            left: canvasData.left,
+            top: canvasData.top,
+            width: canvasData.width,
+            height: canvasData.height
         });
     }, 100);
 }

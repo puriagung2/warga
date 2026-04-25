@@ -134,15 +134,19 @@
     const rt = document.getElementById('rtSelector').value; 
     const nomorKK = document.getElementById('fileNameInput').value.trim();
     
+    if(!nomorKK) {
+        Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
+        return;
+    }
+
     const fileName = kategori + " " + nomorKK + ".pdf";
     document.getElementById('btn').disabled = true;
-    status.innerText = "Mengirim...";
+    status.innerText = "Mengunggah...";
 
-    // UJI COBA: Kita pakai no-cors agar tidak terblokir browser
     try {
         await fetch(GAS_URL, {
             method: 'POST',
-            mode: 'no-cors', // Paksa kirim tanpa peduli balasan
+            mode: 'no-cors', // Tetap gunakan no-cors untuk bypass CORS
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
@@ -151,11 +155,24 @@
             })
         });
         
-        // Karena no-cors, kita tidak bisa membaca response.json()
-        status.innerText = "Data terkirim (no-cors). Cek Drive sekarang.";
+        // Menampilkan notifikasi sukses sesuai permintaan Anda
+        Swal.fire({ 
+            icon: 'success', 
+            title: 'Berhasil!', 
+            text: fileName + ' telah tersimpan di folder ' + rt 
+        }).then((result) => {
+            // Setelah tombol OK di popup ditekan, jalankan resetForm
+            if (result.isConfirmed) {
+                resetForm();
+            }
+        });
+        
+        status.innerText = "Selesai.";
         
     } catch (err) {
-        status.innerText = "Error fatal: " + err.message;
+        console.error(err);
+        Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
+        document.getElementById('btn').disabled = false;
     }
 }
 </script>

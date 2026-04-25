@@ -123,25 +123,24 @@
     let originalFile = null;
     
 function rotateImage(degree) {
-    if (!cropper) return;
-
-    // 1. Lakukan rotasi
-    cropper.rotate(degree);
-
-    // 2. Penting: Panggil replace() atau setCanvasData untuk memaksa 
-    // Cropper menghitung ulang ruang yang tersedia setelah rotasi
+    const img = document.getElementById('imagePreview');
+    // Ambil rotasi saat ini
+    let currentRotation = parseInt(img.dataset.rotation || '0');
+    currentRotation = (currentRotation + degree) % 360;
+    img.dataset.rotation = currentRotation;
+    
+    // Terapkan rotasi CSS
+    img.style.transform = `rotate(${currentRotation}deg)`;
+    
+    // Beri tahu cropper bahwa gambar telah berubah ukuran/orientasi
     setTimeout(() => {
-        // Mengambil data canvas yang sudah diputar
-        const canvasData = cropper.getCanvasData();
-        
-        // Memaksa Cropper untuk menyesuaikan area crop dengan orientasi baru
-        cropper.setCropBoxData({
-            left: canvasData.left,
-            top: canvasData.top,
-            width: canvasData.width,
-            height: canvasData.height
+        cropper.destroy();
+        cropper = new Cropper(img, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            autoCropArea: 0.9,
         });
-    }, 100);
+    }, 300);
 }
     
     // === FUNGSI 1: MEMUAT FILE ===

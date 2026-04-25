@@ -137,28 +137,37 @@
         }
 
         // === FUNGSI 2: TERAPKAN CROP & PINDAH KE FINAL ===
-        function applyCrop() {
+       function applyCrop() {
             if (!cropper) return;
             
             const status = document.getElementById('status');
-            status.innerText = "Memotong gambar...";
+            status.innerText = "Memotong & Menambahkan Watermark...";
             
-            // Ambil hasil crop dalam bentuk Canvas
-            // Kita atur agar hasilnya maksimal (biar OCR akurat & PDF rapi)
             const croppedCanvas = cropper.getCroppedCanvas({
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high',
-                // Opsional: Batasi lebar maksimal hasil potong agar upload tidak berat (misal 1200px)
-                // maxWidth: 1200, 
             });
             
-            // Pindahkan hasil crop ke Canvas final kita
             const finalCanvas = document.getElementById('canvas');
             finalCanvas.width = croppedCanvas.width;
             finalCanvas.height = croppedCanvas.height;
-            finalCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0);
+            const ctx = finalCanvas.getContext('2d');
             
-            // Tampilkan Preview Hasil Crop
+            // 1. Gambar hasil crop
+            ctx.drawImage(croppedCanvas, 0, 0);
+            
+            // 2. Tambahkan Watermark
+            const fontSize = Math.floor(finalCanvas.width / 25); // Ukuran teks proporsional
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillStyle = "rgba(0, 0, 255, 0.4)"; // Biru transparan (0.4 = alpha/transparansi)
+            
+            // Posisi di pojok kiri bawah (Padding 20px dari kiri dan bawah)
+            const x = 20;
+            const y = finalCanvas.height - 20;
+            
+            ctx.fillText("PURI AGUNG 2 RW 6", x, y);
+            
+            // 3. Tampilkan Preview Hasil dengan Watermark
             const croppedPreview = document.getElementById('croppedPreview');
             croppedPreview.src = finalCanvas.toDataURL('image/jpeg', 0.9);
             
@@ -166,7 +175,7 @@
             document.getElementById('editorSection').classList.add('hidden');
             document.getElementById('finalSection').classList.remove('hidden');
             
-            // Jalankan OCR pada *HASIL POTONG* (bukan file asli)
+            // Jalankan OCR
             startOCR();
         }
 

@@ -223,30 +223,43 @@ cropper = new Cropper(imagePreview, {
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Mxembacaaaa...";
+    status.innerText = "Menganalisis (Fast Mode)...";
     
     try {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));
+        // 1. BUAT VIRTUAL CANVAS (Hanya 25% area atas & resize ke 800px)
+        // Ini mengurangi beban kerja Tesseract hingga 80-90%
+        const tempCanvas = document.createElement('canvas');
+        const scale = 800 / canvas.width; 
+        tempCanvas.width = 800;
+        tempCanvas.height = canvas.height * 0.25 * scale; // Hanya 25% area atas
         
-        // Tambahkan opsi psm (Page Segmentation Mode) 
-        // 3 = Default, 6 = Assume a single uniform block of text
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // 2. Konversi ke Blob dengan kualitas rendah (0.5) sudah cukup untuk angka
+        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 0.5));
+        
+        // 3. Panggil Tesseract dengan konfigurasi lebih ringan
         const { data: { text } } = await Tesseract.recognize(blob, 'ind', {
-            logger: m => console.log(m),
+            // PSM 6: Anggap sebagai satu blok teks yang seragam (sangat cepat untuk baris)
+            psm: 6 
         });
         
-        // Jika hasil OCR tetap berantakan, tambahkan pembersihan karakter di sini
-        let cleanText = text.replace(/[\n\r]+/g, ' ').replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1');
+        // 4. Proses pembersihan
+        let cleanText = text.replace(/[^\d]/g, ''); // Ambil hanya angka
         
-        // Cari angka 16 digit
-        const match = cleanText.match(/(\d{16})/);
+        // Cari angka 16 digit yang benar
+        // Karena kita sudah membuang karakter lain, cari deretan 16 angka
+        const match = cleanText.match(/\d{16}/);
         
         if (match) {
             fileNameInput.value = match[0];
             status.innerText = "Berhasil dibaca!";
         } else {
-            status.innerText = "Nomor KK tidak terdeteksi. Silakan input manual.";
+            status.innerText = "Nomor KK tidak terdeteksi.";
         }
     } catch (err) {
+        console.error(err);
         status.innerText = "Gagal membaca.";
     }
 }
@@ -269,7 +282,7 @@ cropper = new Cropper(imagePreview, {
         status.innerText = "Sedang kirim file...";
 
         const finalCanvas = document.getElementById('canvas');
-        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.9);
+        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.5); // Kualitas 0.5 dr 09 cukup untuk teks
 
         try {
             await fetch(GAS_URL, {

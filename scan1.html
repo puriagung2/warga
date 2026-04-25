@@ -3,221 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner KK - RW 06</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <title>Scanner KK RW6</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
+    <style>
+        .img-container {
+            max-height: 70vh; /* Batasi tinggi container biar nggak kepotong di HP */
+            overflow: hidden;
+            background-color: #f3f4f6; /* Warna abu muda biar kelihatan batas gambar */
+        }
+        img {
+            max-width: 100%; /* Wajib biar Cropper.js berfungsi benar */
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Scanner KK Puri Agung 2</h3>
-
+        
         <div id="uploadSection">
-            <label class="block w-full text-center py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                <span class="text-gray-500">Klik untuk ambil foto KK</span>
-                <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="loadFile(this)">
+            <label class="block w-full text-center py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition">
+                <span class="text-gray-500 block">Klik untuk ambil/pilih foto KK</span>
+                <span class="text-xs text-gray-400 block mt-1">(Bisa dari kamera atau galeri)</span>
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="loadFile(this)">
             </label>
         </div>
 
         <div id="editorSection" class="hidden mt-4">
-            <canvas id="canvas" class="w-full rounded border"></canvas>
+            <div class="img-container border rounded overflow-hidden">
+                <img id="imagePreview" src="" alt="Preview">
+            </div>
+            
             <div class="flex justify-center gap-2 mt-4">
-                <button onclick="rotateImage()" class="bg-gray-600 text-white px-4 py-2 rounded shadow">Putar 90°</button>
-                <button onclick="startOCR()" class="bg-yellow-500 text-white px-4 py-2 rounded shadow">Scan Ulang (OCR)</button>
+                <button onclick="cropper.rotate(-90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↺ L</button>
+                <button onclick="cropper.rotate(90)" class="bg-gray-600 text-white px-3 py-1.5 rounded shadow text-sm">↻ R</button>
+                <button onclick="cropper.reset()" class="bg-gray-500 text-white px-3 py-1.5 rounded shadow text-sm">Reset</button>
             </div>
-
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
-                <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
-                    <option value="KK BATAM">KK BATAM</option>
-                    <option value="KK LUAR BATAM">KK LUAR BATAM</option>
-                </select>
-            </div>
-
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
-                <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
-                    <option value="RT 01">RT 01</option>
-                    <option value="RT 02">RT 02</option>
-                    <option value="RT 03">RT 03</option>
-                    <option value="RT 04">RT 04</option>
-                </select>
-            </div>
-
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi Manual):</label>
-                <input type="text" id="fileNameInput" class="w-full mt-1 p-2 border rounded-md">
-            </div>
-
-            <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium"></div>
-
+            
             <div class="flex gap-2 mt-4">
-                <button id="btn" onclick="upload()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow">Simpan ke Drive</button>
-                <button onclick="location.reload()" class="bg-red-500 text-white py-2 px-4 rounded shadow">Reset</button>
+                <button onclick="location.reload()" class="flex-1 bg-red-500 text-white py-2 rounded shadow">Batal</button>
+                <button onclick="applyCrop()" class="flex-1 bg-blue-600 text-white py-2 rounded shadow font-bold">Potong & Lanjut</button>
+            </div>
+        </div>
+
+       <div id="finalSection" class="hidden mt-4">
+    <canvas id="canvas" class="w-full rounded border mb-4 hidden"></canvas>
+    <img id="croppedPreview" class="w-full rounded border mb-4 shadow" alt="Hasil Potong">
+    
+    <div class="mt-4 space-y-3">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pilih Kategori:</label>
+            <select id="kategoriFile" class="w-full mt-1 p-2 border rounded-md">
+                <option value="KK BATAM">KK BATAM</option>
+                <option value="KK LUAR BATAM">KK LUAR BATAM</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Pilih RT:</label>
+            <select id="rtSelector" class="w-full mt-1 p-2 border rounded-md">
+                <option value="RT 01">RT 01</option>
+                <option value="RT 02">RT 02</option>
+                <option value="RT 03">RT 03</option>
+                <option value="RT 04">RT 04</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi/Edit):</label>
+            <div class="flex gap-2 mt-1">
+                <input type="text" id="fileNameInput" class="flex-1 p-2 border rounded-md" placeholder="Tunggu sedang membaca...">
+                <button onclick="startOCR()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-bold shadow transition">
+                    SCAN
+                </button>
             </div>
         </div>
     </div>
 
+    <div id="status" class="mt-4 text-center text-sm text-gray-600 font-medium min-h-[20px]"></div>
+
+    <div class="flex gap-2 mt-4">
+        <button id="btnUpload" onclick="upload()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded shadow font-bold transition">Simpan ke Drive</button>
+        <button onclick="location.reload()" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded shadow text-sm transition">Ulang</button>
+    </div>
+</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyS4SondgG4nv2_80mFW5GvkkiwxV5ySmcByB3L2Yj2eOMJkS1I0u8hkBwP76WG5tlwlQ/exec";
+    // === KONFIGURASI ===
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzXh2wXJYOg5Z-4Q3Kz5iRSm7tPb7RSFgilap1DFBCFOEBXfNwfTYvSnk0XER13xmX2cQ/exec";
 
-    // !! GANTI dengan Spreadsheet ID yang sama di scankode.gs !!
-    // Format URL CSV Sheet: https://docs.google.com/spreadsheets/d/ID/export?format=csv
-    const SHEET_ID  = "1UjreUYynu0Sr_WbT-XlVZBLI59Av4zySJgZ9zewrfCA";
-    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/export?format=csv&sheet=Sheet1";
-
-    let img = new Image();
-    let rotation = 0;
+    // === STATE ===
+    let cropper = null; 
     let originalFile = null;
-    let pollTimer = null;
 
-    function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
-
-    function resetForm() {
-        stopPolling();
-        document.getElementById('uploadSection').classList.remove('hidden');
-        document.getElementById('editorSection').classList.add('hidden');
-        document.getElementById('fileInput').value = "";
-        document.getElementById('fileNameInput').value = "";
-        document.getElementById('status').innerText = "";
-        document.getElementById('btn').disabled = false;
-        const c = document.getElementById('canvas');
-        c.getContext('2d').clearRect(0, 0, c.width, c.height);
-        rotation = 0; originalFile = null;
-    }
-
-    function genToken() {
-        return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    }
-
+    // === FUNGSI 1: MEMUAT FILE ===
     function loadFile(input) {
-        if (!input.files || !input.files[0]) return;
-        originalFile = input.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            img.onload = () => { drawImage(); startOCR(); };
-            img.src = e.target.result;
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('editorSection').classList.remove('hidden');
-        };
-        reader.readAsDataURL(originalFile);
+        if (input.files && input.files[0]) {
+            originalFile = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.src = e.target.result;
+                
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+                
+                if (cropper) cropper.destroy();
+                
+                cropper = new Cropper(imagePreview, {
+                    aspectRatio: NaN,
+                    viewMode: 2,
+                    autoCropArea: 0.9,
+                    responsive: true,
+                    restore: false,
+                    guides: true,
+                    checkOrientation: true,
+                });
+            };
+            reader.readAsDataURL(originalFile);
+        }
     }
 
-    async function startOCR() {
-        stopPolling();
-        document.getElementById('fileNameInput').value = "";
-        document.getElementById('status').innerText = "TUNGGU SEDANG BACA NO KK...";
+    // === FUNGSI 2: CROP & WATERMARK ===
+    function applyCrop() {
+    if (!cropper) return;
+    
+    // Ambil gambar UTUH (bukan hasil potong)
+    const fullCanvas = cropper.getCroppedCanvas({
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    // Terapkan Watermark ke fullCanvas
+    const ctx = fullCanvas.getContext('2d');
+    const fontSize = Math.floor(fullCanvas.width / 40); 
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.fillStyle = "rgb(0, 50, 200)"; 
+    ctx.globalAlpha = 0.6; 
+    ctx.fillText("PURI AGUNG 2 RW 6", fullCanvas.width * 0.05, fullCanvas.height - (fullCanvas.height * 0.02));
+    ctx.globalAlpha = 1.0;
 
-        const canvas = document.getElementById('canvas');
-        const base64Image = canvas.toDataURL('image/jpeg', 0.85);
-        const token = genToken();
+    // Simpan ke canvas utama (canvas ini yang akan di-upload ke PDF)
+    const finalCanvas = document.getElementById('canvas');
+    finalCanvas.width = fullCanvas.width;
+    finalCanvas.height = fullCanvas.height;
+    finalCanvas.getContext('2d').drawImage(fullCanvas, 0, 0);
+    
+    // Tampilkan preview utuh
+    document.getElementById('croppedPreview').src = finalCanvas.toDataURL('image/jpeg', 0.9);
+    
+    document.getElementById('editorSection').classList.add('hidden');
+    document.getElementById('finalSection').classList.remove('hidden');
+    
+    // Tetap jalankan OCR
+    startOCR();
+}
 
-        // Kirim ke GAS via no-cors (fire and forget — tidak bisa baca response)
-        fetch(GAS_URL, {
-            method : 'POST',
-            mode   : 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body   : JSON.stringify({ action: 'ocr', token, base64Image })
-        }).catch(err => console.warn("POST error:", err));
-
-        // Polling hasil dari Google Sheet CSV (bebas CORS karena Sheet publik)
-        const MAX_WAIT = 60000;
-        const INTERVAL = 4000;
-        let elapsed = 0;
-
-        pollTimer = setInterval(async () => {
-            elapsed += INTERVAL;
-            try {
-                // Tambah timestamp agar tidak kena browser cache
-                const res  = await fetch(SHEET_CSV + "&t=" + Date.now());
-                const text = await res.text();
-
-                // Parse CSV — cari baris dengan token kita
-                const rows = text.trim().split('\n').map(r => r.split(','));
-                const found = rows.find(r => r[0] && r[0].trim() === token);
-
-                if (!found) {
-                    // Belum ada hasil
-                    if (elapsed >= MAX_WAIT) {
-                        stopPolling();
-                        document.getElementById('status').innerText = "Waktu habis, silakan masukkan manual.";
-                    }
-                    return;
-                }
-
-                stopPolling();
-
-                const nomorKK = (found[1] || "").trim().replace(/"/g,'');
-                const status  = (found[2] || "").trim().replace(/"/g,'');
-
-                if (status === "error") {
-                    console.error("OCR error:", found[3]);
-                    document.getElementById('status').innerText = "Gagal membaca, silakan masukkan manual.";
-                    return;
-                }
-
-                document.getElementById('fileNameInput').value = nomorKK;
-                document.getElementById('status').innerText = nomorKK
-                    ? "Pembacaan selesai. Periksa kembali nomor KK."
-                    : "Nomor KK tidak ditemukan, silakan masukkan manual.";
-
-            } catch (err) {
-                console.warn("Poll error:", err);
-                if (elapsed >= MAX_WAIT) {
-                    stopPolling();
-                    document.getElementById('status').innerText = "Waktu habis, silakan masukkan manual.";
-                }
-            }
-        }, INTERVAL);
+    // === FUNGSI 3: OCR ===
+  async function startOCR() {
+    const fileNameInput = document.getElementById('fileNameInput');
+    const status = document.getElementById('status');
+    const canvas = document.getElementById('canvas');
+    
+    status.innerText = "Menganalisis Nomor KK...";
+    
+    // Teknik: Hanya ambil 20% area atas gambar untuk OCR agar akurat
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height * 0.25; // Ambil 25% area atas saja
+    tempCanvas.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height * 0.25, 0, 0, tempCanvas.width, tempCanvas.height);
+    
+    try {
+        const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 1.0));
+        const { data: { text } } = await Tesseract.recognize(blob, 'ind');
+        
+        // Bersihkan teks & cari 16 digit
+        const allNumbers = text.replace(/L/gi, '0').replace(/O/gi, '0').replace(/I/gi, '1').match(/\d+/g);
+        
+        let found = allNumbers ? allNumbers.find(num => num.length === 16) : null;
+        
+        if (found) {
+            fileNameInput.value = found;
+            status.innerText = "Berhasil!";
+        } else {
+            status.innerText = "Otomatis gagal. Silakan cek manual.";
+        }
+    } catch (err) {
+        status.innerText = "Gagal membaca.";
     }
+}
 
-    function drawImage() {
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width  = (rotation % 180 !== 0) ? img.height : img.width;
-        canvas.height = (rotation % 180 !== 0) ? img.width  : img.height;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(rotation * Math.PI / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-    }
-
-    function rotateImage() { rotation = (rotation + 90) % 360; drawImage(); }
-
+    // === FUNGSI 4: UPLOAD ===
     async function upload() {
-        const status   = document.getElementById('status');
-        const kategori = document.getElementById('kategoriFile').value;
-        const rt       = document.getElementById('rtSelector').value;
-        const nomorKK  = document.getElementById('fileNameInput').value.trim();
-
-        if (!nomorKK) {
+        const status = document.getElementById('status');
+        const btnUpload = document.getElementById('btnUpload');
+        const kategori = document.getElementById('kategoriFile').value; 
+        const rt = document.getElementById('rtSelector').value; 
+        const nomorKK = document.getElementById('fileNameInput').value.trim();
+        
+        if(!nomorKK) {
             Swal.fire({ icon: 'warning', title: 'Oops!', text: 'Nomor KK wajib diisi!' });
             return;
         }
-
+        
         const fileName = kategori + " " + nomorKK + ".pdf";
-        document.getElementById('btn').disabled = true;
-        status.innerText = "Mengunggah...";
+        btnUpload.disabled = true;
+        status.innerText = "Sedang kirim file...";
+
+        const finalCanvas = document.getElementById('canvas');
+        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.9);
 
         try {
             await fetch(GAS_URL, {
-                method : 'POST',
-                mode   : 'no-cors',
+                method: 'POST',
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
-                body   : JSON.stringify({
-                    base64Data: document.getElementById('canvas').toDataURL('image/jpeg', 0.9),
-                    fileName,
+                body: JSON.stringify({
+                    base64Data: base64Data,
+                    fileName: fileName,
                     selectedRt: rt
                 })
             });
-
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: fileName + ' telah tersimpan.' })
-                .then(() => resetForm());
-
+            
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Berhasil!', 
+                text: fileName + ' telah tersimpan di folder ' + rt 
+            }).then(() => {
+                location.reload(); 
+            });
         } catch (err) {
-            console.error(err);
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan jaringan.' });
-            document.getElementById('btn').disabled = false;
+            btnUpload.disabled = false;
         }
     }
 </script>

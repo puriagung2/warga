@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner KK Pro - RW 06</title>
+    <title>Scanner KK - RW 06</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -75,7 +75,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">Nomor KK (Verifikasi/Edit):</label>
             <div class="flex gap-2 mt-1">
-                <input type="text" id="fileNameInput" class="flex-1 p-2 border rounded-md" placeholder="Sedang membaca...">
+                <input type="text" id="fileNameInput" class="flex-1 p-2 border rounded-md" placeholder="Tunggu sedang membaca...">
                 <button onclick="startOCR()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-bold shadow transition">
                     SCAN
                 </button>
@@ -192,7 +192,7 @@
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Membaca ulang...";
+    status.innerText = "Tunggu sedang baca No KK...";
     
     try {
         // Trik: Convert ke Grayscale agar angka lebih menonjol
@@ -217,12 +217,12 @@
         
         if (match) {
             fileNameInput.value = match[0];
-            status.innerText = "Berhasil dibaca!";
+            status.innerText = "Berhasil dibaca, periksa No KK !";
         } else {
-            status.innerText = "Gagal otomatis. Silakan isi manual.";
+            status.innerText = "Gagal baca. Silakan isi manual.";
         }
     } catch (err) {
-        status.innerText = "Error OCR. Silakan isi manual.";
+        status.innerText = "Tidak terbaca. Silakan isi manual.";
     }
 }
 
@@ -241,7 +241,7 @@
             
             const fileName = kategori + " " + nomorKK + ".pdf";
             btnUpload.disabled = true;
-            status.innerText = "Mengunggah...";
+            status.innerText = "Sedang kirim file...";
 
             // Ambil data gambar dari canvas final (hasil crop) dalam base64
             const finalCanvas = document.getElementById('canvas');

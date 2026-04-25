@@ -174,7 +174,7 @@
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Membaca...";
+    status.innerText = "Menganalisis...";
     
     try {
         const ctx = canvas.getContext('2d');
@@ -187,45 +187,30 @@
         ctx.putImageData(imgData, 0, 0);
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));
-        
         const { data: { text } } = await Tesseract.recognize(blob, 'ind');
         
-        // 1. Bersihkan karakter yang sering salah baca
-        let cleanText = text
-            .replace(/L/gi, '0')
-            .replace(/O/gi, '0')
-            .replace(/I/gi, '1')
-            .replace(/S/gi, '5')
-            .replace(/Z/gi, '2')
-            .replace(/[^0-9]/g, ' '); // Ganti semua SELAIN angka menjadi spasi
-
-        console.log("Clean text untuk pencarian:", cleanText);
-
-        // 2. Cari semua deretan angka
-        const numbers = cleanText.match(/\d+/g);
+        // 1. Ambil semua deretan angka yang ada di teks
+        const allNumbers = text.match(/\d+/g);
         
-        if (numbers) {
-            // Cari angka yang panjangnya 16 digit
-            const found = numbers.find(num => num.length === 16);
+        if (allNumbers) {
+            // 2. Filter: cari angka yang panjangnya TEPAT 16
+            // Beberapa KK mungkin terbaca 17 digit karena noise, kita ambil 16 karakter pertama dari angka tersebut
+            let found = allNumbers.find(num => num.length === 16);
+            
+            // Jika tidak ada yang pas 16, cari yang 17 (sering terjadi karena OCR salah baca)
+            if (!found) {
+                const longNum = allNumbers.find(num => num.length === 17);
+                if (longNum) found = longNum.substring(0, 16); // Ambil 16 digit saja
+            }
             
             if (found) {
                 fileNameInput.value = found;
-                status.innerText = "Berhasil dibaca!";
+                status.innerText = "Ditemukan: " + found;
             } else {
-                // Jika tidak ada 16 digit, mungkin angkanya terpotong (misal 8+8)
-                // Kita coba gabungkan semua angka dan cari 16 digit
-                const allDigits = numbers.join('');
-                const subMatch = allDigits.match(/\d{16}/);
-                
-                if (subMatch) {
-                    fileNameInput.value = subMatch[0];
-                    status.innerText = "Berhasil dibaca (mode gabung)!";
-                } else {
-                    status.innerText = "Angka 16 digit tidak ditemukan. Isi manual.";
-                }
+                status.innerText = "Nomor tidak valid (harus 16 digit).";
             }
         } else {
-            status.innerText = "Tidak ada angka terdeteksi. Isi manual.";
+            status.innerText = "Tidak ada angka terbaca.";
         }
     } catch (err) {
         status.innerText = "Gagal membaca.";

@@ -105,10 +105,24 @@
     let originalFile = null;
     
 function rotateImage(degree) {
-        cropper.rotate(degree);
-        // Setelah rotasi, kotak crop mungkin perlu di-reset agar pas dengan orientasi baru
-        // cropper.setCropBoxData({ ... }); // Opsional jika ingin mengatur manual
-    }
+    // 1. Putar gambar
+    cropper.rotate(degree);
+
+    // 2. Trik: Setelah rotasi, kita "re-fit" kotak crop
+    // Agar kotak crop menyesuaikan dengan orientasi baru dokumen
+    setTimeout(() => {
+        const containerData = cropper.getContainerData();
+        const canvasData = cropper.getCanvasData();
+        
+        // Atur agar kotak crop memenuhi area gambar yang sudah diputar
+        cropper.setCropBoxData({
+            left: canvasData.left,
+            top: canvasData.top,
+            width: canvasData.width,
+            height: canvasData.height
+        });
+    }, 200); // Beri jeda sedikit untuk animasi rotasi selesai
+}
     
     // === FUNGSI 1: MEMUAT FILE ===
     function loadFile(input) {
@@ -126,11 +140,12 @@ function rotateImage(degree) {
                 if (cropper) cropper.destroy();
                 
 cropper = new Cropper(imagePreview, {
-    aspectRatio: NaN, // Bebas, agar landscape tidak terpotong
-    viewMode: 1,
-    autoCropArea: 0.9, // Mulai dengan 90% area
+    aspectRatio: NaN, 
+    viewMode: 1, // Penting: Agar kotak crop tetap di dalam batas gambar
+    dragMode: 'move', // Memudahkan menggeser dokumen yang landscape
+    autoCropArea: 0.9,
     responsive: true,
-    guides: true,
+    rotatable: true, // Pastikan ini true
 });
             };
             reader.readAsDataURL(originalFile);
@@ -188,7 +203,7 @@ cropper = new Cropper(imagePreview, {
     const status = document.getElementById('status');
     const canvas = document.getElementById('canvas');
     
-    status.innerText = "Membacaaaa...";
+    status.innerText = "Mxembacaaaa...";
     
     try {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 1.0));

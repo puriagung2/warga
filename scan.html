@@ -119,52 +119,60 @@
                 
                 if (cropper) cropper.destroy();
                 
-                cropper = new Cropper(imagePreview, {
-                    aspectRatio: NaN,
-                    viewMode: 2,
-                    autoCropArea: 0.9,
-                    responsive: true,
-                    restore: false,
-                    guides: true,
-                    checkOrientation: true,
-                });
+cropper = new Cropper(imagePreview, {
+    aspectRatio: 1 / 1.41, // Paksa ke rasio kertas A4
+    viewMode: 1,           // Membatasi crop box agar tidak keluar dari gambar
+    autoCropArea: 1,       // Paksa crop box langsung menutupi seluruh gambar
+    responsive: true,
+    guides: true,
+});
             };
             reader.readAsDataURL(originalFile);
         }
     }
 
     // === FUNGSI 2: CROP & WATERMARK ===
-    function applyCrop() {
+   function applyCrop() {
     if (!cropper) return;
     
-    // Ambil gambar UTUH (bukan hasil potong)
+    // Ambil data gambar utuh
+    const croppedData = cropper.getData(); // Ambil data crop jika ada
     const fullCanvas = cropper.getCroppedCanvas({
         imageSmoothingEnabled: true,
         imageSmoothingQuality: 'high',
     });
     
-    // Terapkan Watermark ke fullCanvas
-    const ctx = fullCanvas.getContext('2d');
-    const fontSize = Math.floor(fullCanvas.width / 40); 
-    ctx.font = `bold ${fontSize}px Arial`;
-    ctx.fillStyle = "rgb(0, 50, 200)"; 
-    ctx.globalAlpha = 0.6; 
-    ctx.fillText("PURI AGUNG 2 RW 6", fullCanvas.width * 0.05, fullCanvas.height - (fullCanvas.height * 0.02));
-    ctx.globalAlpha = 1.0;
-
-    // Simpan ke canvas utama (canvas ini yang akan di-upload ke PDF)
+    // Tentukan ukuran standar PDF (misal A4 rasio 1:1.41)
     const finalCanvas = document.getElementById('canvas');
     finalCanvas.width = fullCanvas.width;
     finalCanvas.height = fullCanvas.height;
-    finalCanvas.getContext('2d').drawImage(fullCanvas, 0, 0);
     
-    // Tampilkan preview utuh
+    const ctx = finalCanvas.getContext('2d');
+    
+    // 1. Gambar ke Canvas (Utuh)
+    ctx.drawImage(fullCanvas, 0, 0);
+    
+    // 2. Tambahkan Watermark
+    const fontSize = Math.floor(finalCanvas.width / 40); 
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.fillStyle = "rgb(0, 50, 200)"; 
+    ctx.globalAlpha = 0.6; 
+    
+    // Letakkan di pojok kiri bawah dengan margin
+    ctx.fillText("PURI AGUNG 2 RW 6", finalCanvas.width * 0.05, finalCanvas.height - (finalCanvas.height * 0.02));
+    ctx.globalAlpha = 1.0;
+    
+    // --- TAMBAHAN: MENGHILANGKAN RUANG KOSONG ---
+    // Jika Anda ingin PDF benar-benar pas dengan ukuran konten, 
+    // Anda bisa melakukan "Trim" atau membiarkan canvas mengikuti ukuran gambar saja.
+    // Kode di atas sudah otomatis mengikuti ukuran fullCanvas, 
+    // jadi tidak akan ada ruang putih ekstra jika cropper.js sudah diatur benar.
+    
     document.getElementById('croppedPreview').src = finalCanvas.toDataURL('image/jpeg', 0.9);
     
     document.getElementById('editorSection').classList.add('hidden');
     document.getElementById('finalSection').classList.remove('hidden');
     
-    // Tetap jalankan OCR
     startOCR();
 }
 

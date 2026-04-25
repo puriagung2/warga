@@ -105,36 +105,33 @@
         let originalFile = null; // Untuk menyimpan file asli buat OCR
 
         // === FUNGSI 1: MEMUAT FILE & AKTIFKAN CROPPER ===
-        function loadFile(input) {
-            if (input.files && input.files[0]) {
-                originalFile = input.files[0];
-                const reader = new FileReader();
+   function loadFile(input) {
+        if (input.files && input.files[0]) {
+            originalFile = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.src = e.target.result;
                 
-                reader.onload = (e) => {
-                    const imagePreview = document.getElementById('imagePreview');
-                    imagePreview.src = e.target.result;
-                    
-                    // Pindah Section
-                    document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('editorSection').classList.remove('hidden');
-                    
-                    // Inisialisasi Cropper.js
-                    // Jika cropper sudah ada (misal ganti foto), hancurkan dulu
-                    if (cropper) cropper.destroy();
-                    
-                    cropper = new Cropper(imagePreview, {
-                        aspectRatio: NaN, // NaN = Bebas (bisa potong kotak, persegi panjang, dll)
-                        viewMode: 2, // Batasi kotak potong di dalam gambar, jangan melebihi
-                        autoCropArea: 0.9, // Otomatis buat kotak potong 90% area
-                        responsive: true,
-                        restore: false,
-                        guides: true, // Tampilkan garis bantu
-                        checkOrientation: true, // Perbaiki rotasi EXIF
-                    });
-                };
-                reader.readAsDataURL(originalFile);
-            }
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+                
+                if (cropper) cropper.destroy();
+                
+                cropper = new Cropper(imagePreview, {
+                    aspectRatio: NaN,
+                    viewMode: 2,
+                    autoCropArea: 0.9,
+                    responsive: true,
+                    restore: false,
+                    guides: true,
+                    checkOrientation: true,
+                });
+            };
+            reader.readAsDataURL(originalFile);
         }
+    }
 
         // === FUNGSI 2: TERAPKAN CROP & PINDAH KE FINAL ===
        function applyCrop() {

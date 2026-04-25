@@ -282,7 +282,7 @@ cropper = new Cropper(imagePreview, {
         status.innerText = "Sedang kirim file...";
 
         const finalCanvas = document.getElementById('canvas');
-        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.5); // Kualitas 0.5 dr 09 cukup untuk teks
+        const base64Data = finalCanvas.toDataURL('image/jpeg', 0.7); // Kualitas 0.5 dr 09 cukup untuk teks
 
         try {
             await fetch(GAS_URL, {

@@ -969,6 +969,18 @@ body.dark span:not(.material-icons) {
             Ambil Foto
         </label>
     </div>
+                      <div id="preview-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
+    <div class="relative w-full max-w-xs">
+        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
+        
+        <!-- tombol hapus -->
+        <button onclick="removePreview()" 
+            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
+            Hapus
+        </button>
+    </div>
+</div>
         
     <form id="form-warga" onsubmit="handleSaveWarga(event)" class="space-y-4 pb-24">
         <input type="hidden" id="f-original-nik">
@@ -1144,19 +1156,6 @@ body.dark span:not(.material-icons) {
                     <p class="text-[10px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Upload KTP</p>
                     <p class="text-[8px]" style="color: var(--text-muted)">Scan/Foto E-KTP</p>
                 </div>
-
-              <div id="preview-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
-    <div class="relative w-full max-w-xs">
-        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
-        
-        <!-- tombol hapus -->
-        <button onclick="removePreview()" 
-            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
-            Hapus
-        </button>
-    </div>
-</div>
               
             </label>
         </div>

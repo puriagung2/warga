@@ -981,6 +981,26 @@ body.dark span:not(.material-icons) {
         </button>
     </div>
 </div>
+        <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
+
+        <!-- kotak crop -->
+        <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move"></div>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
+            Gunakan Crop
+        </button>
+
+        <button onclick="scanUlang()" class="bg-gray-500 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Ulang
+        </button>
+    </div>
+</div>
         
     <form id="form-warga" onsubmit="handleSaveWarga(event)" class="space-y-4 pb-24">
         <input type="hidden" id="f-original-nik">
@@ -3411,24 +3431,44 @@ function fileToBase64(file) {
     });
 }
 
-    async function previewAndScanKtp(event) {
+let selectedFile = null;
+
+async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // 🔹 tampilkan preview
+    selectedFile = file; // simpan file asli
+
+    // 🔹 auto crop dulu (opsional, bisa bantu user)
+    const croppedFile = await autoCropKtp(file);
+
     const previewContainer = document.getElementById('preview-container');
     const previewImage = document.getElementById('preview-image');
-    const croppedFile = await autoCropKtp(file);
+
+    const cropContainer = document.getElementById('crop-container');
+    const cropImage = document.getElementById('crop-image');
 
     const reader = new FileReader();
     reader.onload = function(e) {
+
+        // 🔹 tampilkan preview kecil
         previewImage.src = e.target.result;
         previewContainer.classList.remove('hidden');
+
+        // 🔹 tampilkan area crop manual
+        cropImage.src = e.target.result;
+        cropContainer.classList.remove('hidden');
+
+        // 🔥 aktifkan kotak crop
+        setTimeout(() => {
+            initCropBox();
+        }, 100);
     };
+
     reader.readAsDataURL(croppedFile);
-    
-    // 🔹 lanjut scan OCR
-    await handleOcrKtp(event);
+
+    // ❌ HAPUS INI (biar tidak auto scan)
+    // await handleOcrKtp(event);
 }
 
     function removePreview() {
@@ -3513,7 +3553,117 @@ function fileToBase64(file) {
         reader.readAsDataURL(file);
     });
 }
-    
+
+    function initCropBox() {
+    const box = document.getElementById("crop-box");
+    const img = document.getElementById("crop-image");
+
+    box.style.left = "40px";
+    box.style.top = "40px";
+    box.style.width = "200px";
+    box.style.height = "120px";
+
+    let isDragging = false, startX, startY;
+
+    box.onmousedown = (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+    };
+
+    document.onmouseup = () => isDragging = false;
+
+    document.onmousemove = (e) => {
+        if (!isDragging) return;
+
+        let dx = e.clientX - startX;
+        let dy = e.clientY - startY;
+
+        box.style.left = (box.offsetLeft + dx) + "px";
+        box.style.top = (box.offsetTop + dy) + "px";
+
+        startX = e.clientX;
+        startY = e.clientY;
+    };
+}
+    async function applyCrop() {
+    const img = document.getElementById("crop-image");
+    const box = document.getElementById("crop-box");
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const scaleX = img.naturalWidth / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
+
+    const x = box.offsetLeft * scaleX;
+    const y = box.offsetTop * scaleY;
+    const w = box.clientWidth * scaleX;
+    const h = box.clientHeight * scaleY;
+
+    canvas.width = w;
+    canvas.height = h;
+
+    const image = new Image();
+    image.src = img.src;
+
+    image.onload = async () => {
+        ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
+
+        canvas.toBlob(async (blob) => {
+            // 🔥 lanjut ke OCR
+            await processOcrFromBlob(blob);
+        }, "image/jpeg", 0.9);
+    };
+}
+    async function processOcrFromBlob(file) {
+    const overlay = document.getElementById('loading-overlay');
+    const statusText = document.getElementById('status-text');
+
+    overlay.style.display = 'flex';
+    statusText.innerText = "Memproses OCR...";
+
+    try {
+        const compressedFile = await compressImage(file);
+        const base64Image = await fileToBase64(compressedFile);
+
+        let response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "ocrKtp",
+                args: [base64Image]
+            })
+        });
+
+        let result = await response.json();
+
+        console.log(result);
+
+        if (result.OCRExitCode === 1) {
+            extractKtpData(result.ParsedResults[0].ParsedText);
+
+            Swal.fire({
+                title: 'Scan Berhasil!',
+                icon: 'success'
+            });
+        } else {
+            throw new Error("Gagal membaca KTP");
+        }
+
+    } catch (err) {
+        Swal.fire({
+            title: 'Gagal Scan',
+            text: err.message,
+            icon: 'error'
+        });
+    } finally {
+        overlay.style.display = 'none';
+    }
+}
+    function scanUlang() {
+    document.getElementById('scan-ktp-input').value = "";
+    document.getElementById('crop-container').classList.add('hidden');
+}
   </script>
 
   <div id="photo-viewer"

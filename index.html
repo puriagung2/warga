@@ -3056,8 +3056,12 @@ async function handleOcrKtp(event) {
 
     try {
         // 🔹 1. Kompres gambar
-        const compressedFile = await compressImage(file);
+// 🔹 crop dulu
+const croppedFile = await autoCropKtp(file);
 
+// 🔹 lalu kompres
+const compressedFile = await compressImage(croppedFile);
+      
         // 🔹 2. Convert ke base64
         const base64Image = await fileToBase64(compressedFile);
 
@@ -3414,14 +3418,15 @@ function fileToBase64(file) {
     // 🔹 tampilkan preview
     const previewContainer = document.getElementById('preview-container');
     const previewImage = document.getElementById('preview-image');
+    const croppedFile = await autoCropKtp(file);
 
     const reader = new FileReader();
     reader.onload = function(e) {
         previewImage.src = e.target.result;
         previewContainer.classList.remove('hidden');
     };
-    reader.readAsDataURL(file);
-
+    reader.readAsDataURL(croppedFile);
+    
     // 🔹 lanjut scan OCR
     await handleOcrKtp(event);
 }
@@ -3432,6 +3437,81 @@ function fileToBase64(file) {
 
     // reset input file
     document.getElementById('scan-ktp-input').value = "";
+}
+
+    async function autoCropKtp(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+        };
+
+        img.onload = function() {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // 🔹 grayscale + threshold
+            let minX = canvas.width, minY = canvas.height;
+            let maxX = 0, maxY = 0;
+
+            for (let y = 0; y < canvas.height; y += 2) {
+                for (let x = 0; x < canvas.width; x += 2) {
+                    const i = (y * canvas.width + x) * 4;
+
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    const gray = (r + g + b) / 3;
+
+                    // 🔥 threshold (atur kalau perlu)
+                    if (gray > 120) {
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            // fallback kalau gagal deteksi
+            if (maxX - minX < 100 || maxY - minY < 100) {
+                resolve(file);
+                return;
+            }
+
+            // 🔹 crop area
+            const cropWidth = maxX - minX;
+            const cropHeight = maxY - minY;
+
+            const cropCanvas = document.createElement("canvas");
+            const cropCtx = cropCanvas.getContext("2d");
+
+            cropCanvas.width = cropWidth;
+            cropCanvas.height = cropHeight;
+
+            cropCtx.drawImage(
+                img,
+                minX, minY, cropWidth, cropHeight,
+                0, 0, cropWidth, cropHeight
+            );
+
+            cropCanvas.toBlob((blob) => {
+                resolve(blob);
+            }, "image/jpeg", 0.9);
+        };
+
+        reader.readAsDataURL(file);
+    });
 }
     
   </script>

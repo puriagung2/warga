@@ -3048,7 +3048,7 @@ async function handleOcrKtp(event) {
         // 🔹 2. Convert ke base64
         const base64Image = await fileToBase64(compressedFile);
 
-        statusText.innerText = "MENGIRIM KE SERVER OCR...";
+        statusText.innerText = "TUNGGU, SEDANG BACA KTP...";
 
         // 🔹 3. Kirim ke GAS (bukan langsung ke OCR)
 let response = await fetch(API_URL, {

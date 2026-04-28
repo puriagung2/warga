@@ -964,7 +964,7 @@ body.dark span:not(.material-icons) {
             </div>
         </div>
         
-        <input type="file" id="scan-ktp-input" accept="image/*" class="hidden" onchange="handleOcrKtp(event)">
+        <input type="file" id="scan-ktp-input" accept="image/*" class="hidden" onchange="previewAndScanKtp(event)">
         <label for="scan-ktp-input" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer">
             Ambil Foto
         </label>
@@ -1144,6 +1144,20 @@ body.dark span:not(.material-icons) {
                     <p class="text-[10px] font-bold uppercase tracking-tighter" style="color: var(--text-main)">Upload KTP</p>
                     <p class="text-[8px]" style="color: var(--text-muted)">Scan/Foto E-KTP</p>
                 </div>
+
+              <div id="preview-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
+    <div class="relative w-full max-w-xs">
+        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
+        
+        <!-- tombol hapus -->
+        <button onclick="removePreview()" 
+            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
+            Hapus
+        </button>
+    </div>
+</div>
+              
             </label>
         </div>
     </div>
@@ -3392,6 +3406,33 @@ function fileToBase64(file) {
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
+}
+
+    async function previewAndScanKtp(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 🔹 tampilkan preview
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        previewContainer.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    // 🔹 lanjut scan OCR
+    await handleOcrKtp(event);
+}
+
+    function removePreview() {
+    document.getElementById('preview-container').classList.add('hidden');
+    document.getElementById('preview-image').src = "";
+
+    // reset input file
+    document.getElementById('scan-ktp-input').value = "";
 }
     
   </script>

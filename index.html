@@ -3705,10 +3705,20 @@ async function previewAndScanKtp(event) {
     image.onload = async () => {
         ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
 
-        canvas.toBlob(async (blob) => {
-            // 🔥 lanjut ke OCR
-            await processOcrFromBlob(blob);
-        }, "image/jpeg", 0.9);
+canvas.toBlob(async (blob) => {
+
+    // 🔥 ubah blob jadi File
+    const file = new File([blob], "ktp-crop.jpg", {
+        type: "image/jpeg"
+    });
+
+    // 🔥 masukkan ke input upload form
+    setFileToInput("f-foto-ktp", file);
+
+    // 🔥 lanjut OCR (opsional, kalau mau tetap auto)
+    await processOcrFromBlob(blob);
+
+}, "image/jpeg", 0.9);
     };
 }
     async function processOcrFromBlob(file) {
@@ -3759,6 +3769,34 @@ async function previewAndScanKtp(event) {
     document.getElementById('scan-ktp-input').value = "";
     document.getElementById('crop-container').classList.add('hidden');
 }
+
+    function setFileToInput(fileInputId, file) {
+    const input = document.getElementById(fileInputId);
+
+    // DataTransfer dipakai untuk set file ke input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+
+    // trigger onchange biar preview jalan
+    input.dispatchEvent(new Event('change'));
+}
+
+    async function scanTanpaCrop() {
+    const img = document.getElementById("crop-image");
+
+    const res = await fetch(img.src);
+    const blob = await res.blob();
+
+    const file = new File([blob], "ktp.jpg", {
+        type: "image/jpeg"
+    });
+
+    setFileToInput("f-foto-ktp", file);
+
+    await processOcrFromBlob(blob);
+}
+    
   </script>
 
   <div id="photo-viewer"

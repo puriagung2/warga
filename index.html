@@ -499,7 +499,25 @@ body.dark span:not(.material-icons) {
 }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
+
+.resize-handle {
+    width: 12px;
+    height: 12px;
+    background: white;
+    border: 2px solid #6366f1;
+    position: absolute;
+    border-radius: 50%;
+}
+
+/* posisi */
+.tl { top: -6px; left: -6px; cursor: nwse-resize; }
+.tr { top: -6px; right: -6px; cursor: nesw-resize; }
+.bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+    #crop-box {
+    touch-action: none;
+}
   </style>
 </head>
 <body>
@@ -969,15 +987,64 @@ body.dark span:not(.material-icons) {
             Ambil Foto
         </label>
     </div>
-                      <div id="preview-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
-    <div class="relative w-full max-w-xs">
-        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
-        
-        <!-- tombol hapus -->
-        <button onclick="removePreview()" 
-            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
-            Hapus
+                      <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
+
+        <div id="crop-box"
+            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
+
+            <div class="resize-handle tl"></div>
+            <div class="resize-handle tr"></div>
+            <div class="resize-handle bl"></div>
+            <div class="resize-handle br"></div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
+            Gunakan Crop
+        </button>
+
+        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Langsung
+        </button>
+
+        <button onclick="scanUlang()" class="bg-gray-500 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Ulang
+        </button>
+    </div>
+</div>
+
+        <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
+
+        <!-- kotak crop -->
+        <div id="crop-box"
+            class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move">
+        </div>
+    </div>
+
+    <!-- 🔥 TOMBOL WAJIB -->
+    <div class="flex gap-2 mt-3">
+        <button onclick="applyCrop()"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs">
+            Gunakan Crop
+        </button>
+
+        <button onclick="scanTanpaCrop()"
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Langsung
+        </button>
+
+        <button onclick="scanUlang()"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Ulang
         </button>
     </div>
 </div>
@@ -3056,7 +3123,11 @@ async function handleOcrKtp(event) {
 
     try {
         // 🔹 1. Kompres gambar
-        const compressedFile = await compressImage(file);
+      // 🔹 crop dulu
+        const croppedFile = await autoCropKtp(file);
+
+// 🔹 lalu kompres
+        const compressedFile = await compressImage(croppedFile);
 
         // 🔹 2. Convert ke base64
         const base64Image = await fileToBase64(compressedFile);
@@ -3407,23 +3478,35 @@ function fileToBase64(file) {
     });
 }
 
-    async function previewAndScanKtp(event) {
+  let selectedFile = null;
+
+async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // 🔹 tampilkan preview
-    const previewContainer = document.getElementById('preview-container');
-    const previewImage = document.getElementById('preview-image');
+    const cropContainer = document.getElementById('crop-container');
+    const cropImage = document.getElementById('crop-image');
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        previewImage.src = e.target.result;
-        previewContainer.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
+    // 🔹 tampilkan container dulu
+    cropContainer.classList.remove('hidden');
 
-    // 🔹 lanjut scan OCR
-    await handleOcrKtp(event);
+    try {
+        // 🔹 auto crop
+        const croppedBlob = await autoCropKtp(file);
+
+        // 🔥 PENTING: gunakan URL.createObjectURL (bukan FileReader)
+        const imageUrl = URL.createObjectURL(croppedBlob);
+
+        cropImage.src = imageUrl;
+
+        // 🔥 tunggu gambar benar-benar load
+        cropImage.onload = () => {
+            initCropBox();
+        };
+
+    } catch (err) {
+        console.error("Preview error:", err);
+    }
 }
 
     function removePreview() {
@@ -3433,7 +3516,288 @@ function fileToBase64(file) {
     // reset input file
     document.getElementById('scan-ktp-input').value = "";
 }
+    async function autoCropKtp(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+        };
+
+        img.onload = function() {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // 🔹 grayscale + threshold
+            let minX = canvas.width, minY = canvas.height;
+            let maxX = 0, maxY = 0;
+
+            for (let y = 0; y < canvas.height; y += 2) {
+                for (let x = 0; x < canvas.width; x += 2) {
+                    const i = (y * canvas.width + x) * 4;
+
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    const gray = (r + g + b) / 3;
+
+                    // 🔥 threshold (atur kalau perlu)
+                    if (gray > 120) {
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            // fallback kalau gagal deteksi
+            if (maxX - minX < 100 || maxY - minY < 100) {
+                resolve(file);
+                return;
+            }
+
+            // 🔹 crop area
+            const cropWidth = maxX - minX;
+            const cropHeight = maxY - minY;
+
+            const cropCanvas = document.createElement("canvas");
+            const cropCtx = cropCanvas.getContext("2d");
+
+            cropCanvas.width = cropWidth;
+            cropCanvas.height = cropHeight;
+
+            cropCtx.drawImage(
+                img,
+                minX, minY, cropWidth, cropHeight,
+                0, 0, cropWidth, cropHeight
+            );
+
+            cropCanvas.toBlob((blob) => {
+                resolve(blob);
+            }, "image/jpeg", 0.9);
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+    function initCropBox() {
+    const box = document.getElementById("crop-box");
+
+    box.style.left = "40px";
+    box.style.top = "40px";
+    box.style.width = "200px";
+    box.style.height = "120px";
+
+    let action = null;
+    let startX, startY, startW, startH, startL, startT;
+
+    const handles = box.querySelectorAll(".resize-handle");
+
+    // 🔹 ambil posisi dari mouse / touch
+    function getEventPos(e) {
+        if (e.touches) {
+            return {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            };
+        }
+        return {
+            x: e.clientX,
+            y: e.clientY
+        };
+    }
+
+    // 🔹 RESIZE
+    handles.forEach(handle => {
+        const type = handle.classList[1];
+
+        const startResize = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            action = type;
+
+            const pos = getEventPos(e);
+            startX = pos.x;
+            startY = pos.y;
+
+            startW = box.offsetWidth;
+            startH = box.offsetHeight;
+            startL = box.offsetLeft;
+            startT = box.offsetTop;
+        };
+
+        handle.addEventListener("mousedown", startResize);
+        handle.addEventListener("touchstart", startResize);
+    });
+
+    // 🔹 MOVE
+    const startMove = (e) => {
+        if (e.target.classList.contains("resize-handle")) return;
+
+        e.preventDefault();
+
+        action = "move";
+
+        const pos = getEventPos(e);
+        startX = pos.x;
+        startY = pos.y;
+
+        startL = box.offsetLeft;
+        startT = box.offsetTop;
+    };
+
+    box.addEventListener("mousedown", startMove);
+    box.addEventListener("touchstart", startMove);
+
+    // 🔹 MOVE / RESIZE PROCESS
+    const onMove = (e) => {
+        if (!action) return;
+
+        const pos = getEventPos(e);
+        let dx = pos.x - startX;
+        let dy = pos.y - startY;
+
+        if (action === "move") {
+            box.style.left = startL + dx + "px";
+            box.style.top = startT + dy + "px";
+        }
+
+        if (action === "br") {
+            box.style.width = startW + dx + "px";
+            box.style.height = startH + dy + "px";
+        }
+
+        if (action === "tl") {
+            box.style.width = startW - dx + "px";
+            box.style.height = startH - dy + "px";
+            box.style.left = startL + dx + "px";
+            box.style.top = startT + dy + "px";
+        }
+
+        if (action === "tr") {
+            box.style.width = startW + dx + "px";
+            box.style.height = startH - dy + "px";
+            box.style.top = startT + dy + "px";
+        }
+
+        if (action === "bl") {
+            box.style.width = startW - dx + "px";
+            box.style.height = startH + dy + "px";
+            box.style.left = startL + dx + "px";
+        }
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("touchmove", onMove);
+
+    // 🔹 STOP
+    const stop = () => {
+        action = null;
+    };
+
+    document.addEventListener("mouseup", stop);
+    document.addEventListener("touchend", stop);
+}
+    async function applyCrop() {
+    const img = document.getElementById("crop-image");
+    const box = document.getElementById("crop-box");
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const scaleX = img.naturalWidth / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
+
+    const x = box.offsetLeft * scaleX;
+    const y = box.offsetTop * scaleY;
+    const w = box.clientWidth * scaleX;
+    const h = box.clientHeight * scaleY;
+
+    canvas.width = w;
+    canvas.height = h;
+
+    const image = new Image();
+    image.src = img.src;
+
+    image.onload = async () => {
+        ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
+
+        canvas.toBlob(async (blob) => {
+            await processOcrFromBlob(blob);
+        }, "image/jpeg", 0.9);
+    };
+}
+
+    async function scanTanpaCrop() {
+    const img = document.getElementById("crop-image");
+
+    const res = await fetch(img.src);
+    const blob = await res.blob();
+
+    await processOcrFromBlob(blob);
+}
     
+    async function processOcrFromBlob(file) {
+    const overlay = document.getElementById('loading-overlay');
+    const statusText = document.getElementById('status-text');
+
+    overlay.style.display = 'flex';
+    statusText.innerText = "Memproses OCR...";
+
+    try {
+        const compressedFile = await compressImage(file);
+        const base64Image = await fileToBase64(compressedFile);
+
+        let response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "ocrKtp",
+                args: [base64Image]
+            })
+        });
+
+        let result = await response.json();
+
+        console.log(result);
+
+        if (result.OCRExitCode === 1) {
+            extractKtpData(result.ParsedResults[0].ParsedText);
+
+            Swal.fire({
+                title: 'Scan Berhasil!',
+                icon: 'success'
+            });
+        } else {
+            throw new Error("Gagal membaca KTP");
+        }
+
+    } catch (err) {
+        Swal.fire({
+            title: 'Gagal Scan',
+            text: err.message,
+            icon: 'error'
+        });
+    } finally {
+        overlay.style.display = 'none';
+    }
+}
+    function scanUlang() {
+    document.getElementById('scan-ktp-input').value = "";
+    document.getElementById('preview-container').classList.add('hidden');
+    document.getElementById('crop-container').classList.add('hidden');
+}
   </script>
 
   <div id="photo-viewer"

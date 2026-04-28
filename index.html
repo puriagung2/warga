@@ -499,6 +499,21 @@ body.dark span:not(.material-icons) {
 }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .resize-handle {
+    width: 12px;
+    height: 12px;
+    background: white;
+    border: 2px solid #6366f1;
+    position: absolute;
+    border-radius: 50%;
+}
+
+/* posisi */
+.tl { top: -6px; left: -6px; cursor: nwse-resize; }
+.tr { top: -6px; right: -6px; cursor: nesw-resize; }
+.bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.br { bottom: -6px; right: -6px; cursor: nwse-resize; }
     
   </style>
 </head>
@@ -988,7 +1003,15 @@ body.dark span:not(.material-icons) {
         <img id="crop-image" class="max-w-xs rounded-xl border" />
 
         <!-- kotak crop -->
-        <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move"></div>
+<div id="crop-box"
+    class="absolute border-2 border-indigo-500 bg-indigo-500/20">
+
+    <!-- 4 titik sudut -->
+    <div class="resize-handle tl"></div>
+    <div class="resize-handle tr"></div>
+    <div class="resize-handle bl"></div>
+    <div class="resize-handle br"></div>
+</div> 
     </div>
 
     <div class="flex gap-2 mt-3">
@@ -3556,35 +3579,83 @@ async function previewAndScanKtp(event) {
 
     function initCropBox() {
     const box = document.getElementById("crop-box");
-    const img = document.getElementById("crop-image");
 
     box.style.left = "40px";
     box.style.top = "40px";
     box.style.width = "200px";
     box.style.height = "120px";
 
-    let isDragging = false, startX, startY;
+    let action = null;
+    let startX, startY, startW, startH, startL, startT;
 
-    box.onmousedown = (e) => {
-        isDragging = true;
+    const handles = box.querySelectorAll(".resize-handle");
+
+    // 🔹 resize
+    handles.forEach(handle => {
+        handle.addEventListener("mousedown", (e) => {
+            e.stopPropagation();
+            action = handle.classList[1]; // tl, tr, bl, br
+            startX = e.clientX;
+            startY = e.clientY;
+
+            startW = box.offsetWidth;
+            startH = box.offsetHeight;
+            startL = box.offsetLeft;
+            startT = box.offsetTop;
+        });
+    });
+
+    // 🔹 drag
+    box.addEventListener("mousedown", (e) => {
+        if (e.target.classList.contains("resize-handle")) return;
+
+        action = "move";
         startX = e.clientX;
         startY = e.clientY;
-    };
+        startL = box.offsetLeft;
+        startT = box.offsetTop;
+    });
 
-    document.onmouseup = () => isDragging = false;
-
-    document.onmousemove = (e) => {
-        if (!isDragging) return;
+    document.addEventListener("mousemove", (e) => {
+        if (!action) return;
 
         let dx = e.clientX - startX;
         let dy = e.clientY - startY;
 
-        box.style.left = (box.offsetLeft + dx) + "px";
-        box.style.top = (box.offsetTop + dy) + "px";
+        if (action === "move") {
+            box.style.left = startL + dx + "px";
+            box.style.top = startT + dy + "px";
+        }
 
-        startX = e.clientX;
-        startY = e.clientY;
-    };
+        // 🔥 RESIZE LOGIC
+        if (action === "br") {
+            box.style.width = startW + dx + "px";
+            box.style.height = startH + dy + "px";
+        }
+
+        if (action === "tl") {
+            box.style.width = startW - dx + "px";
+            box.style.height = startH - dy + "px";
+            box.style.left = startL + dx + "px";
+            box.style.top = startT + dy + "px";
+        }
+
+        if (action === "tr") {
+            box.style.width = startW + dx + "px";
+            box.style.height = startH - dy + "px";
+            box.style.top = startT + dy + "px";
+        }
+
+        if (action === "bl") {
+            box.style.width = startW - dx + "px";
+            box.style.height = startH + dy + "px";
+            box.style.left = startL + dx + "px";
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+        action = null;
+    });
 }
     async function applyCrop() {
     const img = document.getElementById("crop-image");

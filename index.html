@@ -514,7 +514,10 @@ body.dark span:not(.material-icons) {
 .tr { top: -6px; right: -6px; cursor: nesw-resize; }
 .bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
 .br { bottom: -6px; right: -6px; cursor: nwse-resize; }
-    
+
+    #crop-box {
+    touch-action: none;
+}
   </style>
 </head>
 <body>
@@ -3572,44 +3575,76 @@ async function previewAndScanKtp(event) {
 
     const handles = box.querySelectorAll(".resize-handle");
 
-    // 🔹 resize
+    // 🔹 ambil posisi dari mouse / touch
+    function getEventPos(e) {
+        if (e.touches) {
+            return {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY
+            };
+        }
+        return {
+            x: e.clientX,
+            y: e.clientY
+        };
+    }
+
+    // 🔹 RESIZE
     handles.forEach(handle => {
-        handle.addEventListener("mousedown", (e) => {
+        const type = handle.classList[1];
+
+        const startResize = (e) => {
+            e.preventDefault();
             e.stopPropagation();
-            action = handle.classList[1]; // tl, tr, bl, br
-            startX = e.clientX;
-            startY = e.clientY;
+
+            action = type;
+
+            const pos = getEventPos(e);
+            startX = pos.x;
+            startY = pos.y;
 
             startW = box.offsetWidth;
             startH = box.offsetHeight;
             startL = box.offsetLeft;
             startT = box.offsetTop;
-        });
+        };
+
+        handle.addEventListener("mousedown", startResize);
+        handle.addEventListener("touchstart", startResize);
     });
 
-    // 🔹 drag
-    box.addEventListener("mousedown", (e) => {
+    // 🔹 MOVE
+    const startMove = (e) => {
         if (e.target.classList.contains("resize-handle")) return;
 
+        e.preventDefault();
+
         action = "move";
-        startX = e.clientX;
-        startY = e.clientY;
+
+        const pos = getEventPos(e);
+        startX = pos.x;
+        startY = pos.y;
+
         startL = box.offsetLeft;
         startT = box.offsetTop;
-    });
+    };
 
-    document.addEventListener("mousemove", (e) => {
+    box.addEventListener("mousedown", startMove);
+    box.addEventListener("touchstart", startMove);
+
+    // 🔹 MOVE / RESIZE PROCESS
+    const onMove = (e) => {
         if (!action) return;
 
-        let dx = e.clientX - startX;
-        let dy = e.clientY - startY;
+        const pos = getEventPos(e);
+        let dx = pos.x - startX;
+        let dy = pos.y - startY;
 
         if (action === "move") {
             box.style.left = startL + dx + "px";
             box.style.top = startT + dy + "px";
         }
 
-        // 🔥 RESIZE LOGIC
         if (action === "br") {
             box.style.width = startW + dx + "px";
             box.style.height = startH + dy + "px";
@@ -3633,11 +3668,18 @@ async function previewAndScanKtp(event) {
             box.style.height = startH + dy + "px";
             box.style.left = startL + dx + "px";
         }
-    });
+    };
 
-    document.addEventListener("mouseup", () => {
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("touchmove", onMove);
+
+    // 🔹 STOP
+    const stop = () => {
         action = null;
-    });
+    };
+
+    document.addEventListener("mouseup", stop);
+    document.addEventListener("touchend", stop);
 }
     async function applyCrop() {
     const img = document.getElementById("crop-image");

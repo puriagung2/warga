@@ -1004,17 +1004,9 @@ body.dark span:not(.material-icons) {
     </div>
 
     <div class="flex gap-2 mt-3">
-        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
-            Gunakan Crop
-        </button>
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
+        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
 
-        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">
-            Scan Langsung
-        </button>
-
-        <button onclick="scanUlang()" class="bg-gray-500 text-white px-3 py-1 rounded-lg text-xs">
-            Scan Ulang
-        </button>
     </div>
 </div>
 
@@ -3793,7 +3785,8 @@ async function scanTanpaCrop() {
             extractKtpData(result.ParsedResults[0].ParsedText);
 
             Swal.fire({
-                title: 'Scan Berhasil!',
+                title: 'Scan Berhasil, Lakukan Verifikasi',
+                text: 'Data KTP telah otomatis masuk ke formulir.',
                 icon: 'success'
             });
         } else {

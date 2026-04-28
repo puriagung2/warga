@@ -985,6 +985,20 @@ body.dark span:not(.material-icons) {
         </label>
     </div>
 
+        <div id="preview-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
+    <div class="relative w-full max-w-xs">
+        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
+        
+        <!-- tombol hapus -->
+        <button onclick="removePreview()" 
+            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
+            Hapus
+        </button>
+    </div>
+</div>
+
+
         <div id="crop-container" class="hidden mt-4">
     <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
 

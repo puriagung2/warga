@@ -3474,7 +3474,12 @@ function fileToBase64(file) {
   let selectedFile = null;
 
 async function previewAndScanKtp(event) {
-    const file = event.target.files[0];
+    let file = event.target.files[0];
+    if (!file) return;
+
+    // 🔥 AUTO ROTATE
+    file = await autoRotateIfNeeded(file);
+  
     if (!file) return;
 
     const cropContainer = document.getElementById('crop-container');
@@ -3849,6 +3854,44 @@ async function scanTanpaCrop() {
     // 🔹 reset state global
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
+}
+    async function autoRotateIfNeeded(file) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            const isPortrait = img.height > img.width;
+
+            // kalau bukan portrait → langsung pakai
+            if (!isPortrait) {
+                resolve(file);
+                return;
+            }
+
+            // 🔥 kalau portrait → rotate ke landscape
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = img.height;
+            canvas.height = img.width;
+
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(90 * Math.PI / 180);
+
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+            canvas.toBlob((blob) => {
+                const rotatedFile = new File([blob], "ktp-auto-rotate.jpg", {
+                    type: "image/jpeg"
+                });
+
+                resolve(rotatedFile);
+            }, "image/jpeg", 0.95);
+        };
+
+        img.src = url;
+    });
 }
   </script>
 

@@ -519,6 +519,9 @@ body.dark span:not(.material-icons) {
     touch-action: none;
 }
     #crop-image {
+    display: block;
+    margin: 0 auto;
+    transform-origin: center center;
     transition: transform 0.2s ease;
 }
   </style>
@@ -994,18 +997,18 @@ body.dark span:not(.material-icons) {
        <div id="crop-container" class="hidden mt-4">
     <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
 
+    <div class="flex justify-center">
     <div class="relative inline-block">
         <img id="crop-image" class="max-w-xs rounded-xl border" />
-
-        <div id="crop-box"
-            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
-
+        
+        <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20">
             <div class="resize-handle tl"></div>
             <div class="resize-handle tr"></div>
             <div class="resize-handle bl"></div>
             <div class="resize-handle br"></div>
         </div>
     </div>
+</div>
     <div class="flex gap-2 mt-2">
     <button onclick="rotateImage(-90)" class="bg-gray-600 text-white px-3 py-1 rounded-lg text-xs">↺ Kiri</button>
     <button onclick="rotateImage(90)" class="bg-gray-600 text-white px-3 py-1 rounded-lg text-xs">↻ Kanan</button>

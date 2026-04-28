@@ -2269,7 +2269,7 @@ async function handleSaveWarga(e) {
         if (addWrap) addWrap.style.display = "none";
 
         showDetail(payload.nik);
-        showToast("Data berhasil disimpan!");
+        showToast("Tambah Data berhasil disimpan!");
         resetScanKtp();
 
     } catch (err) {
@@ -2723,7 +2723,7 @@ function closePhotoViewer() {
     document.getElementById("photo-viewer").classList.add("hidden");
 }
 // popup alert
-    function showToast(message = "Data berhasil disimpan!", duration = 3000) {
+    function showToast(message = "Perubahan data berhasil disimpan!", duration = 3000) {
     const toast = document.getElementById('custom-toast');
     const toastMsg = document.getElementById('toast-message');
     
@@ -3886,7 +3886,7 @@ async function scanTanpaCrop() {
         <div class="bg-green-500 rounded-full p-1 flex items-center justify-center">
             <span class="material-icons text-sm" style="font-size: 16px;">check</span>
         </div>
-        <span id="toast-message" class="text-xs font-bold tracking-wide uppercase">Data berhasil disimpan!</span>
+        <span id="toast-message" class="text-xs font-bold tracking-wide uppercase">Data berhasil disimpan..!</span>
     </div>
 </div>
 </body>

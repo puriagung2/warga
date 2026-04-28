@@ -2270,6 +2270,7 @@ async function handleSaveWarga(e) {
 
         showDetail(payload.nik);
         showToast("Data berhasil disimpan!");
+        resetScanKtp();
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
@@ -3820,7 +3821,35 @@ async function scanTanpaCrop() {
     // trigger onchange biar preview jalan
     input.dispatchEvent(new Event('change'));
 }
-    
+    function resetScanKtp() {
+    // 🔹 reset input file
+    const input = document.getElementById('scan-ktp-input');
+    if (input) input.value = "";
+
+    const inputForm = document.getElementById('f-foto-ktp');
+    if (inputForm) inputForm.value = "";
+
+    // 🔹 reset preview gambar
+    const cropImage = document.getElementById('crop-image');
+    if (cropImage) cropImage.src = "";
+
+    const previewKtp = document.getElementById('preview-ktp');
+    if (previewKtp) previewKtp.src = "";
+
+    // 🔹 sembunyikan container
+    const cropContainer = document.getElementById('crop-container');
+    if (cropContainer) cropContainer.classList.add('hidden');
+
+    const previewContainer = document.getElementById('container-preview-ktp');
+    if (previewContainer) previewContainer.classList.add('hidden');
+
+    const placeholder = document.getElementById('placeholder-ktp');
+    if (placeholder) placeholder.classList.remove('hidden');
+
+    // 🔹 reset state global
+    if (typeof rotation !== "undefined") rotation = 0;
+    if (typeof selectedFile !== "undefined") selectedFile = null;
+}
   </script>
 
   <div id="photo-viewer"

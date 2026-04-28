@@ -985,41 +985,29 @@ body.dark span:not(.material-icons) {
         </label>
     </div>
 
-        <div id="preview-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Preview KTP</p>
-    <div class="relative w-full max-w-xs">
-        <img id="preview-image" class="w-full rounded-2xl border border-slate-300 shadow-md object-cover" />
-        
-        <!-- tombol hapus -->
-        <button onclick="removePreview()" 
-            class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-lg shadow">
-            Hapus
-        </button>
-    </div>
-</div>
-
-
-        <div id="crop-container" class="hidden mt-4">
+       <div id="crop-container" class="hidden mt-4">
     <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
 
     <div class="relative inline-block">
         <img id="crop-image" class="max-w-xs rounded-xl border" />
 
-        <!-- kotak crop -->
-<div id="crop-box"
-    class="absolute border-2 border-indigo-500 bg-indigo-500/20">
+        <div id="crop-box"
+            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
 
-    <!-- 4 titik sudut -->
-    <div class="resize-handle tl"></div>
-    <div class="resize-handle tr"></div>
-    <div class="resize-handle bl"></div>
-    <div class="resize-handle br"></div>
-</div> 
+            <div class="resize-handle tl"></div>
+            <div class="resize-handle tr"></div>
+            <div class="resize-handle bl"></div>
+            <div class="resize-handle br"></div>
+        </div>
     </div>
 
     <div class="flex gap-2 mt-3">
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
             Gunakan Crop
+        </button>
+
+        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Langsung
         </button>
 
         <button onclick="scanUlang()" class="bg-gray-500 text-white px-3 py-1 rounded-lg text-xs">

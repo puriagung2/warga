@@ -3451,38 +3451,29 @@ async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    selectedFile = file; // simpan file asli
-
-    // 🔹 auto crop dulu (opsional, bisa bantu user)
-    const croppedFile = await autoCropKtp(file);
-
-    const previewContainer = document.getElementById('preview-container');
-    const previewImage = document.getElementById('preview-image');
-
     const cropContainer = document.getElementById('crop-container');
     const cropImage = document.getElementById('crop-image');
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    // 🔹 tampilkan container dulu
+    cropContainer.classList.remove('hidden');
 
-        // 🔹 tampilkan preview kecil
-        previewImage.src = e.target.result;
-        previewContainer.classList.remove('hidden');
+    try {
+        // 🔹 auto crop
+        const croppedBlob = await autoCropKtp(file);
 
-        // 🔹 tampilkan area crop manual
-        cropImage.src = e.target.result;
-        cropContainer.classList.remove('hidden');
+        // 🔥 PENTING: gunakan URL.createObjectURL (bukan FileReader)
+        const imageUrl = URL.createObjectURL(croppedBlob);
 
-        // 🔥 aktifkan kotak crop
-        setTimeout(() => {
+        cropImage.src = imageUrl;
+
+        // 🔥 tunggu gambar benar-benar load
+        cropImage.onload = () => {
             initCropBox();
-        }, 100);
-    };
+        };
 
-    reader.readAsDataURL(croppedFile);
-
-    // ❌ HAPUS INI (biar tidak auto scan)
-    // await handleOcrKtp(event);
+    } catch (err) {
+        console.error("Preview error:", err);
+    }
 }
 
     function removePreview() {

@@ -3051,16 +3051,13 @@ async function handleOcrKtp(event) {
         statusText.innerText = "MENGIRIM KE SERVER OCR...";
 
         // 🔹 3. Kirim ke GAS (bukan langsung ke OCR)
-        let response = await fetch(API_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                action: "ocrKtp",
-                args: [base64Image]
-            })
-        });
+let response = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+        action: "ocrKtp",
+        args: [base64Image]
+    })
+});
 
         let result = await response.json();
 

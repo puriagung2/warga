@@ -3764,16 +3764,12 @@ async function scanTanpaCrop() {
     await processOcrFromBlob(blob);
 }
     
-    async function processOcrFromBlob(file) {
-    const overlay = document.getElementById('loading-overlay');
-    const statusText = document.getElementById('status-text');
-
-    overlay.style.display = 'flex';
-    statusText.innerText = "TUNGGU, SEDANG BACA KTP...";
-
+   async function processOcrFromBlob(blob) {
     try {
-        const compressedFile = await compressImage(file);
-        const base64Image = await fileToBase64(compressedFile);
+        // 🔥 AUTO ROTATE BERDASARKAN TEKS
+        const finalBlob = await autoDetectOrientation(blob);
+
+        const base64Image = await fileToBase64(finalBlob);
 
         let response = await fetch(API_URL, {
             method: "POST",
@@ -3785,28 +3781,15 @@ async function scanTanpaCrop() {
 
         let result = await response.json();
 
-        console.log(result);
-
-        if (result.OCRExitCode === 1) {
-            extractKtpData(result.ParsedResults[0].ParsedText);
-
-            Swal.fire({
-                title: 'Scan Berhasil, Lakukan Verifikasi',
-                text: 'Data KTP telah otomatis masuk ke formulir.',
-                icon: 'success'
-            });
+        if (result && result.OCRExitCode === 1) {
+            const rawText = result.ParsedResults[0].ParsedText;
+            extractKtpData(rawText);
         } else {
-            throw new Error("Gagal membaca KTP");
+            throw new Error("Gagal memproses gambar");
         }
 
     } catch (err) {
-        Swal.fire({
-            title: 'Gagal Scan',
-            text: err.message,
-            icon: 'error'
-        });
-    } finally {
-        overlay.style.display = 'none';
+        console.error("ERROR OCR:", err);
     }
 }
     function scanUlang() {
@@ -3892,6 +3875,80 @@ async function scanTanpaCrop() {
 
         img.src = url;
     });
+}
+
+    async function rotateBlob(blob, deg) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(blob);
+
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            const rad = deg * Math.PI / 180;
+
+            if (deg === 90 || deg === 270) {
+                canvas.width = img.height;
+                canvas.height = img.width;
+            } else {
+                canvas.width = img.width;
+                canvas.height = img.height;
+            }
+
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(rad);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+            canvas.toBlob(resolve, "image/jpeg", 0.9);
+        };
+    });
+}
+    function scoreText(text) {
+    const t = text.toUpperCase();
+
+    let score = 0;
+
+    const keywords = [
+        "NIK", "NAMA", "TEMPAT", "LAHIR",
+        "JENIS", "KELAMIN", "ALAMAT",
+        "RT/RW", "KEL", "KECAMATAN"
+    ];
+
+    keywords.forEach(k => {
+        if (t.includes(k)) score += 10;
+    });
+
+    // bonus kalau banyak huruf (teks jelas)
+    score += t.replace(/[^A-Z]/g, "").length * 0.05;
+
+    // penalti karakter aneh
+    score -= (t.match(/[^A-Z0-9\s]/g) || []).length * 0.2;
+
+    return score;
+}
+
+    async function autoDetectOrientation(originalBlob) {
+    const angles = [0, 90, 180, 270];
+
+    let bestScore = -Infinity;
+    let bestBlob = originalBlob;
+
+    for (let deg of angles) {
+        const rotated = await rotateBlob(originalBlob, deg);
+
+        const text = await getTextFromBlob(rotated);
+        const score = scoreText(text);
+
+        console.log("ROT", deg, "SCORE", score);
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestBlob = rotated;
+        }
+    }
+
+    return bestBlob;
 }
   </script>
 

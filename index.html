@@ -1003,15 +1003,8 @@ body.dark span:not(.material-icons) {
         </div>
     </div>
 <div class="flex justify-center gap-2 mt-2">
-    <button onclick="rotateKtp(-90)" 
-        class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs">
-        ⟲
-    </button>
-
-    <button onclick="rotateKtp(90)" 
-        class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
-        ⟳
-    </button>
+    <button type="button" onclick="rotateKtp(-90)">⟲</button>
+<button type="button" onclick="rotateKtp(90)">⟳</button>
 </div>
     <div class="flex gap-2 mt-3">
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
@@ -1213,7 +1206,7 @@ body.dark span:not(.material-icons) {
             <input type="file" id="f-foto-ktp" 
             accept="image/*" 
             class="hidden" 
-            onchange="handleKtpUpload('f-foto-ktp')">
+            onchange="handleKtpUpload(event)">
             <label for="f-foto-ktp" class="flex flex-col items-center justify-center w-full min-h-[140px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group hover:bg-teal-50/50" 
                    style="background-color: var(--input-bg); border-color: var(--border-color);">
                 
@@ -3864,15 +3857,18 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
-    function handleKtpUpload(inputId) {
-    const input = document.getElementById(inputId);
-    const file = input.files[0];
+function handleKtpUpload(event) {
+    const file = event.target.files[0];
     if (!file) return;
 
-    selectedKtpFile = file; // 🔥 simpan file asli
+    selectedKtpFile = file;
     rotation = 0;
 
-    showKtpPreview(file);
+    // tampilkan preview
+    updatePreview(file);
+
+    // pastikan file masuk ke input (normal case)
+    setFileToInput("f-foto-ktp", file);
 }
     function showKtpPreview(file) {
     const reader = new FileReader();
@@ -3888,24 +3884,31 @@ async function scanTanpaCrop() {
     document.getElementById("container-preview-ktp").classList.remove("hidden");
     document.getElementById("placeholder-ktp").classList.add("hidden");
 }
-    async function rotateKtp(deg) {
-    if (!selectedKtpFile) return;
+async function rotateKtp(deg) {
+    if (!selectedKtpFile) {
+        alert("Upload foto dulu");
+        return;
+    }
 
-    rotation = (rotation + deg) % 360;
+    try {
+        rotation = (rotation + deg) % 360;
 
-    // 🔥 apply rotate ke file (bukan cuma preview)
-    const rotatedFile = await rotateImageFile(selectedKtpFile, rotation);
+        const rotatedFile = await rotateImage(selectedKtpFile, rotation);
 
-    // 🔥 simpan hasil rotate
-    selectedKtpFile = rotatedFile;
+        // 🔥 penting: update file global
+        selectedKtpFile = rotatedFile;
 
-    // 🔥 update input file (penting!)
-    setFileToInput("f-foto-ktp", rotatedFile);
+        // 🔥 update input file
+        setFileToInput("f-foto-ktp", rotatedFile);
 
-    // 🔥 tampilkan preview
-    showKtpPreview(rotatedFile);
+        // 🔥 update preview
+        updatePreview(rotatedFile);
+
+    } catch (err) {
+        console.error("Rotate error:", err);
+    }
 }
-    function rotateImageFile(file, deg) {
+ function rotateImage(file, deg) {
     return new Promise((resolve) => {
         const img = new Image();
         img.src = URL.createObjectURL(file);
@@ -3924,25 +3927,45 @@ async function scanTanpaCrop() {
                 canvas.height = img.height;
             }
 
-            // 🔥 CENTER FIX (ini yang bikin tidak mepet kiri)
+            // 🔥 CENTER FIX (ini kunci)
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.rotate(rad);
             ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
             canvas.toBlob((blob) => {
-                resolve(new File([blob], "ktp-rotated.jpg", {
+                resolve(new File([blob], "ktp.jpg", {
                     type: "image/jpeg"
                 }));
             }, "image/jpeg", 0.95);
         };
     });
 }
-    function setFileToInput(inputId, file) {
+function setFileToInput(inputId, file) {
     const input = document.getElementById(inputId);
+
     const dt = new DataTransfer();
     dt.items.add(file);
+
     input.files = dt.files;
 }
+  function updatePreview(file) {
+    const img = document.getElementById("preview-ktp");
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        img.src = e.target.result;
+        img.style.transform = `rotate(${rotation}deg)`;
+        img.style.display = "block";
+        img.style.margin = "0 auto";
+        img.style.objectFit = "contain";
+    };
+
+    reader.readAsDataURL(file);
+
+    document.getElementById("container-preview-ktp").classList.remove("hidden");
+    document.getElementById("placeholder-ktp").classList.add("hidden");
+}
+ 
   </script>
 
   <div id="photo-viewer"

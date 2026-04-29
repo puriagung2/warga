@@ -1003,30 +1003,6 @@ body.dark span:not(.material-icons) {
         </div>
     </div>
 
-<div class="flex gap-2 mt-3">
-
-    <button onclick="rotateLeft()" 
-        class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-xs">
-        ⟲ Kiri
-    </button>
-
-    <button onclick="rotateRight()" 
-        class="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs">
-        ⟳ Kanan
-    </button>
-
-    <button onclick="applyCrop()" 
-        class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">
-        Gunakan Crop
-    </button>
-
-    <button onclick="scanUlang()" 
-        class="bg-gray-500 text-white px-3 py-1 rounded-lg text-xs">
-        Scan Ulang
-    </button>
-
-</div>
-                        
     <div class="flex gap-2 mt-3">
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
         <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
@@ -1298,8 +1274,7 @@ body.dark span:not(.material-icons) {
     const PAGE_SIZE = 20;
     let currentStatTab = 'balita';
     let currentPage = "dashboard"; // halaman default
-    let rotation = 0;    
-    let selectedFile = null;
+
 
     // Handle back button on mobile
     window.addEventListener('popstate', function (event) {
@@ -3496,17 +3471,14 @@ function fileToBase64(file) {
     });
 }
 
+  let selectedFile = null;
+
 async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    selectedFile = file; // 🔥 simpan file asli
-    const cropImage = document.getElementById('crop-image');
-    cropImage.src = URL.createObjectURL(file);
-
-    document.getElementById('crop-container').classList.remove('hidden');
     const cropContainer = document.getElementById('crop-container');
-   
+    const cropImage = document.getElementById('crop-image');
 
     // 🔹 tampilkan container dulu
     cropContainer.classList.remove('hidden');
@@ -3731,67 +3703,44 @@ async function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
-  async function applyCrop() {
+    async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
+    const scaleX = img.naturalWidth / img.clientWidth;
+    const scaleY = img.naturalHeight / img.clientHeight;
+
+    const x = box.offsetLeft * scaleX;
+    const y = box.offsetTop * scaleY;
+    const w = box.clientWidth * scaleX;
+    const h = box.clientHeight * scaleY;
+
+    canvas.width = w;
+    canvas.height = h;
+
     const image = new Image();
     image.src = img.src;
 
     image.onload = async () => {
+        ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
 
-        // 🔥 ROTATE (FIX CENTER)
-        let rotatedCanvas = document.createElement("canvas");
-        let rctx = rotatedCanvas.getContext("2d");
+canvas.toBlob(async (blob) => {
 
-        const rad = rotation * Math.PI / 180;
+    // 🔥 ubah blob jadi File
+    const file = new File([blob], "ktp-crop.jpg", {
+        type: "image/jpeg"
+    });
 
-        if (Math.abs(rotation % 180) === 90) {
-            rotatedCanvas.width = image.height;
-            rotatedCanvas.height = image.width;
-        } else {
-            rotatedCanvas.width = image.width;
-            rotatedCanvas.height = image.height;
-        }
+    // 🔥 masukkan ke input upload form
+    setFileToInput("f-foto-ktp", file);
 
-        rctx.setTransform(1, 0, 0, 1, 0, 0);
-        rctx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
-        rctx.rotate(rad);
-        rctx.drawImage(image, -image.width / 2, -image.height / 2);
+    // 🔥 lanjut OCR (opsional, kalau mau tetap auto)
+    await processOcrFromBlob(blob);
 
-        // 🔥 SCALE FIX
-        const scaleX = rotatedCanvas.width / img.clientWidth;
-        const scaleY = rotatedCanvas.height / img.clientHeight;
-
-        const x = box.offsetLeft * scaleX;
-        const y = box.offsetTop * scaleY;
-        const w = box.clientWidth * scaleX;
-        const h = box.clientHeight * scaleY;
-
-        canvas.width = w;
-        canvas.height = h;
-
-        ctx.drawImage(rotatedCanvas, x, y, w, h, 0, 0, w, h);
-
-        canvas.toBlob(async (blob) => {
-
-            const file = new File([blob], "ktp-crop.jpg", {
-                type: "image/jpeg"
-            });
-
-            // 🔥 PASTIKAN INI JALAN
-            setFileToInput("f-foto-ktp", file);
-
-            // 🔥 OCR dari hasil crop (BUKAN file lama)
-            await processOcrFromBlob(blob);
-
-            // 🔥 RESET ROTATE (opsional)
-            rotation = 0;
-
-        }, "image/jpeg", 0.9);
+}, "image/jpeg", 0.9);
     };
 }
 
@@ -3863,7 +3812,7 @@ async function scanTanpaCrop() {
 
     function setFileToInput(fileInputId, file) {
     const input = document.getElementById(fileInputId);
-    
+
     // DataTransfer dipakai untuk set file ke input
     const dt = new DataTransfer();
     dt.items.add(file);
@@ -3900,56 +3849,6 @@ async function scanTanpaCrop() {
     // 🔹 reset state global
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
-}
-
-function rotateLeft() {
-    rotation = (rotation - 90) % 360;
-    updatePreviewRotation();
-}
-
-function rotateRight() {
-    rotation = (rotation + 90) % 360;
-    updatePreviewRotation();
-}
-
-function updatePreviewRotation() {
-    const img = document.getElementById("crop-image");
-    if (!img) return;
-
-    img.style.transform = `rotate(${rotation}deg)`;
-    img.style.transformOrigin = "center center";
-}
-    async function applyRotationToBlob(file) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            const rad = rotation * Math.PI / 180;
-
-            // handle width/height
-            if (Math.abs(rotation % 180) === 90) {
-                canvas.width = img.height;
-                canvas.height = img.width;
-            } else {
-                canvas.width = img.width;
-                canvas.height = img.height;
-            }
-
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rad);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-            canvas.toBlob((blob) => {
-                resolve(new File([blob], "ktp-rotated.jpg", {
-                    type: "image/jpeg"
-                }));
-            }, "image/jpeg", 0.95);
-        };
-    });
 }
   </script>
 

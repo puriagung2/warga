@@ -1002,10 +1002,7 @@ body.dark span:not(.material-icons) {
             <div class="resize-handle br"></div>
         </div>
     </div>
-<div class="flex justify-center gap-2 mt-2">
-<button type="button" onclick="rotateKtp(-90)">⟲</button>
-<button type="button" onclick="rotateKtp(90)">⟳</button>
-</div>
+
     <div class="flex gap-2 mt-3">
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
         <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
@@ -1203,15 +1200,12 @@ body.dark span:not(.material-icons) {
     <div class="space-y-2">
         <label class="text-[10px] font-black uppercase tracking-widest px-1" style="color: var(--text-muted)">Foto KTP</label>
         <div class="relative">
-            <input type="file" id="f-foto-ktp" 
-            accept="image/*" 
-            class="hidden" 
-            onchange="handleKtpUpload(event)">
+            <input type="file" id="f-foto-ktp" accept="image/*" class="hidden" onchange="previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp')">
             <label for="f-foto-ktp" class="flex flex-col items-center justify-center w-full min-h-[140px] p-4 border-2 border-dashed rounded-3xl transition-all cursor-pointer group hover:bg-teal-50/50" 
                    style="background-color: var(--input-bg); border-color: var(--border-color);">
                 
                 <div id="container-preview-ktp" class="hidden mb-3 relative">
-                    <img id="preview-ktp" class="max-h-32 mx-auto block object-contain rounded-2xl shadow-md border-2 border-white transition-transform duration-200">
+                    <img id="preview-ktp" src="" class="w-full h-24 object-cover rounded-2xl shadow-md border-2 border-white">
                 </div>
 
                 <div id="placeholder-ktp" class="flex flex-col items-center text-center">
@@ -1280,8 +1274,7 @@ body.dark span:not(.material-icons) {
     const PAGE_SIZE = 20;
     let currentStatTab = 'balita';
     let currentPage = "dashboard"; // halaman default
-    let rotation = 0;
-    let selectedKtpFile = null;
+
 
     // Handle back button on mobile
     window.addEventListener('popstate', function (event) {
@@ -3857,118 +3850,6 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
-function handleKtpUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // 🔥 simpan ke global
-    selectedKtpFile = file;
-    rotation = 0;
-    console.log("selectedKtpFile:", selectedKtpFile);
-
-    // 🔥 panggil preview lama kamu (BIAR TIDAK RUSAK)
-    previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp');
-}
-    function showKtpPreview(file) {
-    const reader = new FileReader();
-    const img = document.getElementById("preview-ktp");
-
-    reader.onload = function(e) {
-        img.src = e.target.result;
-        img.style.transform = `rotate(${rotation}deg)`;
-    };
-
-    reader.readAsDataURL(file);
-
-    document.getElementById("container-preview-ktp").classList.remove("hidden");
-    document.getElementById("placeholder-ktp").classList.add("hidden");
-}
-async function rotateKtp(deg) {
-
-    // 🔥 fallback ambil dari input
-    if (!selectedKtpFile) {
-        const input = document.getElementById("f-foto-ktp");
-        if (input.files.length > 0) {
-            selectedKtpFile = input.files[0];
-        }
-    }
-
-    if (!selectedKtpFile) {
-        alert("Upload foto dulu");
-        return;
-    }
-
-    rotation = (rotation + deg) % 360;
-
-    const rotatedFile = await rotateImage(selectedKtpFile, rotation);
-
-    // 🔥 update file global
-    selectedKtpFile = rotatedFile;
-
-    // 🔥 update input
-    setFileToInput("f-foto-ktp", rotatedFile);
-
-    // 🔥 update preview
-    previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp');
-}
- function rotateImage(file, deg) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            const rad = deg * Math.PI / 180;
-
-            if (Math.abs(deg % 180) === 90) {
-                canvas.width = img.height;
-                canvas.height = img.width;
-            } else {
-                canvas.width = img.width;
-                canvas.height = img.height;
-            }
-
-            // 🔥 CENTER FIX (ini kunci)
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rad);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-            canvas.toBlob((blob) => {
-                resolve(new File([blob], "ktp.jpg", {
-                    type: "image/jpeg"
-                }));
-            }, "image/jpeg", 0.95);
-        };
-    });
-}
-function setFileToInput(inputId, file) {
-    const input = document.getElementById(inputId);
-
-    const dt = new DataTransfer();
-    dt.items.add(file);
-
-    input.files = dt.files;
-}
-  function updatePreview(file) {
-    const img = document.getElementById("preview-ktp");
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        img.src = e.target.result;
-        img.style.transform = `rotate(${rotation}deg)`;
-        img.style.display = "block";
-        img.style.margin = "0 auto";
-        img.style.objectFit = "contain";
-    };
-
-    reader.readAsDataURL(file);
-
-    document.getElementById("container-preview-ktp").classList.remove("hidden");
-    document.getElementById("placeholder-ktp").classList.add("hidden");
-}
- 
   </script>
 
   <div id="photo-viewer"

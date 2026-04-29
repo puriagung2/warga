@@ -1003,7 +1003,7 @@ body.dark span:not(.material-icons) {
         </div>
     </div>
 <div class="flex justify-center gap-2 mt-2">
-    <button type="button" onclick="rotateKtp(-90)">⟲</button>
+<button type="button" onclick="rotateKtp(-90)">⟲</button>
 <button type="button" onclick="rotateKtp(90)">⟳</button>
 </div>
     <div class="flex gap-2 mt-3">
@@ -3861,14 +3861,13 @@ function handleKtpUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    // 🔥 simpan ke global
     selectedKtpFile = file;
     rotation = 0;
+    console.log("selectedKtpFile:", selectedKtpFile);
 
-    // tampilkan preview
-    updatePreview(file);
-
-    // pastikan file masuk ke input (normal case)
-    setFileToInput("f-foto-ktp", file);
+    // 🔥 panggil preview lama kamu (BIAR TIDAK RUSAK)
+    previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp');
 }
     function showKtpPreview(file) {
     const reader = new FileReader();
@@ -3885,28 +3884,32 @@ function handleKtpUpload(event) {
     document.getElementById("placeholder-ktp").classList.add("hidden");
 }
 async function rotateKtp(deg) {
+
+    // 🔥 fallback ambil dari input
+    if (!selectedKtpFile) {
+        const input = document.getElementById("f-foto-ktp");
+        if (input.files.length > 0) {
+            selectedKtpFile = input.files[0];
+        }
+    }
+
     if (!selectedKtpFile) {
         alert("Upload foto dulu");
         return;
     }
 
-    try {
-        rotation = (rotation + deg) % 360;
+    rotation = (rotation + deg) % 360;
 
-        const rotatedFile = await rotateImage(selectedKtpFile, rotation);
+    const rotatedFile = await rotateImage(selectedKtpFile, rotation);
 
-        // 🔥 penting: update file global
-        selectedKtpFile = rotatedFile;
+    // 🔥 update file global
+    selectedKtpFile = rotatedFile;
 
-        // 🔥 update input file
-        setFileToInput("f-foto-ktp", rotatedFile);
+    // 🔥 update input
+    setFileToInput("f-foto-ktp", rotatedFile);
 
-        // 🔥 update preview
-        updatePreview(rotatedFile);
-
-    } catch (err) {
-        console.error("Rotate error:", err);
-    }
+    // 🔥 update preview
+    previewFile('f-foto-ktp', 'preview-ktp', 'container-preview-ktp', 'placeholder-ktp');
 }
  function rotateImage(file, deg) {
     return new Promise((resolve) => {

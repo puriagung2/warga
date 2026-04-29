@@ -3766,20 +3766,8 @@ async function scanTanpaCrop() {
     
    async function processOcrFromBlob(blob) {
     try {
-        // 🔥 AUTO ROTATE BERDASARKAN TEKS
-        const finalBlob = await autoDetectOrientation(blob);
-
-        const base64Image = await fileToBase64(finalBlob);
-
-        let response = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                action: "ocrKtp",
-                args: [base64Image]
-            })
-        });
-
-        let result = await response.json();
+        // 🔥 sudah termasuk OCR di dalamnya
+        const result = await autoDetectOrientation(blob);
 
         if (result && result.OCRExitCode === 1) {
             const rawText = result.ParsedResults[0].ParsedText;
@@ -3928,27 +3916,37 @@ async function scanTanpaCrop() {
     return score;
 }
 
-    async function autoDetectOrientation(originalBlob) {
+    async function autoDetectOrientation(blob) {
     const angles = [0, 90, 180, 270];
 
     let bestScore = -Infinity;
-    let bestBlob = originalBlob;
+    let bestResult = null;
 
     for (let deg of angles) {
-        const rotated = await rotateBlob(originalBlob, deg);
+        const rotated = await rotateBlob(blob, deg);
 
-        const text = await getTextFromBlob(rotated);
+        const base64 = await fileToBase64(rotated);
+
+        let response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "ocrKtp",
+                args: [base64]
+            })
+        });
+
+        let result = await response.json();
+
+        const text = result?.ParsedResults?.[0]?.ParsedText || "";
         const score = scoreText(text);
-
-        console.log("ROT", deg, "SCORE", score);
 
         if (score > bestScore) {
             bestScore = score;
-            bestBlob = rotated;
+            bestResult = result;
         }
     }
 
-    return bestBlob;
+    return bestResult;
 }
   </script>
 

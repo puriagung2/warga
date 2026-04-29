@@ -3731,7 +3731,7 @@ async function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
-   async function applyCrop() {
+  async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
 
@@ -3743,7 +3743,7 @@ async function previewAndScanKtp(event) {
 
     image.onload = async () => {
 
-        // 🔥 1. ROTATE DULU (kalau ada)
+        // 🔥 ROTATE (FIX CENTER)
         let rotatedCanvas = document.createElement("canvas");
         let rctx = rotatedCanvas.getContext("2d");
 
@@ -3757,11 +3757,12 @@ async function previewAndScanKtp(event) {
             rotatedCanvas.height = image.height;
         }
 
+        rctx.setTransform(1, 0, 0, 1, 0, 0);
         rctx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
         rctx.rotate(rad);
         rctx.drawImage(image, -image.width / 2, -image.height / 2);
 
-        // 🔥 2. HITUNG SCALE DARI HASIL ROTATE
+        // 🔥 SCALE FIX
         const scaleX = rotatedCanvas.width / img.clientWidth;
         const scaleY = rotatedCanvas.height / img.clientHeight;
 
@@ -3773,7 +3774,6 @@ async function previewAndScanKtp(event) {
         canvas.width = w;
         canvas.height = h;
 
-        // 🔥 3. CROP DARI GAMBAR YANG SUDAH DI-ROTATE
         ctx.drawImage(rotatedCanvas, x, y, w, h, 0, 0, w, h);
 
         canvas.toBlob(async (blob) => {
@@ -3782,11 +3782,14 @@ async function previewAndScanKtp(event) {
                 type: "image/jpeg"
             });
 
-            // 🔥 masuk ke form upload
+            // 🔥 PASTIKAN INI JALAN
             setFileToInput("f-foto-ktp", file);
 
-            // 🔥 OCR
+            // 🔥 OCR dari hasil crop (BUKAN file lama)
             await processOcrFromBlob(blob);
+
+            // 🔥 RESET ROTATE (opsional)
+            rotation = 0;
 
         }, "image/jpeg", 0.9);
     };
@@ -3860,7 +3863,7 @@ async function scanTanpaCrop() {
 
     function setFileToInput(fileInputId, file) {
     const input = document.getElementById(fileInputId);
-
+    
     // DataTransfer dipakai untuk set file ke input
     const dt = new DataTransfer();
     dt.items.add(file);

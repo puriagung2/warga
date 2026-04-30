@@ -3924,6 +3924,56 @@ async function scanTanpaCrop() {
     const base64 = rotatedCanvas.toDataURL('image/jpeg', 0.9);
     processOcr(base64);
 }
+    const cropBox = document.getElementById('crop-box');
+let isResizing = false;
+
+// Inisialisasi fungsi resize
+cropBox.querySelectorAll('.resizer').forEach(resizer => {
+    resizer.addEventListener('mousedown', function(e) {
+        e.stopPropagation(); // Agar tidak bentrok dengan fungsi geser (drag)
+        isResizing = true;
+        let currentResizer = e.target;
+        
+        let prevX = e.clientX;
+        let prevY = e.clientY;
+
+        function mouseMove(e) {
+            const rect = cropBox.getBoundingClientRect();
+            
+            if (currentResizer.classList.contains('br')) {
+                cropBox.style.width = rect.width + (e.clientX - prevX) + "px";
+                cropBox.style.height = rect.height + (e.clientY - prevY) + "px";
+            } else if (currentResizer.classList.contains('bl')) {
+                cropBox.style.width = rect.width - (e.clientX - prevX) + "px";
+                cropBox.style.height = rect.height + (e.clientY - prevY) + "px";
+                cropBox.style.left = cropBox.offsetLeft + (e.clientX - prevX) + "px";
+            } else if (currentResizer.classList.contains('tr')) {
+                cropBox.style.width = rect.width + (e.clientX - prevX) + "px";
+                cropBox.style.height = rect.height - (e.clientY - prevY) + "px";
+                cropBox.style.top = cropBox.offsetTop + (e.clientY - prevY) + "px";
+            } else if (currentResizer.classList.contains('tl')) {
+                cropBox.style.width = rect.width - (e.clientX - prevX) + "px";
+                cropBox.style.height = rect.height - (e.clientY - prevY) + "px";
+                cropBox.style.left = cropBox.offsetLeft + (e.clientX - prevX) + "px";
+                cropBox.style.top = cropBox.offsetTop + (e.clientY - prevY) + "px";
+            }
+
+            prevX = e.clientX;
+            prevY = e.clientY;
+        }
+
+        function mouseUp() {
+            window.removeEventListener('mousemove', mouseMove);
+            window.removeEventListener('mouseup', mouseUp);
+            isResizing = false;
+        }
+
+        window.addEventListener('mousemove', mouseMove);
+        window.addEventListener('mouseup', mouseUp);
+    });
+});
+
+// Pastikan fungsi drag (geser) utama Anda mengecek (if !isResizing)
   </script>
 
   <div id="photo-viewer"

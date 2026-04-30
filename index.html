@@ -1274,7 +1274,8 @@ body.dark span:not(.material-icons) {
     const PAGE_SIZE = 20;
     let currentStatTab = 'balita';
     let currentPage = "dashboard"; // halaman default
-
+    let selectedKtpFile = null;
+    let rotation = 0;
 
     // Handle back button on mobile
     window.addEventListener('popstate', function (event) {
@@ -3703,7 +3704,7 @@ async function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
-    async function applyCrop() {
+   async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
 
@@ -3724,23 +3725,25 @@ async function previewAndScanKtp(event) {
     const image = new Image();
     image.src = img.src;
 
-    image.onload = async () => {
+    image.onload = () => {
         ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
 
-canvas.toBlob(async (blob) => {
+        canvas.toBlob(async (blob) => {
 
-    // 🔥 ubah blob jadi File
-    const file = new File([blob], "ktp-crop.jpg", {
-        type: "image/jpeg"
-    });
+            const file = new File([blob], "ktp-crop.jpg", {
+                type: "image/jpeg"
+            });
 
-    // 🔥 masukkan ke input upload form
-    setFileToInput("f-foto-ktp", file);
+            // 🔥 update semua
+            selectedKtpFile = file;
 
-    // 🔥 lanjut OCR (opsional, kalau mau tetap auto)
-    await processOcrFromBlob(blob);
+            setFileToInput("f-foto-ktp", file);
+            updatePreview(file);
 
-}, "image/jpeg", 0.9);
+            // 🔥 langsung OCR dari hasil crop
+            await processOcrFromBlob(blob);
+
+        }, "image/jpeg", 0.95);
     };
 }
 
@@ -3850,6 +3853,108 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
+    function handleKtpUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    selectedKtpFile = file;
+    rotation = 0;
+
+    updatePreview(file);
+    setFileToInput("f-foto-ktp", file);
+}
+    function updatePreview(file) {
+    const img = document.getElementById("preview-ktp");
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        img.src = e.target.result;
+
+        img.style.display = "block";
+        img.style.margin = "0 auto";
+        img.style.maxHeight = "140px";
+        img.style.objectFit = "contain";
+    };
+
+    reader.readAsDataURL(file);
+
+    document.getElementById("container-preview-ktp").classList.remove("hidden");
+    document.getElementById("placeholder-ktp").classList.add("hidden");
+}
+    async function rotateKtp(deg) {
+    if (!selectedKtpFile) {
+        alert("Upload foto dulu");
+        return;
+    }
+
+    rotation = (rotation + deg) % 360;
+
+    const rotatedFile = await rotateImage(selectedKtpFile, deg);
+
+    selectedKtpFile = rotatedFile;
+
+    setFileToInput("f-foto-ktp", rotatedFile);
+    updatePreview(rotatedFile);
+}
+    function rotateImage(file, deg) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            const rad = deg * Math.PI / 180;
+
+            if (Math.abs(deg % 180) === 90) {
+                canvas.width = img.height;
+                canvas.height = img.width;
+            } else {
+                canvas.width = img.width;
+                canvas.height = img.height;
+            }
+
+            // 🔥 CENTER FIX (WAJIB)
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(rad);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+            canvas.toBlob((blob) => {
+                resolve(new File([blob], "ktp.jpg", {
+                    type: "image/jpeg"
+                }));
+            }, "image/jpeg", 0.95);
+        };
+    });
+}
+    function setFileToInput(inputId, file) {
+    const input = document.getElementById(inputId);
+
+    const dt = new DataTransfer();
+    dt.items.add(file);
+
+    input.files = dt.files;
+}
+    async function processOcrFromBlob(blob) {
+    const base64Image = await fileToBase64(blob);
+
+    let response = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+            action: "ocrKtp",
+            args: [base64Image]
+        })
+    });
+
+    let result = await response.json();
+
+    if (result && result.OCRExitCode === 1) {
+        const rawText = result.ParsedResults[0].ParsedText;
+        extractKtpData(rawText);
+    }
+}
+    
   </script>
 
   <div id="photo-viewer"

@@ -971,88 +971,52 @@ body.dark span:not(.material-icons) {
       <section id="page-add" class="page">
     <h2 id="form-title" class="text-xl font-black mb-6" style="color: var(--text-main)">Input Data Warga</h2>
 
-       <!-- 🔥 SCAN KTP -->
-<div class="mb-6 p-4 rounded-[32px] border-2 border-dashed border-indigo-200 dark:border-slate-700 bg-indigo-50/50 dark:bg-slate-800/50 flex flex-col items-center gap-4">
+     <!-- 🔥 SCAN KTP -->
+<div class="mb-6 p-4 rounded-[32px] border-2 border-dashed border-indigo-200 bg-indigo-50/50 flex flex-col items-center gap-4">
 
-    <!-- HEADER -->
     <div class="flex items-center gap-3 self-start">
-        <div class="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+        <div class="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white">
             <span class="material-icons">document_scanner</span>
         </div>
         <div>
-            <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Fitur Pintar</p>
-            <h4 class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200">Scan KTP Otomatis</h4>
+            <p class="text-[10px] font-black text-indigo-500 uppercase">Fitur Pintar</p>
+            <h4 class="text-[11px] font-extrabold">Scan KTP Otomatis</h4>
         </div>
     </div>
 
-    <!-- 🔥 PREVIEW (CENTER) -->
-    <div id="preview-container" class="hidden w-full text-center">
-        <img id="preview-ktp"
-             class="max-h-40 mx-auto object-contain rounded-2xl shadow-md border-2 border-white transition-all duration-300">
-    </div>
-
-    <!-- 🔥 BUTTON AMBIL FOTO -->
+    <!-- BUTTON -->
     <input type="file" id="scan-ktp-input" accept="image/*" class="hidden" onchange="previewAndScanKtp(event)">
     <label for="scan-ktp-input"
-        class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer">
+        class="bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs cursor-pointer">
         Ambil Foto
     </label>
 </div>
 
 
-<!-- 🔥 CROP + ROTATE -->
+<!-- 🔥 CROP -->
 <div id="crop-container" class="hidden mt-4 text-center">
 
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+    <p class="text-xs font-bold mb-2">Atur Crop</p>
 
-    <!-- AREA GAMBAR -->
-    <div class="relative inline-block mx-auto">
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border">
 
-        <img id="crop-image"
-             class="max-w-xs mx-auto rounded-xl border shadow-md object-contain">
-
-        <!-- BOX CROP -->
         <div id="crop-box"
             class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move">
-
-            <!-- HANDLE RESIZE -->
-            <div class="resize-handle tl"></div>
-            <div class="resize-handle tr"></div>
-            <div class="resize-handle bl"></div>
-            <div class="resize-handle br"></div>
         </div>
     </div>
 
-    <!-- 🔥 TOMBOL AKSI -->
-    <div class="flex justify-center gap-2 mt-4 flex-wrap">
+    <div class="flex justify-center gap-2 mt-3 flex-wrap">
 
-        <!-- ROTATE -->
-        <button type="button" onclick="rotateKtp(-90)"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-xs">
-            ⟲ Kiri
-        </button>
+        <button onclick="rotateKtp(-90)" class="bg-yellow-500 text-white px-2 py-1 text-xs rounded">⟲</button>
+        <button onclick="rotateKtp(90)" class="bg-yellow-500 text-white px-2 py-1 text-xs rounded">⟳</button>
 
-        <button type="button" onclick="rotateKtp(90)"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-lg text-xs">
-            ⟳ Kanan
-        </button>
-
-        <!-- CROP -->
-        <button type="button" onclick="applyCrop()"
-            class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs">
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-2 py-1 text-xs rounded">
             Crop & Scan
         </button>
 
-        <!-- TANPA CROP -->
-        <button type="button" onclick="scanTanpaCrop()"
-            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
+        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-2 py-1 text-xs rounded">
             Scan Langsung
-        </button>
-
-        <!-- ULANG -->
-        <button type="button" onclick="scanUlang()"
-            class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-xs">
-            Scan Ulang
         </button>
     </div>
 </div>
@@ -3484,31 +3448,23 @@ async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    console.log("FILE MASUK:", file);
-
     selectedKtpFile = file;
     rotation = 0;
 
+    // 🔥 tampilkan ke preview FORM (INI KUNCI)
     const reader = new FileReader();
-
     reader.onload = function(e) {
-        const img = document.getElementById("preview-ktp");
-
-        img.src = e.target.result;
-
-        // 🔥 tampilkan preview
-        document.getElementById("preview-container").classList.remove("hidden");
+        document.getElementById("preview-ktp").src = e.target.result;
+        document.getElementById("container-preview-ktp").classList.remove("hidden");
+        document.getElementById("placeholder-ktp").classList.add("hidden");
 
         // 🔥 tampilkan crop
         document.getElementById("crop-container").classList.remove("hidden");
-
-        // 🔥 isi crop image juga
         document.getElementById("crop-image").src = e.target.result;
     };
-
     reader.readAsDataURL(file);
 
-    // 🔥 masukkan ke form upload
+    // 🔥 masuk ke input form
     setFileToInput("f-foto-ktp", file);
 }
 
@@ -3757,18 +3713,12 @@ async function previewAndScanKtp(event) {
 }
 
 async function scanTanpaCrop() {
-    const img = document.getElementById("crop-image");
+    if (!selectedKtpFile) {
+        alert("Upload foto dulu");
+        return;
+    }
 
-    const res = await fetch(img.src);
-    const blob = await res.blob();
-
-    const file = new File([blob], "ktp.jpg", {
-        type: "image/jpeg"
-    });
-
-    setFileToInput("f-foto-ktp", file);
-
-    await processOcrFromBlob(blob);
+    await processOcrFromBlob(selectedKtpFile);
 }
     
     async function processOcrFromBlob(file) {
@@ -3887,43 +3837,51 @@ function updatePreview(file) {
 
     document.getElementById("preview-container").classList.remove("hidden");
 }
-async function rotateKtp(deg) {
-    console.log("selectedKtpFile:", selectedKtpFile);
-    console.log("input file:", document.getElementById("f-foto-ktp").files);
-    let fileToUse = selectedKtpFile;
-
-    // 🔥 FALLBACK: ambil dari input kalau state kosong
-    if (!fileToUse) {
-        const input = document.getElementById("f-foto-ktp");
-        if (input.files && input.files.length > 0) {
-            fileToUse = input.files[0];
-            selectedKtpFile = fileToUse;
-            console.log("Ambil file dari input");
-        }
-    }
-
-    if (!fileToUse) {
+function rotateKtp(deg) {
+    if (!selectedKtpFile) {
         alert("Upload foto dulu");
         return;
     }
 
-    try {
-        rotation = (rotation + deg) % 360;
+    rotation += deg;
 
-        const rotatedFile = await rotateImage(fileToUse, deg);
+    const img = new Image();
+    const url = URL.createObjectURL(selectedKtpFile);
 
-        // 🔥 update semua state
-        selectedKtpFile = rotatedFile;
+    img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-        // 🔥 masukkan ke input
-        setFileToInput("f-foto-ktp", rotatedFile);
+        if (rotation % 180 !== 0) {
+            canvas.width = img.height;
+            canvas.height = img.width;
+        } else {
+            canvas.width = img.width;
+            canvas.height = img.height;
+        }
 
-        // 🔥 update preview
-        updatePreview(rotatedFile);
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(rotation * Math.PI / 180);
 
-    } catch (err) {
-        console.error("Rotate error:", err);
-    }
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+        canvas.toBlob((blob) => {
+            const newFile = new File([blob], "ktp-rotate.jpg", { type: "image/jpeg" });
+
+            selectedKtpFile = newFile;
+
+            // 🔥 update preview FORM
+            document.getElementById("preview-ktp").src = URL.createObjectURL(newFile);
+
+            // 🔥 update crop
+            document.getElementById("crop-image").src = URL.createObjectURL(newFile);
+
+            // 🔥 update input
+            setFileToInput("f-foto-ktp", newFile);
+        }, "image/jpeg", 0.9);
+    };
+
+    img.src = url;
 }
     function rotateImage(file, deg) {
     return new Promise((resolve) => {

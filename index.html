@@ -518,32 +518,6 @@ body.dark span:not(.material-icons) {
     #crop-box {
     touch-action: none;
 }
-
-    /* Menjaga gambar tetap di tengah kontainer */
-  .crop-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f8fafc;
-    overflow: hidden;
-    min-height: 300px;
-    border-radius: 12px;
-    position: relative;
-  }
-
-  /* Titik penarik di sudut crop box */
-  .resizer {
-    width: 10px;
-    height: 10px;
-    background: #6366f1;
-    position: absolute;
-    border: 1px solid white;
-    border-radius: 50%;
-  }
-  .resizer.tl { top: -5px; left: -5px; cursor: nwse-resize; }
-  .resizer.tr { top: -5px; right: -5px; cursor: nesw-resize; }
-  .resizer.bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
-  .resizer.br { bottom: -5px; right: -5px; cursor: nwse-resize; }
   </style>
 </head>
 <body>
@@ -1013,33 +987,26 @@ body.dark span:not(.material-icons) {
             Ambil Foto
         </label>
     </div>
-   <!-- Bagian di dalam #crop-container -->
-<div id="crop-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2 text-center">Atur Posisi & Ukuran Scan</p>
-    
-    <div class="crop-wrapper border">
-        <div id="movable-area" class="relative">
-            <img id="crop-image" class="max-w-xs transition-transform duration-300" />
-            <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move">
-                <!-- Handle untuk resize -->
-                <div class="resizer tl"></div>
-                <div class="resizer tr"></div>
-                <div class="resizer bl"></div>
-                <div class="resizer br"></div>
-            </div>
+                      <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
+
+        <div id="crop-box"
+            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
+
+            <div class="resize-handle tl"></div>
+            <div class="resize-handle tr"></div>
+            <div class="resize-handle bl"></div>
+            <div class="resize-handle br"></div>
         </div>
     </div>
-    
-    <!-- Tombol navigasi tetap sama seperti sebelumnya -->
-    <div class="flex justify-center gap-2 mt-4">
-        <button onclick="rotateImage(-90)" class="bg-slate-200 p-2 rounded-full"><span class="material-icons">rotate_left</span></button>
-        <button onclick="rotateImage(90)" class="bg-slate-200 p-2 rounded-full"><span class="material-icons">rotate_right</span></button>
-    </div>
-</div>
 
     <div class="flex gap-2 mt-3">
-        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Gunakan Crop & Scan</button>
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
         <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
+
     </div>
 </div>
 
@@ -3883,97 +3850,6 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
-    let currentRotation = 0;
-
-function rotateImage(deg) {
-    currentRotation = (currentRotation + deg) % 360;
-    const img = document.getElementById('crop-image');
-    img.style.transform = `rotate(${currentRotation}deg)`;
-    
-    // Reset posisi crop box jika gambar diputar agar tidak melesat
-    const box = document.getElementById('crop-box');
-    box.style.top = '10px';
-    box.style.left = '10px';
-}
-
-// Fungsi bantu untuk memproses gambar yang sudah diputar ke Canvas
-function getRotatedCanvas(imageEl) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Jika rotasi 90 atau 270, balikkan lebar dan tinggi
-    if (Math.abs(currentRotation) === 90 || Math.abs(currentRotation) === 270) {
-        canvas.width = imageEl.naturalHeight;
-        canvas.height = imageEl.naturalWidth;
-    } else {
-        canvas.width = imageEl.naturalWidth;
-        canvas.height = imageEl.naturalHeight;
-    }
-
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((currentRotation * Math.PI) / 180);
-    ctx.drawImage(imageEl, -imageEl.naturalWidth / 2, -imageEl.naturalHeight / 2);
-    
-    return canvas;
-}
-  
-
-async function scanTanpaCrop() {
-    const img = document.getElementById('crop-image');
-    const rotatedCanvas = getRotatedCanvas(img);
-    const base64 = rotatedCanvas.toDataURL('image/jpeg', 0.9);
-    processOcr(base64);
-}
-    const cropBox = document.getElementById('crop-box');
-let isResizing = false;
-
-// Inisialisasi fungsi resize
-cropBox.querySelectorAll('.resizer').forEach(resizer => {
-    resizer.addEventListener('mousedown', function(e) {
-        e.stopPropagation(); // Agar tidak bentrok dengan fungsi geser (drag)
-        isResizing = true;
-        let currentResizer = e.target;
-        
-        let prevX = e.clientX;
-        let prevY = e.clientY;
-
-        function mouseMove(e) {
-            const rect = cropBox.getBoundingClientRect();
-            
-            if (currentResizer.classList.contains('br')) {
-                cropBox.style.width = rect.width + (e.clientX - prevX) + "px";
-                cropBox.style.height = rect.height + (e.clientY - prevY) + "px";
-            } else if (currentResizer.classList.contains('bl')) {
-                cropBox.style.width = rect.width - (e.clientX - prevX) + "px";
-                cropBox.style.height = rect.height + (e.clientY - prevY) + "px";
-                cropBox.style.left = cropBox.offsetLeft + (e.clientX - prevX) + "px";
-            } else if (currentResizer.classList.contains('tr')) {
-                cropBox.style.width = rect.width + (e.clientX - prevX) + "px";
-                cropBox.style.height = rect.height - (e.clientY - prevY) + "px";
-                cropBox.style.top = cropBox.offsetTop + (e.clientY - prevY) + "px";
-            } else if (currentResizer.classList.contains('tl')) {
-                cropBox.style.width = rect.width - (e.clientX - prevX) + "px";
-                cropBox.style.height = rect.height - (e.clientY - prevY) + "px";
-                cropBox.style.left = cropBox.offsetLeft + (e.clientX - prevX) + "px";
-                cropBox.style.top = cropBox.offsetTop + (e.clientY - prevY) + "px";
-            }
-
-            prevX = e.clientX;
-            prevY = e.clientY;
-        }
-
-        function mouseUp() {
-            window.removeEventListener('mousemove', mouseMove);
-            window.removeEventListener('mouseup', mouseUp);
-            isResizing = false;
-        }
-
-        window.addEventListener('mousemove', mouseMove);
-        window.addEventListener('mouseup', mouseUp);
-    });
-});
-
-// Pastikan fungsi drag (geser) utama Anda mengecek (if !isResizing)
   </script>
 
   <div id="photo-viewer"

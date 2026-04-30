@@ -987,26 +987,27 @@ body.dark span:not(.material-icons) {
             Ambil Foto
         </label>
     </div>
-                      <div id="crop-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
-
+   <!-- Bagian di dalam #crop-container -->
+<div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area & Rotasi</p>
     <div class="relative inline-block">
-        <img id="crop-image" class="max-w-xs rounded-xl border" />
+        <img id="crop-image" class="max-w-xs rounded-xl border transition-transform duration-300" />
+        <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move"></div>
+    </div>
 
-        <div id="crop-box"
-            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
-
-            <div class="resize-handle tl"></div>
-            <div class="resize-handle tr"></div>
-            <div class="resize-handle bl"></div>
-            <div class="resize-handle br"></div>
-        </div>
+    <!-- Tambahkan Tombol Rotasi -->
+    <div class="flex gap-2 mt-3">
+        <button onclick="rotateImage(-90)" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs flex items-center gap-1">
+            <span class="material-icons text-sm">rotate_left</span> -90°
+        </button>
+        <button onclick="rotateImage(90)" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs flex items-center gap-1">
+            <span class="material-icons text-sm">rotate_right</span> +90°
+        </button>
     </div>
 
     <div class="flex gap-2 mt-3">
-        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Gunakan Crop & Scan</button>
         <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
-
     </div>
 </div>
 
@@ -3849,6 +3850,73 @@ async function scanTanpaCrop() {
     // 🔹 reset state global
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
+}
+    let currentRotation = 0;
+
+function rotateImage(deg) {
+    currentRotation = (currentRotation + deg) % 360;
+    const img = document.getElementById('crop-image');
+    img.style.transform = `rotate(${currentRotation}deg)`;
+    
+    // Reset posisi crop box jika gambar diputar agar tidak melesat
+    const box = document.getElementById('crop-box');
+    box.style.top = '10px';
+    box.style.left = '10px';
+}
+
+// Fungsi bantu untuk memproses gambar yang sudah diputar ke Canvas
+function getRotatedCanvas(imageEl) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Jika rotasi 90 atau 270, balikkan lebar dan tinggi
+    if (Math.abs(currentRotation) === 90 || Math.abs(currentRotation) === 270) {
+        canvas.width = imageEl.naturalHeight;
+        canvas.height = imageEl.naturalWidth;
+    } else {
+        canvas.width = imageEl.naturalWidth;
+        canvas.height = imageEl.naturalHeight;
+    }
+
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((currentRotation * Math.PI) / 180);
+    ctx.drawImage(imageEl, -imageEl.naturalWidth / 2, -imageEl.naturalHeight / 2);
+    
+    return canvas;
+}
+    async function applyCrop() {
+    const img = document.getElementById('crop-image');
+    const box = document.getElementById('crop-box');
+    
+    // 1. Ambil canvas yang sudah diputar
+    const rotatedCanvas = getRotatedCanvas(img);
+    
+    // 2. Hitung skala antara tampilan layar dan ukuran asli
+    const displayWidth = img.clientWidth;
+    const scale = rotatedCanvas.width / displayWidth;
+
+    const cropCanvas = document.createElement('canvas');
+    const ctx = cropCanvas.getContext('2d');
+    
+    cropCanvas.width = box.offsetWidth * scale;
+    cropCanvas.height = box.offsetHeight * scale;
+
+    ctx.drawImage(
+        rotatedCanvas,
+        box.offsetLeft * scale, box.offsetTop * scale, 
+        box.offsetWidth * scale, box.offsetHeight * scale,
+        0, 0, cropCanvas.width, cropCanvas.height
+    );
+
+    const base64 = cropCanvas.toDataURL('image/jpeg', 0.9);
+    processOcr(base64); // Panggil fungsi OCR Anda yang sudah ada
+}
+
+async function scanTanpaCrop() {
+    const img = document.getElementById('crop-image');
+    const rotatedCanvas = getRotatedCanvas(img);
+    const base64 = rotatedCanvas.toDataURL('image/jpeg', 0.9);
+    processOcr(base64);
 }
   </script>
 

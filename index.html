@@ -550,6 +550,10 @@ body.dark span:not(.material-icons) {
     transition: transform 0.3s ease;
     display: block;
   }
+    #cropBox {
+    touch-action: none; /* Mematikan scroll otomatis saat menyentuh kotak ini */
+    user-select: none;  /* Mencegah teks terpilih saat drag */
+}
   </style>
 </head>
 <body>
@@ -3926,6 +3930,37 @@ let startX, startY, initialLeft, initialTop;
 
 // --- LOGIKA GESER (DRAG) ---
 cropBox.addEventListener('mousedown', (e) => {
+
+  // Tambah ini agar support HP
+cropBox.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('resize-handle')) return;
+    
+    // Ambil koordinat sentuhan pertama
+    const touch = e.touches[0];
+    isDragging = true;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    initialLeft = cropBox.offsetLeft;
+    initialTop = cropBox.offsetTop;
+
+    function doDragTouch(ev) {
+        if (!isDragging) return;
+        const t = ev.touches[0];
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        cropBox.style.left = (initialLeft + dx) + 'px';
+        cropBox.style.top = (initialTop + dy) + 'px';
+    }
+
+    function stopDragTouch() {
+        isDragging = false;
+        window.removeEventListener('touchmove', doDragTouch);
+        window.removeEventListener('touchend', stopDragTouch);
+    }
+
+    window.addEventListener('touchmove', doDragTouch, { passive: false });
+    window.addEventListener('touchend', stopDragTouch);
+});
     // Jika yang diklik adalah handle resize, jangan jalankan fungsi drag
     if (e.target.classList.contains('resize-handle')) return;
 
@@ -3956,45 +3991,36 @@ cropBox.addEventListener('mousedown', (e) => {
 // --- LOGIKA TARIK SUDUT (RESIZE) ---
 function startResize(e, direction) {
     e.preventDefault();
-    e.stopPropagation(); // Mencegah trigger fungsi drag di atas
+    e.stopPropagation();
 
-    let rStartX = e.clientX;
-    let rStartY = e.clientY;
-    let rStartWidth = cropBox.offsetWidth;
-    let rStartHeight = cropBox.offsetHeight;
-    let rStartLeft = cropBox.offsetLeft;
-    let rStartTop = cropBox.offsetTop;
+    // Cek apakah ini sentuhan (HP) atau klik mouse
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    let rStartX = clientX;
+    let rStartY = clientY;
+    // ... sisa variabel rStartWidth, dll tetap sama ...
 
     function doResize(ev) {
-        const dx = ev.clientX - rStartX;
-        const dy = ev.clientY - rStartY;
-
-        if (direction === 'br') {
-            cropBox.style.width = (rStartWidth + dx) + 'px';
-            cropBox.style.height = (rStartHeight + dy) + 'px';
-        } else if (direction === 'bl') {
-            cropBox.style.width = (rStartWidth - dx) + 'px';
-            cropBox.style.left = (rStartLeft + dx) + 'px';
-            cropBox.style.height = (rStartHeight + dy) + 'px';
-        } else if (direction === 'tr') {
-            cropBox.style.width = (rStartWidth + dx) + 'px';
-            cropBox.style.height = (rStartHeight - dy) + 'px';
-            cropBox.style.top = (rStartTop + dy) + 'px';
-        } else if (direction === 'tl') {
-            cropBox.style.width = (rStartWidth - dx) + 'px';
-            cropBox.style.left = (rStartLeft + dx) + 'px';
-            cropBox.style.height = (rStartHeight - dy) + 'px';
-            cropBox.style.top = (rStartTop + dy) + 'px';
-        }
+        const moveX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        const moveY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+        
+        const dx = moveX - rStartX;
+        const dy = moveY - rStartY;
+        // ... sisa logika if(direction) tetap sama ...
     }
 
     function stopResize() {
         window.removeEventListener('mousemove', doResize);
         window.removeEventListener('mouseup', stopResize);
+        window.removeEventListener('touchmove', doResize); // Tambah ini
+        window.removeEventListener('touchend', stopResize); // Tambah ini
     }
 
     window.addEventListener('mousemove', doResize);
     window.addEventListener('mouseup', stopResize);
+    window.addEventListener('touchmove', doResize, { passive: false }); // Tambah ini
+    window.addEventListener('touchend', stopResize); // Tambah ini
 }
   </script>
 

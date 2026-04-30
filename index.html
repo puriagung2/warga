@@ -3719,34 +3719,33 @@ function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
- async function applyCrop() {
+async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
 
-    // 1. Buat canvas untuk memproses rotasi fisik gambar asli
+    // 1. Siapkan Canvas Utama untuk Rotasi Fisik
     const tempCanvas = document.createElement("canvas");
     const tempCtx = tempCanvas.getContext("2d");
     
-    // Cek apakah rotasi posisi ganjil (90 atau 270 derajat)
     const isRotated90 = Math.abs(currentRotation) % 180 !== 0;
     const naturalW = img.naturalWidth;
     const naturalH = img.naturalHeight;
 
-    // Set dimensi canvas sesuai hasil rotasi
+    // Tentukan dimensi canvas: jika 90/270 derajat, balik W dan H
     tempCanvas.width = isRotated90 ? naturalH : naturalW;
     tempCanvas.height = isRotated90 ? naturalW : naturalH;
 
-    // Gambar ulang foto asli ke canvas dengan rotasi
+    // Gambar ulang foto asli dengan rotasi fisik ke tempCanvas
     tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
     tempCtx.rotate((currentRotation * Math.PI) / 180);
     tempCtx.drawImage(img, -naturalW / 2, -naturalH / 2);
 
-    // 2. Hitung Skala antara tampilan di layar dengan canvas yang sudah diputar
-    // Sangat penting: gunakan clientWidth/Height dari elemen img
+    // 2. Hitung Skala Koordinat (Layar vs Canvas Fisik yang sudah diputar)
+    // Gunakan clientWidth/Height dari img karena elemen ini yang menjadi acuan kotak crop di layar
     const scaleX = tempCanvas.width / img.clientWidth;
     const scaleY = tempCanvas.height / img.clientHeight;
 
-    // 3. Buat canvas akhir untuk hasil potong (Crop)
+    // 3. Eksekusi Pemotongan (Crop)
     const finalCanvas = document.createElement("canvas");
     const finalCtx = finalCanvas.getContext("2d");
     
@@ -3758,22 +3757,21 @@ function previewAndScanKtp(event) {
     finalCanvas.width = cropW;
     finalCanvas.height = cropH;
 
-    // Ambil bagian dari tempCanvas (gambar yang sudah tegak) ke finalCanvas
+    // Ambil area dari tempCanvas (yang sudah tegak) ke finalCanvas
     finalCtx.drawImage(tempCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
-    // 4. Konversi ke Blob untuk Form dan OCR
+    // 4. Update Form & Preview
     finalCanvas.toBlob(async (blob) => {
         if (!blob) return;
 
         const file = new File([blob], "ktp-crop.jpg", { type: "image/jpeg" });
 
-        // 🔥 Masukkan ke input file form asli
-        // Pastikan fungsi setFileToInput Anda bekerja dengan DataTransfer
+        // Update Input File di Form (f-foto-ktp)
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         document.getElementById('f-foto-ktp').files = dataTransfer.files;
 
-        // 🔥 Update Preview di Form agar tidak hilang
+        // Update Tampilan Preview di Form
         const reader = new FileReader();
         reader.onload = function(e) {
             const previewImg = document.getElementById('preview-ktp');
@@ -3788,13 +3786,11 @@ function previewAndScanKtp(event) {
         };
         reader.readAsDataURL(blob);
 
-        // 🔥 Sembunyikan editor crop setelah selesai
+        // Sembunyikan editor dan jalankan OCR
         document.getElementById("crop-container").classList.add("hidden");
-
-        // 🔥 Lanjut OCR
         await processOcrFromBlob(blob);
 
-    }, "image/jpeg", 0.9);
+    }, "image/jpeg", 0.95);
 }
 
 async function scanTanpaCrop() {

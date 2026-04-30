@@ -3855,14 +3855,18 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
-    function handleKtpUpload(event) {
+function handleKtpUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     selectedKtpFile = file;
     rotation = 0;
 
+    console.log("UPLOAD:", file);
+
     updatePreview(file);
+
+    // 🔥 pastikan selalu sinkron
     setFileToInput("f-foto-ktp", file);
 }
     function updatePreview(file) {
@@ -3883,20 +3887,43 @@ async function scanTanpaCrop() {
     document.getElementById("container-preview-ktp").classList.remove("hidden");
     document.getElementById("placeholder-ktp").classList.add("hidden");
 }
-    async function rotateKtp(deg) {
-    if (!selectedKtpFile) {
+async function rotateKtp(deg) {
+    console.log("selectedKtpFile:", selectedKtpFile);
+    console.log("input file:", document.getElementById("f-foto-ktp").files);
+    let fileToUse = selectedKtpFile;
+
+    // 🔥 FALLBACK: ambil dari input kalau state kosong
+    if (!fileToUse) {
+        const input = document.getElementById("f-foto-ktp");
+        if (input.files && input.files.length > 0) {
+            fileToUse = input.files[0];
+            selectedKtpFile = fileToUse;
+            console.log("Ambil file dari input");
+        }
+    }
+
+    if (!fileToUse) {
         alert("Upload foto dulu");
         return;
     }
 
-    rotation = (rotation + deg) % 360;
+    try {
+        rotation = (rotation + deg) % 360;
 
-    const rotatedFile = await rotateImage(selectedKtpFile, deg);
+        const rotatedFile = await rotateImage(fileToUse, deg);
 
-    selectedKtpFile = rotatedFile;
+        // 🔥 update semua state
+        selectedKtpFile = rotatedFile;
 
-    setFileToInput("f-foto-ktp", rotatedFile);
-    updatePreview(rotatedFile);
+        // 🔥 masukkan ke input
+        setFileToInput("f-foto-ktp", rotatedFile);
+
+        // 🔥 update preview
+        updatePreview(rotatedFile);
+
+    } catch (err) {
+        console.error("Rotate error:", err);
+    }
 }
     function rotateImage(file, deg) {
     return new Promise((resolve) => {

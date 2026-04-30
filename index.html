@@ -1038,11 +1038,12 @@ body.dark span:not(.material-icons) {
             <img id="crop-image" class="max-w-xs rounded-lg shadow-md" />
 
             <!-- Kotak Crop dengan Handle -->
-            <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move" style="width: 200px; height: 120px; top: 10px; left: 10px;">
-                <div class="resize-handle tl" onmousedown="startResize(event, 'tl')"></div>
-                <div class="resize-handle tr" onmousedown="startResize(event, 'tr')"></div>
-                <div class="resize-handle bl" onmousedown="startResize(event, 'bl')"></div>
-                <div class="resize-handle br" onmousedown="startResize(event, 'br')"></div>
+            <div id="cropbox" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move" style="width: 200px; height: 120px; top: 10px; left: 10px;">
+                <div class="resize-handle" data-direction="tl" style="position:absolute; top:-5px; left:-5px; width:15px; height:15px; background:blue;"></div>
+                <div class="resize-handle" data-direction="tr" style="position:absolute; top:-5px; right:-5px; width:15px; height:15px; background:blue;"></div>
+                <div class="resize-handle" data-direction="bl" style="position:absolute; bottom:-5px; left:-5px; width:15px; height:15px; background:blue;"></div>
+                <div class="resize-handle" data-direction="br" style="position:absolute; bottom:-5px; right:-5px; width:15px; height:15px; background:blue;"></div>
+
             </div>
         </div>
     </div>
@@ -3615,8 +3616,25 @@ function previewAndScanKtp(event) {
     let action = null;
     let startX, startY, startW, startH, startL, startT;
 
-    const handles = box.querySelectorAll(".resize-handle");
+    // const handles = box.querySelectorAll(".resize-handle");
+    // Contoh jika Anda menggunakan class 'resize-handle'
+const handles = document.querySelectorAll('.resize-handle');
 
+handles.forEach(handle => {
+    // Untuk Desktop
+    handle.addEventListener('mousedown', (e) => {
+        const direction = e.target.dataset.direction; // pastikan ada data-direction di HTML
+        startResize(e, direction);
+    });
+
+    // UNTUK HANDPHONE (TAMBAHKAN INI)
+    handle.addEventListener('touchstart', (e) => {
+        const direction = e.target.dataset.direction;
+        startResize(e, direction);
+    }, { passive: false });
+});
+      
+      
     // 🔹 ambil posisi dari mouse / touch
     function getEventPos(e) {
         if (e.touches) {
@@ -3990,9 +4008,9 @@ cropBox.addEventListener('touchstart', (e) => {
 
 // --- LOGIKA TARIK SUDUT (RESIZE) ---
 function startResize(e, direction) {
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     e.stopPropagation();
-
+     
     // Cek apakah ini sentuhan (HP) atau klik mouse
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;

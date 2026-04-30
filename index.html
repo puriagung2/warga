@@ -2649,33 +2649,23 @@ function previewFoto() {
     reader.readAsDataURL(fileInput.files[0]);
 }
 
-function previewFile(inputId, imgPreviewId, containerId, placeholderId) {
-    const fileInput = document.getElementById(inputId);
-    const img = document.getElementById(imgPreviewId);
-    const container = document.getElementById(containerId);
-    const placeholder = document.getElementById(placeholderId);
+function previewFile(inputId, previewId, containerId, placeholderId) {
+    const input = document.getElementById(inputId);
+    const file = input.files[0];
+    if (!file) return;
 
-    // Jika tidak ada file yang dipilih (batal)
-    if (!fileInput.files || fileInput.files.length === 0) {
-        img.src = "";
-        container.classList.add("hidden");
-        placeholder.classList.remove("hidden");
-        return;
-    }
+    // 🔥 simpan ke global (backup)
+    selectedKtpFile = file;
 
     const reader = new FileReader();
-    reader.onload = e => {
-        img.src = e.target.result;
-        
-        // Tampilkan foto, sembunyikan icon/teks "Upload"
-        container.classList.remove("hidden");
-        placeholder.classList.add("hidden");
-        
-        // Feedback getar ringan untuk HP
-        if (window.navigator.vibrate) window.navigator.vibrate(50);
+    reader.onload = function(e) {
+        document.getElementById(previewId).src = e.target.result;
     };
-    
-    reader.readAsDataURL(fileInput.files[0]);
+
+    reader.readAsDataURL(file);
+
+    document.getElementById(containerId).classList.remove("hidden");
+    document.getElementById(placeholderId).classList.add("hidden");
 }
     
 // Tambahkan fungsi ini jika ingin ada tombol hapus manual
@@ -3480,29 +3470,18 @@ async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const cropContainer = document.getElementById('crop-container');
-    const cropImage = document.getElementById('crop-image');
+    // 🔥 simpan ke global (PENTING)
+    selectedKtpFile = file;
+    rotation = 0;
 
-    // 🔹 tampilkan container dulu
-    cropContainer.classList.remove('hidden');
+    // 🔥 tampilkan preview ke form upload
+    updatePreview(file);
 
-    try {
-        // 🔹 auto crop
-        const croppedBlob = await autoCropKtp(file);
+    // 🔥 masukkan ke input upload KTP (BIAR TIDAK DOUBLE UPLOAD)
+    setFileToInput("f-foto-ktp", file);
 
-        // 🔥 PENTING: gunakan URL.createObjectURL (bukan FileReader)
-        const imageUrl = URL.createObjectURL(croppedBlob);
-
-        cropImage.src = imageUrl;
-
-        // 🔥 tunggu gambar benar-benar load
-        cropImage.onload = () => {
-            initCropBox();
-        };
-
-    } catch (err) {
-        console.error("Preview error:", err);
-    }
+    // 🔥 lanjut OCR
+    await processOcrFromBlob(file);
 }
 
     function removePreview() {
@@ -3957,12 +3936,10 @@ async function rotateKtp(deg) {
         };
     });
 }
-    function setFileToInput(inputId, file) {
+function setFileToInput(inputId, file) {
     const input = document.getElementById(inputId);
-
     const dt = new DataTransfer();
     dt.items.add(file);
-
     input.files = dt.files;
 }
     async function processOcrFromBlob(blob) {

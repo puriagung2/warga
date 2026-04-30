@@ -3489,34 +3489,27 @@ async function previewAndScanKtp(event) {
     selectedKtpFile = file;
     rotation = 0;
 
-    // 🔥 PREVIEW (WAJIB)
     const reader = new FileReader();
+
     reader.onload = function(e) {
         const img = document.getElementById("preview-ktp");
 
         img.src = e.target.result;
 
-        // 🔥 tampilkan container
-        document.getElementById("container-preview-ktp").classList.remove("hidden");
-        document.getElementById("placeholder-ktp").classList.add("hidden");
+        // 🔥 tampilkan preview
+        document.getElementById("preview-container").classList.remove("hidden");
 
-        // 🔥 styling biar center & rapi
-        img.style.display = "block";
-        img.style.margin = "0 auto";
-        img.style.maxHeight = "140px";
-        img.style.objectFit = "contain";
+        // 🔥 tampilkan crop
+        document.getElementById("crop-container").classList.remove("hidden");
+
+        // 🔥 isi crop image juga
+        document.getElementById("crop-image").src = e.target.result;
     };
+
     reader.readAsDataURL(file);
 
-    // 🔥 masuk ke form upload
+    // 🔥 masukkan ke form upload
     setFileToInput("f-foto-ktp", file);
-
-    // 🔥 OCR (optional, bisa dimatikan dulu untuk test)
-    try {
-        await processOcrFromBlob(file);
-    } catch (e) {
-        console.log("OCR skip dulu:", e);
-    }
 }
 
     function removePreview() {
@@ -3883,23 +3876,16 @@ function handleKtpUpload(event) {
     // 🔥 pastikan selalu sinkron
     setFileToInput("f-foto-ktp", file);
 }
-    function updatePreview(file) {
+function updatePreview(file) {
     const img = document.getElementById("preview-ktp");
 
     const reader = new FileReader();
     reader.onload = function(e) {
         img.src = e.target.result;
-
-        img.style.display = "block";
-        img.style.margin = "0 auto";
-        img.style.maxHeight = "140px";
-        img.style.objectFit = "contain";
     };
-
     reader.readAsDataURL(file);
 
-    document.getElementById("container-preview-ktp").classList.remove("hidden");
-    document.getElementById("placeholder-ktp").classList.add("hidden");
+    document.getElementById("preview-container").classList.remove("hidden");
 }
 async function rotateKtp(deg) {
     console.log("selectedKtpFile:", selectedKtpFile);

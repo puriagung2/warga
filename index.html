@@ -3884,33 +3884,7 @@ function getRotatedCanvas(imageEl) {
     
     return canvas;
 }
-    async function applyCrop() {
-    const img = document.getElementById('crop-image');
-    const box = document.getElementById('crop-box');
-    
-    // 1. Ambil canvas yang sudah diputar
-    const rotatedCanvas = getRotatedCanvas(img);
-    
-    // 2. Hitung skala antara tampilan layar dan ukuran asli
-    const displayWidth = img.clientWidth;
-    const scale = rotatedCanvas.width / displayWidth;
-
-    const cropCanvas = document.createElement('canvas');
-    const ctx = cropCanvas.getContext('2d');
-    
-    cropCanvas.width = box.offsetWidth * scale;
-    cropCanvas.height = box.offsetHeight * scale;
-
-    ctx.drawImage(
-        rotatedCanvas,
-        box.offsetLeft * scale, box.offsetTop * scale, 
-        box.offsetWidth * scale, box.offsetHeight * scale,
-        0, 0, cropCanvas.width, cropCanvas.height
-    );
-
-    const base64 = cropCanvas.toDataURL('image/jpeg', 0.9);
-    processOcr(base64); // Panggil fungsi OCR Anda yang sudah ada
-}
+  
 
 async function scanTanpaCrop() {
     const img = document.getElementById('crop-image');

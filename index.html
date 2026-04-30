@@ -971,52 +971,72 @@ body.dark span:not(.material-icons) {
       <section id="page-add" class="page">
     <h2 id="form-title" class="text-xl font-black mb-6" style="color: var(--text-main)">Input Data Warga</h2>
 
-     <!-- 🔥 SCAN KTP -->
-<div class="mb-6 p-4 rounded-[32px] border-2 border-dashed border-indigo-200 bg-indigo-50/50 flex flex-col items-center gap-4">
-
-    <div class="flex items-center gap-3 self-start">
-        <div class="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white">
-            <span class="material-icons">document_scanner</span>
+        <div class="mb-6 p-4 rounded-[32px] border-2 border-dashed border-indigo-200 dark:border-slate-700 bg-indigo-50/50 dark:bg-slate-800/50 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                <span class="material-icons">document_scanner</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Fitur Pintar</p>
+                <h4 class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200">Scan KTP Otomatis</h4>
+            </div>
         </div>
-        <div>
-            <p class="text-[10px] font-black text-indigo-500 uppercase">Fitur Pintar</p>
-            <h4 class="text-[11px] font-extrabold">Scan KTP Otomatis</h4>
+        
+        <input type="file" id="scan-ktp-input" accept="image/*" class="hidden" onchange="previewAndScanKtp(event)">
+        <label for="scan-ktp-input" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer">
+            Ambil Foto
+        </label>
+    </div>
+                      <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
+
+    <div class="relative inline-block">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
+
+        <div id="crop-box"
+            class="absolute border-2 border-indigo-500 bg-indigo-500/20">
+
+            <div class="resize-handle tl"></div>
+            <div class="resize-handle tr"></div>
+            <div class="resize-handle bl"></div>
+            <div class="resize-handle br"></div>
         </div>
     </div>
 
-    <!-- BUTTON -->
-    <input type="file" id="scan-ktp-input" accept="image/*" class="hidden" onchange="previewAndScanKtp(event)">
-    <label for="scan-ktp-input"
-        class="bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs cursor-pointer">
-        Ambil Foto
-    </label>
+    <div class="flex gap-2 mt-3">
+        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
+        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
+
+    </div>
 </div>
 
-
-<!-- 🔥 CROP -->
-<div id="crop-container" class="hidden mt-4 text-center">
-
-    <p class="text-xs font-bold mb-2">Atur Crop</p>
+        <div id="crop-container" class="hidden mt-4">
+    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area Crop</p>
 
     <div class="relative inline-block">
-        <img id="crop-image" class="max-w-xs rounded-xl border">
+        <img id="crop-image" class="max-w-xs rounded-xl border" />
 
+        <!-- kotak crop -->
         <div id="crop-box"
             class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move">
         </div>
     </div>
 
-    <div class="flex justify-center gap-2 mt-3 flex-wrap">
-
-        <button onclick="rotateKtp(-90)" class="bg-yellow-500 text-white px-2 py-1 text-xs rounded">⟲</button>
-        <button onclick="rotateKtp(90)" class="bg-yellow-500 text-white px-2 py-1 text-xs rounded">⟳</button>
-
-        <button onclick="applyCrop()" class="bg-indigo-500 text-white px-2 py-1 text-xs rounded">
-            Crop & Scan
+    <!-- 🔥 TOMBOL WAJIB -->
+    <div class="flex gap-2 mt-3">
+        <button onclick="applyCrop()"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs">
+            Gunakan Crop
         </button>
 
-        <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-2 py-1 text-xs rounded">
+        <button onclick="scanTanpaCrop()"
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs">
             Scan Langsung
+        </button>
+
+        <button onclick="scanUlang()"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-xs">
+            Scan Ulang
         </button>
     </div>
 </div>
@@ -1254,8 +1274,7 @@ body.dark span:not(.material-icons) {
     const PAGE_SIZE = 20;
     let currentStatTab = 'balita';
     let currentPage = "dashboard"; // halaman default
-    let selectedKtpFile = null;
-    let rotation = 0;
+
 
     // Handle back button on mobile
     window.addEventListener('popstate', function (event) {
@@ -2627,23 +2646,33 @@ function previewFoto() {
     reader.readAsDataURL(fileInput.files[0]);
 }
 
-function previewFile(inputId, previewId, containerId, placeholderId) {
-    const input = document.getElementById(inputId);
-    const file = input.files[0];
-    if (!file) return;
+function previewFile(inputId, imgPreviewId, containerId, placeholderId) {
+    const fileInput = document.getElementById(inputId);
+    const img = document.getElementById(imgPreviewId);
+    const container = document.getElementById(containerId);
+    const placeholder = document.getElementById(placeholderId);
 
-    // 🔥 simpan ke global (backup)
-    selectedKtpFile = file;
+    // Jika tidak ada file yang dipilih (batal)
+    if (!fileInput.files || fileInput.files.length === 0) {
+        img.src = "";
+        container.classList.add("hidden");
+        placeholder.classList.remove("hidden");
+        return;
+    }
 
     const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById(previewId).src = e.target.result;
+    reader.onload = e => {
+        img.src = e.target.result;
+        
+        // Tampilkan foto, sembunyikan icon/teks "Upload"
+        container.classList.remove("hidden");
+        placeholder.classList.add("hidden");
+        
+        // Feedback getar ringan untuk HP
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
     };
-
-    reader.readAsDataURL(file);
-
-    document.getElementById(containerId).classList.remove("hidden");
-    document.getElementById(placeholderId).classList.add("hidden");
+    
+    reader.readAsDataURL(fileInput.files[0]);
 }
     
 // Tambahkan fungsi ini jika ingin ada tombol hapus manual
@@ -3448,24 +3477,29 @@ async function previewAndScanKtp(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    selectedKtpFile = file;
-    rotation = 0;
+    const cropContainer = document.getElementById('crop-container');
+    const cropImage = document.getElementById('crop-image');
 
-    // 🔥 tampilkan ke preview FORM (INI KUNCI)
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById("preview-ktp").src = e.target.result;
-        document.getElementById("container-preview-ktp").classList.remove("hidden");
-        document.getElementById("placeholder-ktp").classList.add("hidden");
+    // 🔹 tampilkan container dulu
+    cropContainer.classList.remove('hidden');
 
-        // 🔥 tampilkan crop
-        document.getElementById("crop-container").classList.remove("hidden");
-        document.getElementById("crop-image").src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    try {
+        // 🔹 auto crop
+        const croppedBlob = await autoCropKtp(file);
 
-    // 🔥 masuk ke input form
-    setFileToInput("f-foto-ktp", file);
+        // 🔥 PENTING: gunakan URL.createObjectURL (bukan FileReader)
+        const imageUrl = URL.createObjectURL(croppedBlob);
+
+        cropImage.src = imageUrl;
+
+        // 🔥 tunggu gambar benar-benar load
+        cropImage.onload = () => {
+            initCropBox();
+        };
+
+    } catch (err) {
+        console.error("Preview error:", err);
+    }
 }
 
     function removePreview() {
@@ -3669,7 +3703,7 @@ async function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
-   async function applyCrop() {
+    async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
 
@@ -3690,35 +3724,39 @@ async function previewAndScanKtp(event) {
     const image = new Image();
     image.src = img.src;
 
-    image.onload = () => {
+    image.onload = async () => {
         ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
 
-        canvas.toBlob(async (blob) => {
+canvas.toBlob(async (blob) => {
 
-            const file = new File([blob], "ktp-crop.jpg", {
-                type: "image/jpeg"
-            });
+    // 🔥 ubah blob jadi File
+    const file = new File([blob], "ktp-crop.jpg", {
+        type: "image/jpeg"
+    });
 
-            // 🔥 update semua
-            selectedKtpFile = file;
+    // 🔥 masukkan ke input upload form
+    setFileToInput("f-foto-ktp", file);
 
-            setFileToInput("f-foto-ktp", file);
-            updatePreview(file);
+    // 🔥 lanjut OCR (opsional, kalau mau tetap auto)
+    await processOcrFromBlob(blob);
 
-            // 🔥 langsung OCR dari hasil crop
-            await processOcrFromBlob(blob);
-
-        }, "image/jpeg", 0.95);
+}, "image/jpeg", 0.9);
     };
 }
 
 async function scanTanpaCrop() {
-    if (!selectedKtpFile) {
-        alert("Upload foto dulu");
-        return;
-    }
+    const img = document.getElementById("crop-image");
 
-    await processOcrFromBlob(selectedKtpFile);
+    const res = await fetch(img.src);
+    const blob = await res.blob();
+
+    const file = new File([blob], "ktp.jpg", {
+        type: "image/jpeg"
+    });
+
+    setFileToInput("f-foto-ktp", file);
+
+    await processOcrFromBlob(blob);
 }
     
     async function processOcrFromBlob(file) {
@@ -3812,134 +3850,6 @@ async function scanTanpaCrop() {
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
 }
-function handleKtpUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    selectedKtpFile = file;
-    rotation = 0;
-
-    console.log("UPLOAD:", file);
-
-    updatePreview(file);
-
-    // 🔥 pastikan selalu sinkron
-    setFileToInput("f-foto-ktp", file);
-}
-function updatePreview(file) {
-    const img = document.getElementById("preview-ktp");
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-
-    document.getElementById("preview-container").classList.remove("hidden");
-}
-function rotateKtp(deg) {
-    if (!selectedKtpFile) {
-        alert("Upload foto dulu");
-        return;
-    }
-
-    rotation += deg;
-
-    const img = new Image();
-    const url = URL.createObjectURL(selectedKtpFile);
-
-    img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        if (rotation % 180 !== 0) {
-            canvas.width = img.height;
-            canvas.height = img.width;
-        } else {
-            canvas.width = img.width;
-            canvas.height = img.height;
-        }
-
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(rotation * Math.PI / 180);
-
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-        canvas.toBlob((blob) => {
-            const newFile = new File([blob], "ktp-rotate.jpg", { type: "image/jpeg" });
-
-            selectedKtpFile = newFile;
-
-            // 🔥 update preview FORM
-            document.getElementById("preview-ktp").src = URL.createObjectURL(newFile);
-
-            // 🔥 update crop
-            document.getElementById("crop-image").src = URL.createObjectURL(newFile);
-
-            // 🔥 update input
-            setFileToInput("f-foto-ktp", newFile);
-        }, "image/jpeg", 0.9);
-    };
-
-    img.src = url;
-}
-    function rotateImage(file, deg) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            const rad = deg * Math.PI / 180;
-
-            if (Math.abs(deg % 180) === 90) {
-                canvas.width = img.height;
-                canvas.height = img.width;
-            } else {
-                canvas.width = img.width;
-                canvas.height = img.height;
-            }
-
-            // 🔥 CENTER FIX (WAJIB)
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rad);
-            ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-            canvas.toBlob((blob) => {
-                resolve(new File([blob], "ktp.jpg", {
-                    type: "image/jpeg"
-                }));
-            }, "image/jpeg", 0.95);
-        };
-    });
-}
-function setFileToInput(inputId, file) {
-    const input = document.getElementById(inputId);
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    input.files = dt.files;
-}
-    async function processOcrFromBlob(blob) {
-    const base64Image = await fileToBase64(blob);
-
-    let response = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-            action: "ocrKtp",
-            args: [base64Image]
-        })
-    });
-
-    let result = await response.json();
-
-    if (result && result.OCRExitCode === 1) {
-        const rawText = result.ParsedResults[0].ParsedText;
-        extractKtpData(rawText);
-    }
-}
-    
   </script>
 
   <div id="photo-viewer"

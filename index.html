@@ -518,6 +518,32 @@ body.dark span:not(.material-icons) {
     #crop-box {
     touch-action: none;
 }
+
+    /* Menjaga gambar tetap di tengah kontainer */
+  .crop-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8fafc;
+    overflow: hidden;
+    min-height: 300px;
+    border-radius: 12px;
+    position: relative;
+  }
+
+  /* Titik penarik di sudut crop box */
+  .resizer {
+    width: 10px;
+    height: 10px;
+    background: #6366f1;
+    position: absolute;
+    border: 1px solid white;
+    border-radius: 50%;
+  }
+  .resizer.tl { top: -5px; left: -5px; cursor: nwse-resize; }
+  .resizer.tr { top: -5px; right: -5px; cursor: nesw-resize; }
+  .resizer.bl { bottom: -5px; left: -5px; cursor: nesw-resize; }
+  .resizer.br { bottom: -5px; right: -5px; cursor: nwse-resize; }
   </style>
 </head>
 <body>
@@ -989,21 +1015,27 @@ body.dark span:not(.material-icons) {
     </div>
    <!-- Bagian di dalam #crop-container -->
 <div id="crop-container" class="hidden mt-4">
-    <p class="text-[10px] font-bold text-slate-500 mb-2">Atur Area & Rotasi</p>
-    <div class="relative inline-block">
-        <img id="crop-image" class="max-w-xs rounded-xl border transition-transform duration-300" />
-        <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move"></div>
+    <p class="text-[10px] font-bold text-slate-500 mb-2 text-center">Atur Posisi & Ukuran Scan</p>
+    
+    <div class="crop-wrapper border">
+        <div id="movable-area" class="relative">
+            <img id="crop-image" class="max-w-xs transition-transform duration-300" />
+            <div id="crop-box" class="absolute border-2 border-indigo-500 bg-indigo-500/20 cursor-move">
+                <!-- Handle untuk resize -->
+                <div class="resizer tl"></div>
+                <div class="resizer tr"></div>
+                <div class="resizer bl"></div>
+                <div class="resizer br"></div>
+            </div>
+        </div>
     </div>
-
-    <!-- Tambahkan Tombol Rotasi -->
-    <div class="flex gap-2 mt-3">
-        <button onclick="rotateImage(-90)" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs flex items-center gap-1">
-            <span class="material-icons text-sm">rotate_left</span> -90°
-        </button>
-        <button onclick="rotateImage(90)" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs flex items-center gap-1">
-            <span class="material-icons text-sm">rotate_right</span> +90°
-        </button>
+    
+    <!-- Tombol navigasi tetap sama seperti sebelumnya -->
+    <div class="flex justify-center gap-2 mt-4">
+        <button onclick="rotateImage(-90)" class="bg-slate-200 p-2 rounded-full"><span class="material-icons">rotate_left</span></button>
+        <button onclick="rotateImage(90)" class="bg-slate-200 p-2 rounded-full"><span class="material-icons">rotate_right</span></button>
     </div>
+</div>
 
     <div class="flex gap-2 mt-3">
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Gunakan Crop & Scan</button>

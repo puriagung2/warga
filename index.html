@@ -3719,66 +3719,81 @@ function previewAndScanKtp(event) {
     document.addEventListener("mouseup", stop);
     document.addEventListener("touchend", stop);
 }
-  async function applyCrop() {
+ async function applyCrop() {
     const img = document.getElementById("crop-image");
     const box = document.getElementById("crop-box");
-    const finalCanvas = document.createElement("canvas");
-    const finalCtx = finalCanvas.getContext("2d");
 
-    // Logika Rotasi Fisik
+    // 1. Buat canvas untuk memproses rotasi fisik gambar asli
     const tempCanvas = document.createElement("canvas");
     const tempCtx = tempCanvas.getContext("2d");
-    const isRotated90 = Math.abs(currentRotation) % 180 !== 0;
     
-    tempCanvas.width = isRotated90 ? img.naturalHeight : img.naturalWidth;
-    tempCanvas.height = isRotated90 ? img.naturalWidth : img.naturalHeight;
+    // Cek apakah rotasi posisi ganjil (90 atau 270 derajat)
+    const isRotated90 = Math.abs(currentRotation) % 180 !== 0;
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
 
+    // Set dimensi canvas sesuai hasil rotasi
+    tempCanvas.width = isRotated90 ? naturalH : naturalW;
+    tempCanvas.height = isRotated90 ? naturalW : naturalH;
+
+    // Gambar ulang foto asli ke canvas dengan rotasi
     tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
     tempCtx.rotate((currentRotation * Math.PI) / 180);
-    tempCtx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    tempCtx.drawImage(img, -naturalW / 2, -naturalH / 2);
 
-    // Hitung Skala
+    // 2. Hitung Skala antara tampilan di layar dengan canvas yang sudah diputar
+    // Sangat penting: gunakan clientWidth/Height dari elemen img
     const scaleX = tempCanvas.width / img.clientWidth;
     const scaleY = tempCanvas.height / img.clientHeight;
 
-    const w = box.clientWidth * scaleX;
-    const h = box.clientHeight * scaleY;
-    finalCanvas.width = w;
-    finalCanvas.height = h;
+    // 3. Buat canvas akhir untuk hasil potong (Crop)
+    const finalCanvas = document.createElement("canvas");
+    const finalCtx = finalCanvas.getContext("2d");
+    
+    const cropW = box.clientWidth * scaleX;
+    const cropH = box.clientHeight * scaleY;
+    const cropX = box.offsetLeft * scaleX;
+    const cropY = box.offsetTop * scaleY;
 
-    finalCtx.drawImage(
-        tempCanvas, 
-        box.offsetLeft * scaleX, box.offsetTop * scaleY, w, h, 
-        0, 0, w, h
-    );
+    finalCanvas.width = cropW;
+    finalCanvas.height = cropH;
 
+    // Ambil bagian dari tempCanvas (gambar yang sudah tegak) ke finalCanvas
+    finalCtx.drawImage(tempCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+    // 4. Konversi ke Blob untuk Form dan OCR
     finalCanvas.toBlob(async (blob) => {
         if (!blob) return;
 
-        // 1. Masukkan ke Input File Form (f-foto-ktp)
-        const file = new File([blob], "ktp-edited.jpg", { type: "image/jpeg" });
+        const file = new File([blob], "ktp-crop.jpg", { type: "image/jpeg" });
+
+        // 🔥 Masukkan ke input file form asli
+        // Pastikan fungsi setFileToInput Anda bekerja dengan DataTransfer
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         document.getElementById('f-foto-ktp').files = dataTransfer.files;
 
-        // 2. Update Tampilan Preview di Form Secara Visual
+        // 🔥 Update Preview di Form agar tidak hilang
         const reader = new FileReader();
         reader.onload = function(e) {
             const previewImg = document.getElementById('preview-ktp');
             const container = document.getElementById('container-preview-ktp');
             const placeholder = document.getElementById('placeholder-ktp');
 
-            previewImg.src = e.target.result;
-            container.classList.remove('hidden'); // Munculkan preview
-            placeholder.classList.add('hidden');  // Sembunyikan icon upload
-        }
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                container.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+        };
         reader.readAsDataURL(blob);
 
-        // 3. Lanjut OCR
+        // 🔥 Sembunyikan editor crop setelah selesai
+        document.getElementById("crop-container").classList.add("hidden");
+
+        // 🔥 Lanjut OCR
         await processOcrFromBlob(blob);
-        
-        // Sembunyikan editor
-        document.getElementById('crop-container').classList.add('hidden');
+
     }, "image/jpeg", 0.9);
 }
 

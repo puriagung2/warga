@@ -1007,8 +1007,6 @@ body.dark span:not(.material-icons) {
     </div>
 
     <div class="flex gap-2 mt-3">
-      <button onclick="rotateImage()">Rotate 90°</button>
-
         <button onclick="applyCrop()" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs">Crop & Scan</button>
         <button onclick="scanTanpaCrop()" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Scan Langsung</button>
 
@@ -3854,15 +3852,6 @@ async function scanTanpaCrop() {
     // 🔹 reset state global
     if (typeof rotation !== "undefined") rotation = 0;
     if (typeof selectedFile !== "undefined") selectedFile = null;
-}
-
-
-    let currentAngle = 0;
-
-function rotateImage() {
-  currentAngle += 90; // Add 90 degrees on every click
-  const img = document.getElementById('crop-image');
-  img.style.transform = `rotate(${currentAngle}deg)`;
 }
 
   </script>
